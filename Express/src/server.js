@@ -1,6 +1,5 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors"); 
 const app = require("./app");
 const connectDB = require("./config/database");
 
@@ -9,24 +8,30 @@ connectDB();
 
 const server = express();
 
-// Configuration CORS
-const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:4200',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-
-server.use(cors(corsOptions));
-
-// Gérer les requêtes preflight
-server.options('*', cors(corsOptions));
+// Configuration CORS supplémentaire
+server.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && (origin.includes('localhost') || origin.includes(process.env.FRONTEND_URL || 'http://localhost:4200'))) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 server.use(app);
 
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, () =>
-  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`)
-);
+server.listen(PORT, () => {
+  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
+  console.log(`📁 Environnement: ${process.env.NODE_ENV}`);
+  console.log(`🔗 API disponible sur: http://localhost:${PORT}/api`);
+  console.log(`👤 JWT Secret: ${process.env.JWT_SECRET ? '✓ Configuré' : '✗ Non configuré'}`);
+});

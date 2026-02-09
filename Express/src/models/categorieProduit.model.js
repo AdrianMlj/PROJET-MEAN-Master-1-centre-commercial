@@ -25,6 +25,10 @@ const categorieProduitSchema = new mongoose.Schema({
   est_active: {
     type: Boolean,
     default: true
+  },
+  nombre_produits: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: { createdAt: 'date_creation', updatedAt: 'date_modification' }
@@ -32,5 +36,13 @@ const categorieProduitSchema = new mongoose.Schema({
 
 // Compound index pour garantir l'unicité par boutique
 categorieProduitSchema.index({ nom_categorie: 1, boutique: 1 }, { unique: true });
+
+// Hook pour formater le nom
+categorieProduitSchema.pre('save', function(next) {
+  if (this.isModified('nom_categorie')) {
+    this.nom_categorie = this.nom_categorie.charAt(0).toUpperCase() + this.nom_categorie.slice(1).toLowerCase();
+  }
+  next();
+});
 
 module.exports = mongoose.model('CategorieProduit', categorieProduitSchema);

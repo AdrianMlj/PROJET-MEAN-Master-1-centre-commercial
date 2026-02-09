@@ -12,3 +12,11 @@ exports.verifierToken = (token) => {
     return null;
   }
 };
+
+exports.decoderToken = (token) => {
+  try {
+    return jwt.decode(token);
+  } catch (error) {
+    return null;
+  }
+};

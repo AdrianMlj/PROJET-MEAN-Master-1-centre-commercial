@@ -2,13 +2,18 @@ const Boutique = require('../models/boutique.model');
 const Produit = require('../models/produit.model');
 const Commande = require('../models/commande.model');
 const Utilisateur = require('../models/utilisateur.model');
+const Paiement = require('../models/paiement.model');
 const mongoose = require('mongoose');
 
-// Statistiques globales (pour admin)
+// Statistiques globales (admin)
 exports.statistiquesGlobales = async (req, res) => {
   try {
-    const dateDebut = new Date();
-    dateDebut.setMonth(dateDebut.getMonth() - 1); // 30 derniers jours
+    const dateDebutMois = new Date();
+    dateDebutMois.setDate(1);
+    dateDebutMois.setHours(0, 0, 0, 0);
+
+    const dateDebutSemaine = new Date();
+    dateDebutSemaine.setDate(dateDebutSemaine.getDate() - 7);
 
     // Statistiques de base
     const [
@@ -16,31 +21,44 @@ exports.statistiquesGlobales = async (req, res) => {
       boutiquesActives,
       totalAcheteurs,
       totalCommandes,
-      chiffreAffairesTotal,
-      commandesMois
+      commandesMois,
+      commandesSemaine
     ] = await Promise.all([
       Boutique.countDocuments(),
       Boutique.countDocuments({ est_active: true }),
       Utilisateur.countDocuments({ 'role.nom_role': 'acheteur' }),
       Commande.countDocuments(),
-      Commande.aggregate([
-        { $match: { statut: 'livre' } },
-        { $group: { _id: null, total: { $sum: '$total_commande' } } }
-      ]),
       Commande.countDocuments({ 
-        date_commande: { $gte: dateDebut } 
+        date_commande: { $gte: dateDebutMois } 
+      }),
+      Commande.countDocuments({ 
+        date_commande: { $gte: dateDebutSemaine } 
       })
+    ]);
+
+    // Chiffre d'affaires total et du mois
+    const chiffreAffaires = await Commande.aggregate([
+      { $match: { statut: 'livre', 'informations_paiement.statut': 'paye' } },
+      { $group: { 
+        _id: null, 
+        total: { $sum: '$total_commande' },
+        total_mois: { 
+          $sum: { 
+            $cond: [{ $gte: ['$date_commande', dateDebutMois] }, '$total_commande', 0] 
+          } 
+        }
+      }}
     ]);
 
     // Boutique la plus active
     const boutiquePlusActive = await Commande.aggregate([
-      { $match: { statut: 'livre' } },
+      { $match: { statut: 'livre', 'informations_paiement.statut': 'paye' } },
       { $group: { 
         _id: '$boutique', 
         nombreCommandes: { $sum: 1 },
         chiffreAffaires: { $sum: '$total_commande' }
       }},
-      { $sort: { nombreCommandes: -1 } },
+      { $sort: { chiffreAffaires: -1 } },
       { $limit: 1 },
       { $lookup: {
         from: 'boutiques',
@@ -48,12 +66,17 @@ exports.statistiquesGlobales = async (req, res) => {
         foreignField: '_id',
         as: 'boutique'
       }},
-      { $unwind: '$boutique' }
+      { $unwind: '$boutique' },
+      { $project: {
+        boutique: '$boutique.nom',
+        nombreCommandes: 1,
+        chiffreAffaires: 1
+      }}
     ]);
 
     // Produits les plus vendus
     const produitsPlusVendus = await Commande.aggregate([
-      { $match: { statut: 'livre' } },
+      { $match: { statut: 'livre', 'informations_paiement.statut': 'paye' } },
       { $lookup: {
         from: 'commandedetails',
         localField: '_id',
@@ -67,7 +90,7 @@ exports.statistiquesGlobales = async (req, res) => {
         chiffreAffaires: { $sum: '$details.sous_total' }
       }},
       { $sort: { quantiteVendue: -1 } },
-      { $limit: 10 },
+      { $limit: 5 },
       { $lookup: {
         from: 'produits',
         localField: '_id',
@@ -77,17 +100,22 @@ exports.statistiquesGlobales = async (req, res) => {
       { $unwind: '$produit' },
       { $project: {
         produit: '$produit.nom',
+        boutique: '$produit.boutique',
         quantiteVendue: 1,
         chiffreAffaires: 1
       }}
     ]);
 
     // Évolution du chiffre d'affaires par jour (30 derniers jours)
+    const dateDebut30Jours = new Date();
+    dateDebut30Jours.setDate(dateDebut30Jours.getDate() - 30);
+
     const evolutionCA = await Commande.aggregate([
       { 
         $match: { 
           statut: 'livre',
-          date_commande: { $gte: dateDebut }
+          'informations_paiement.statut': 'paye',
+          date_commande: { $gte: dateDebut30Jours }
         } 
       },
       { 
@@ -102,6 +130,28 @@ exports.statistiquesGlobales = async (req, res) => {
       { $sort: { '_id': 1 } }
     ]);
 
+    // Statistiques des paiements
+    const statistiquesPaiements = await Paiement.aggregate([
+      { 
+        $group: {
+          _id: '$statut_paiement',
+          count: { $sum: 1 },
+          total: { $sum: '$montant' }
+        }
+      }
+    ]);
+
+    // Répartition des commandes par statut
+    const repartitionStatuts = await Commande.aggregate([
+      { 
+        $group: {
+          _id: '$statut',
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]);
+
     res.status(200).json({
       success: true,
       statistiques: {
@@ -110,22 +160,27 @@ exports.statistiquesGlobales = async (req, res) => {
         totalAcheteurs,
         totalCommandes,
         commandesCeMois: commandesMois,
-        chiffreAffairesTotal: chiffreAffairesTotal[0]?.total || 0,
+        commandesCetteSemaine: commandesSemaine,
+        chiffreAffairesTotal: chiffreAffaires[0]?.total || 0,
+        chiffreAffairesMois: chiffreAffaires[0]?.total_mois || 0,
         boutiquePlusActive: boutiquePlusActive[0] || null,
         produitsPlusVendus,
-        evolutionCA
+        evolutionCA,
+        statistiquesPaiements,
+        repartitionStatuts
       }
     });
   } catch (error) {
+    console.error('Erreur statistiques globales:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des statistiques',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Statistiques par boutique (pour les gérants)
+// Statistiques par boutique (gérant)
 exports.statistiquesBoutique = async (req, res) => {
   try {
     // Vérifier que l'utilisateur est un gérant de boutique
@@ -137,8 +192,12 @@ exports.statistiquesBoutique = async (req, res) => {
       });
     }
 
-    const dateDebut = new Date();
-    dateDebut.setMonth(dateDebut.getMonth() - 1); // 30 derniers jours
+    const dateDebutMois = new Date();
+    dateDebutMois.setDate(1);
+    dateDebutMois.setHours(0, 0, 0, 0);
+
+    const dateDebutSemaine = new Date();
+    dateDebutSemaine.setDate(dateDebutSemaine.getDate() - 7);
 
     // Statistiques générales de la boutique
     const [
@@ -146,35 +205,57 @@ exports.statistiquesBoutique = async (req, res) => {
       commandesEnAttente,
       commandesEnPreparation,
       commandesLivrees,
-      chiffreAffairesTotal,
-      chiffreAffairesMois
+      commandesMois,
+      commandesSemaine,
+      produitsActifs
     ] = await Promise.all([
       Commande.countDocuments({ boutique: boutique._id }),
       Commande.countDocuments({ boutique: boutique._id, statut: 'en_attente' }),
       Commande.countDocuments({ boutique: boutique._id, statut: 'en_preparation' }),
       Commande.countDocuments({ boutique: boutique._id, statut: 'livre' }),
-      Commande.aggregate([
-        { $match: { boutique: boutique._id, statut: 'livre' } },
-        { $group: { _id: null, total: { $sum: '$total_commande' } } }
-      ]),
-      Commande.aggregate([
-        { 
-          $match: { 
-            boutique: boutique._id, 
-            statut: 'livre',
-            date_commande: { $gte: dateDebut }
-          } 
-        },
-        { $group: { _id: null, total: { $sum: '$total_commande' } } }
-      ])
+      Commande.countDocuments({ 
+        boutique: boutique._id,
+        date_commande: { $gte: dateDebutMois } 
+      }),
+      Commande.countDocuments({ 
+        boutique: boutique._id,
+        date_commande: { $gte: dateDebutSemaine } 
+      }),
+      Produit.countDocuments({ boutique: boutique._id, est_actif: true })
     ]);
 
-    // Produits les plus vendus de la boutique
+    // Chiffre d'affaires
+    const chiffreAffaires = await Commande.aggregate([
+      { 
+        $match: { 
+          boutique: boutique._id,
+          statut: 'livre',
+          'informations_paiement.statut': 'paye'
+        } 
+      },
+      { $group: { 
+        _id: null, 
+        total: { $sum: '$total_commande' },
+        total_mois: { 
+          $sum: { 
+            $cond: [{ $gte: ['$date_commande', dateDebutMois] }, '$total_commande', 0] 
+          } 
+        },
+        total_semaine: { 
+          $sum: { 
+            $cond: [{ $gte: ['$date_commande', dateDebutSemaine] }, '$total_commande', 0] 
+          } 
+        }
+      }}
+    ]);
+
+    // Produits les plus vendus
     const produitsPlusVendus = await Commande.aggregate([
       { 
         $match: { 
           boutique: boutique._id,
-          statut: 'livre'
+          statut: 'livre',
+          'informations_paiement.statut': 'paye'
         } 
       },
       { $lookup: {
@@ -205,13 +286,17 @@ exports.statistiquesBoutique = async (req, res) => {
       }}
     ]);
 
-    // Évolution des ventes par jour
+    // Évolution des ventes par jour (30 derniers jours)
+    const dateDebut30Jours = new Date();
+    dateDebut30Jours.setDate(dateDebut30Jours.getDate() - 30);
+
     const evolutionVentes = await Commande.aggregate([
       { 
         $match: { 
           boutique: boutique._id,
           statut: 'livre',
-          date_commande: { $gte: dateDebut }
+          'informations_paiement.statut': 'paye',
+          date_commande: { $gte: dateDebut30Jours }
         } 
       },
       { 
@@ -231,7 +316,8 @@ exports.statistiquesBoutique = async (req, res) => {
       { 
         $match: { 
           boutique: boutique._id,
-          statut: 'livre'
+          statut: 'livre',
+          'informations_paiement.statut': 'paye'
         } 
       },
       { 
@@ -261,71 +347,7 @@ exports.statistiquesBoutique = async (req, res) => {
       }}
     ]);
 
-    res.status(200).json({
-      success: true,
-      boutique: {
-        id: boutique._id,
-        nom: boutique.nom
-      },
-      statistiques: {
-        totalCommandes,
-        commandesEnAttente,
-        commandesEnPreparation,
-        commandesLivrees,
-        chiffreAffairesTotal: chiffreAffairesTotal[0]?.total || 0,
-        chiffreAffairesMois: chiffreAffairesMois[0]?.total || 0,
-        produitsPlusVendus,
-        evolutionVentes,
-        clientsFideles
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération des statistiques de la boutique',
-      error: error.message
-    });
-  }
-};
-
-// Statistiques des produits d'une boutique
-exports.statistiquesProduitsBoutique = async (req, res) => {
-  try {
-    // Vérifier que l'utilisateur est un gérant de boutique
-    const boutique = await Boutique.findOne({ gerant: req.user.id });
-    if (!boutique) {
-      return res.status(403).json({
-        success: false,
-        message: 'Vous devez être gérant d\'une boutique pour voir ces statistiques'
-      });
-    }
-
-    const { tri = 'ventes', limite = 20 } = req.query;
-
-    let sort = {};
-    switch (tri) {
-      case 'ventes':
-        sort = { 'statistiques.nombre_ventes': -1 };
-        break;
-      case 'vues':
-        sort = { 'statistiques.nombre_vues': -1 };
-        break;
-      case 'stock':
-        sort = { 'quantite_stock': 1 };
-        break;
-      case 'prix':
-        sort = { 'prix': -1 };
-        break;
-      default:
-        sort = { 'statistiques.nombre_ventes': -1 };
-    }
-
-    const produits = await Produit.find({ boutique: boutique._id })
-      .select('nom prix prix_promotion en_promotion quantite_stock statistiques images')
-      .sort(sort)
-      .limit(parseInt(limite));
-
-    // Calculer les statistiques globales des produits
+    // Statistiques des produits
     const statistiquesProduits = await Produit.aggregate([
       { $match: { boutique: boutique._id } },
       { 
@@ -368,14 +390,256 @@ exports.statistiquesProduitsBoutique = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      produits,
-      statistiques: statistiquesProduits[0] || {}
+      boutique: {
+        id: boutique._id,
+        nom: boutique.nom
+      },
+      statistiques: {
+        totalCommandes,
+        commandesEnAttente,
+        commandesEnPreparation,
+        commandesLivrees,
+        commandesCeMois: commandesMois,
+        commandesCetteSemaine: commandesSemaine,
+        produitsActifs,
+        chiffreAffairesTotal: chiffreAffaires[0]?.total || 0,
+        chiffreAffairesMois: chiffreAffaires[0]?.total_mois || 0,
+        chiffreAffairesSemaine: chiffreAffaires[0]?.total_semaine || 0,
+        produitsPlusVendus,
+        evolutionVentes,
+        clientsFideles,
+        statistiquesProduits: statistiquesProduits[0] || {}
+      }
     });
   } catch (error) {
+    console.error('Erreur statistiques boutique:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des statistiques de la boutique',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Statistiques des produits d'une boutique
+exports.statistiquesProduitsBoutique = async (req, res) => {
+  try {
+    // Vérifier que l'utilisateur est un gérant de boutique
+    const boutique = await Boutique.findOne({ gerant: req.user.id });
+    if (!boutique) {
+      return res.status(403).json({
+        success: false,
+        message: 'Vous devez être gérant d\'une boutique pour voir ces statistiques'
+      });
+    }
+
+    const { tri = 'ventes', limite = 20, categorie } = req.query;
+
+    let match = { boutique: boutique._id };
+    
+    if (categorie && categorie !== 'tous') {
+      match.categorie_produit = mongoose.Types.ObjectId(categorie);
+    }
+
+    let sort = {};
+    switch (tri) {
+      case 'ventes':
+        sort = { 'statistiques.nombre_ventes': -1 };
+        break;
+      case 'vues':
+        sort = { 'statistiques.nombre_vues': -1 };
+        break;
+      case 'stock':
+        sort = { 'quantite_stock': 1 };
+        break;
+      case 'prix':
+        sort = { 'prix': -1 };
+        break;
+      case 'note':
+        sort = { 'statistiques.note_moyenne': -1 };
+        break;
+      case 'promotion':
+        sort = { 'en_promotion': -1, 'prix_promotion': 1 };
+        break;
+      default:
+        sort = { 'statistiques.nombre_ventes': -1 };
+    }
+
+    const produits = await Produit.find(match)
+      .select('nom prix prix_promotion en_promotion quantite_stock statistiques images categorie_produit')
+      .populate('categorie_produit', 'nom_categorie')
+      .sort(sort)
+      .limit(parseInt(limite));
+
+    // Statistiques détaillées
+    const statistiquesDetaillees = await Produit.aggregate([
+      { $match: { boutique: boutique._id } },
+      { 
+        $group: {
+          _id: null,
+          totalProduits: { $sum: 1 },
+          produitsActifs: { 
+            $sum: { $cond: [{ $eq: ['$est_actif', true] }, 1, 0] } 
+          },
+          produitsEnPromotion: { 
+            $sum: { $cond: [{ $eq: ['$en_promotion', true] }, 1, 0] } 
+          },
+          stockTotal: { $sum: '$quantite_stock' },
+          valeurStockTotal: { $sum: { $multiply: ['$prix', '$quantite_stock'] } },
+          produitsFaibleStock: {
+            $sum: {
+              $cond: [
+                { 
+                  $and: [
+                    { $lte: ['$quantite_stock', '$seuil_alerte'] },
+                    { $gt: ['$quantite_stock', 0] }
+                  ] 
+                }, 
+                1, 
+                0 
+              ]
+            }
+          },
+          produitsRuptureStock: {
+            $sum: {
+              $cond: [
+                { $lte: ['$quantite_stock', 0] },
+                1,
+                0
+              ]
+            }
+          },
+          totalVentes: { $sum: '$statistiques.nombre_ventes' },
+          totalVues: { $sum: '$statistiques.nombre_vues' },
+          moyenneNote: { $avg: '$statistiques.note_moyenne' }
+        }
+      }
+    ]);
+
+    // Répartition par catégorie
+    const repartitionCategories = await Produit.aggregate([
+      { $match: { boutique: boutique._id } },
+      { $group: {
+        _id: '$categorie_produit',
+        count: { $sum: 1 },
+        totalStock: { $sum: '$quantite_stock' },
+        totalVentes: { $sum: '$statistiques.nombre_ventes' }
+      }},
+      { $lookup: {
+        from: 'categorieproduits',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'categorie'
+      }},
+      { $unwind: { path: '$categorie', preserveNullAndEmptyArrays: true } },
+      { $project: {
+        categorie: '$categorie.nom_categorie',
+        count: 1,
+        totalStock: 1,
+        totalVentes: 1
+      }},
+      { $sort: { count: -1 } }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      produits,
+      statistiques: statistiquesDetaillees[0] || {},
+      repartitionCategories
+    });
+  } catch (error) {
+    console.error('Erreur statistiques produits:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des statistiques des produits',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Dashboard admin
+exports.dashboardAdmin = async (req, res) => {
+  try {
+    // Statistiques récentes (7 derniers jours)
+    const dateDebut7Jours = new Date();
+    dateDebut7Jours.setDate(dateDebut7Jours.getDate() - 7);
+
+    const [
+      nouvellesCommandes,
+      nouveauxUtilisateurs,
+      nouvellesBoutiques,
+      commandesRecent,
+      utilisateursRecent,
+      produitsRecent
+    ] = await Promise.all([
+      Commande.countDocuments({ date_commande: { $gte: dateDebut7Jours } }),
+      Utilisateur.countDocuments({ date_creation: { $gte: dateDebut7Jours } }),
+      Boutique.countDocuments({ date_creation: { $gte: dateDebut7Jours } }),
+      Commande.find({ date_commande: { $gte: dateDebut7Jours } })
+        .populate('boutique', 'nom')
+        .populate('client', 'nom prenom')
+        .sort({ date_commande: -1 })
+        .limit(10),
+      Utilisateur.find({ date_creation: { $gte: dateDebut7Jours } })
+        .populate('role', 'nom_role')
+        .sort({ date_creation: -1 })
+        .limit(10),
+      Produit.find({ date_creation: { $gte: dateDebut7Jours } })
+        .populate('boutique', 'nom')
+        .sort({ date_creation: -1 })
+        .limit(10)
+    ]);
+
+    // Chiffre d'affaires récent
+    const chiffreAffairesRecent = await Commande.aggregate([
+      { 
+        $match: { 
+          statut: 'livre',
+          'informations_paiement.statut': 'paye',
+          date_commande: { $gte: dateDebut7Jours }
+        } 
+      },
+      { $group: { 
+        _id: null, 
+        total: { $sum: '$total_commande' }
+      }}
+    ]);
+
+    // Alertes (boutiques inactives, produits en rupture, etc.)
+    const boutiquesInactives = await Boutique.countDocuments({ est_active: false });
+    const produitsRupture = await Produit.countDocuments({ 
+      quantite_stock: 0,
+      est_actif: true 
+    });
+    const commandesEnAttente = await Commande.countDocuments({ statut: 'en_attente' });
+
+    res.status(200).json({
+      success: true,
+      dashboard: {
+        statistiquesRecentes: {
+          nouvellesCommandes,
+          nouveauxUtilisateurs,
+          nouvellesBoutiques,
+          chiffreAffairesRecent: chiffreAffairesRecent[0]?.total || 0
+        },
+        alertes: {
+          boutiquesInactives,
+          produitsRupture,
+          commandesEnAttente
+        },
+        recent: {
+          commandes: commandesRecent,
+          utilisateurs: utilisateursRecent,
+          produits: produitsRecent
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Erreur dashboard admin:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération du dashboard',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

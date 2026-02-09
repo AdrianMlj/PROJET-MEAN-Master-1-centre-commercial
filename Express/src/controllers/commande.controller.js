@@ -20,6 +20,24 @@ exports.passerCommande = async (req, res) => {
       methode_paiement 
     } = req.body;
 
+    // Validation
+    if (!adresse_livraison || !adresse_livraison.nom_complet || !adresse_livraison.telephone || 
+        !adresse_livraison.rue || !adresse_livraison.ville || !adresse_livraison.code_postal) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'Adresse de livraison incomplète'
+      });
+    }
+
+    if (!methode_paiement || !['carte_credit', 'especes', 'virement', 'mobile', 'carte_bancaire'].includes(methode_paiement)) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'Méthode de paiement invalide'
+      });
+    }
+
     // Récupérer le panier de l'utilisateur
     const panier = await Panier.findOne({ client: req.user.id })
       .populate({
@@ -38,23 +56,18 @@ exports.passerCommande = async (req, res) => {
 
     // Grouper les éléments par boutique
     const elementsParBoutique = {};
+    const erreurs = [];
     
     for (const element of panier.elements) {
       if (!element.produit || !element.produit.est_actif || !element.produit.boutique.est_active) {
-        await session.abortTransaction();
-        return res.status(400).json({
-          success: false,
-          message: 'Certains produits ne sont plus disponibles'
-        });
+        erreurs.push(`Le produit "${element.produit?.nom || 'Inconnu'}" n'est plus disponible`);
+        continue;
       }
 
       // Vérifier le stock
       if (element.produit.quantite_stock < element.quantite) {
-        await session.abortTransaction();
-        return res.status(400).json({
-          success: false,
-          message: `Stock insuffisant pour le produit "${element.produit.nom}"`
-        });
+        erreurs.push(`Stock insuffisant pour "${element.produit.nom}". Disponible: ${element.produit.quantite_stock}, Demandé: ${element.quantite}`);
+        continue;
       }
 
       const boutiqueId = element.produit.boutique._id.toString();
@@ -77,10 +90,30 @@ exports.passerCommande = async (req, res) => {
         prix_unitaire: prixProduit,
         sous_total: prixProduit * element.quantite,
         nom_produit: element.produit.nom,
-        image_produit: element.produit.images?.[0]?.url || null
+        image_produit: element.produit.images?.[0]?.url || null,
+        caracteristiques: element.produit.caracteristiques || []
       });
       
       elementsParBoutique[boutiqueId].total += prixProduit * element.quantite;
+    }
+
+    // Si des erreurs, annuler
+    if (erreurs.length > 0) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'Impossible de passer la commande',
+        erreurs
+      });
+    }
+
+    // Si aucun élément valide
+    if (Object.keys(elementsParBoutique).length === 0) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'Aucun produit valide dans votre panier'
+      });
     }
 
     // Créer une commande par boutique
@@ -90,10 +123,10 @@ exports.passerCommande = async (req, res) => {
       const { boutique, elements, total } = elementsParBoutique[boutiqueId];
       
       // Calculer les frais de livraison
-      const seuilLivraisonGratuite = boutique.parametres.livraison_gratuite_apres || 50;
+      const seuilLivraisonGratuite = boutique.parametres?.livraison_gratuite_apres || 50;
       const fraisLivraison = total >= seuilLivraisonGratuite 
         ? 0 
-        : (boutique.parametres.frais_livraison || 5);
+        : (boutique.parametres?.frais_livraison || 5);
       
       const totalGeneral = total + fraisLivraison;
 
@@ -105,7 +138,7 @@ exports.passerCommande = async (req, res) => {
         frais_livraison,
         total_general,
         adresse_livraison,
-        mode_livraison,
+        mode_livraison: mode_livraison || 'livraison_standard',
         notes,
         informations_paiement: {
           methode: methode_paiement,
@@ -123,7 +156,8 @@ exports.passerCommande = async (req, res) => {
         prix_unitaire: element.prix_unitaire,
         sous_total: element.sous_total,
         nom_produit: element.nom_produit,
-        image_produit: element.image_produit
+        image_produit: element.image_produit,
+        caracteristiques: element.caracteristiques
       }));
 
       await CommandeDetail.insertMany(detailsCommande, { session });
@@ -166,7 +200,8 @@ exports.passerCommande = async (req, res) => {
         boutique._id,
         { 
           $inc: { 
-            'statistiques.commandes_traitees': 1 
+            'statistiques.commandes_traitees': 1,
+            'statistiques.produits_vendus': elements.reduce((sum, el) => sum + el.quantite, 0)
           } 
         },
         { session }
@@ -185,29 +220,43 @@ exports.passerCommande = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Commande(s) passée(s) avec succès',
-      commandes: commandesCreees
+      commandes: commandesCreees,
+      nombre_commandes: commandesCreees.length
     });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     
+    console.error('Erreur passage commande:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors du passage de commande',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Obtenir les commandes d'un client
+// Client: Obtenir ses commandes
 exports.obtenirCommandesClient = async (req, res) => {
   try {
-    const { statut, page = 1, limit = 10 } = req.query;
+    const { statut, page = 1, limit = 10, date_debut, date_fin } = req.query;
     
     const query = { client: req.user.id };
     
     if (statut) {
       query.statut = statut;
+    }
+    
+    if (date_debut || date_fin) {
+      query.date_commande = {};
+      if (date_debut) {
+        query.date_commande.$gte = new Date(date_debut);
+      }
+      if (date_fin) {
+        query.date_fin = new Date(date_fin);
+        query.date_fin.setHours(23, 59, 59, 999);
+        query.date_commande.$lte = query.date_fin;
+      }
     }
     
     const options = {
@@ -226,15 +275,16 @@ exports.obtenirCommandesClient = async (req, res) => {
       ...commandes
     });
   } catch (error) {
+    console.error('Erreur commandes client:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des commandes',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Obtenir les commandes d'une boutique (pour les gérants)
+// Gérant: Obtenir les commandes de sa boutique
 exports.obtenirCommandesBoutique = async (req, res) => {
   try {
     // Vérifier que l'utilisateur est un gérant de boutique
@@ -246,7 +296,7 @@ exports.obtenirCommandesBoutique = async (req, res) => {
       });
     }
 
-    const { statut, page = 1, limit = 10, date_debut, date_fin } = req.query;
+    const { statut, page = 1, limit = 10, date_debut, date_fin, recherche } = req.query;
     
     const query = { boutique: boutique._id };
     
@@ -260,7 +310,28 @@ exports.obtenirCommandesBoutique = async (req, res) => {
         query.date_commande.$gte = new Date(date_debut);
       }
       if (date_fin) {
-        query.date_commande.$lte = new Date(date_fin);
+        query.date_fin = new Date(date_fin);
+        query.date_fin.setHours(23, 59, 59, 999);
+        query.date_commande.$lte = query.date_fin;
+      }
+    }
+    
+    // Recherche par numéro de commande ou nom client
+    if (recherche) {
+      // Recherche par numéro de commande
+      if (recherche.startsWith('CMD-')) {
+        query.numero_commande = { $regex: recherche, $options: 'i' };
+      } else {
+        // Recherche par client (via lookup)
+        const utilisateurs = await require('../models/utilisateur.model').find({
+          $or: [
+            { nom: { $regex: recherche, $options: 'i' } },
+            { prenom: { $regex: recherche, $options: 'i' } },
+            { email: { $regex: recherche, $options: 'i' } }
+          ]
+        }).select('_id');
+        
+        query.client = { $in: utilisateurs.map(u => u._id) };
       }
     }
     
@@ -280,10 +351,11 @@ exports.obtenirCommandesBoutique = async (req, res) => {
       ...commandes
     });
   } catch (error) {
+    console.error('Erreur commandes boutique:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des commandes de la boutique',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -293,12 +365,12 @@ exports.obtenirDetailCommande = async (req, res) => {
   try {
     const commande = await Commande.findById(req.params.id)
       .populate('client', 'nom prenom email telephone')
-      .populate('boutique', 'nom logo_url contact')
+      .populate('boutique', 'nom logo_url contact adresse')
       .populate({
         path: 'details',
         populate: {
           path: 'produit',
-          select: 'nom images'
+          select: 'nom images description'
         }
       });
 
@@ -331,21 +403,30 @@ exports.obtenirDetailCommande = async (req, res) => {
       commande
     });
   } catch (error) {
+    console.error('Erreur détail commande:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des détails de la commande',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Mettre à jour le statut d'une commande (pour les boutiques)
+// Gérant: Mettre à jour le statut d'une commande
 exports.mettreAJourStatutCommande = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   
   try {
     const { nouveau_statut, raison } = req.body;
+
+    if (!nouveau_statut || !['en_preparation', 'pret', 'livre', 'annule', 'refuse'].includes(nouveau_statut)) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'Statut invalide'
+      });
+    }
 
     const commande = await Commande.findById(req.params.id)
       .populate('boutique')
@@ -375,13 +456,13 @@ exports.mettreAJourStatutCommande = async (req, res) => {
     const transitionsValides = {
       'en_attente': ['en_preparation', 'annule', 'refuse'],
       'en_preparation': ['pret', 'annule'],
-      'pret': ['livre'],
+      'pret': ['livre', 'annule'],
       'livre': [],
       'annule': [],
       'refuse': []
     };
 
-    if (!transitionsValides[ancienStatut].includes(nouveau_statut)) {
+    if (!transitionsValides[ancienStatut]?.includes(nouveau_statut)) {
       await session.abortTransaction();
       return res.status(400).json({
         success: false,
@@ -400,13 +481,13 @@ exports.mettreAJourStatutCommande = async (req, res) => {
       ancien_statut: ancienStatut,
       nouveau_statut,
       utilisateur_modif: req.user.id,
-      raison
+      raison: raison || `Statut changé par ${req.user.nom}`
     });
 
     await historique.save({ session });
 
-    // Si la commande est annulée, remettre les produits en stock
-    if (nouveau_statut === 'annule') {
+    // Si la commande est annulée ou refusée, remettre les produits en stock
+    if (nouveau_statut === 'annule' || nouveau_statut === 'refuse') {
       const details = await CommandeDetail.find({ commande: commande._id }).session(session);
       
       for (const detail of details) {
@@ -416,6 +497,13 @@ exports.mettreAJourStatutCommande = async (req, res) => {
           { session }
         );
       }
+      
+      // Mettre à jour le paiement
+      await Paiement.findOneAndUpdate(
+        { commande: commande._id },
+        { statut_paiement: 'rembourse' },
+        { session }
+      );
     }
 
     await session.commitTransaction();
@@ -430,10 +518,11 @@ exports.mettreAJourStatutCommande = async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     
+    console.error('Erreur mise à jour statut:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour du statut de la commande',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -441,6 +530,31 @@ exports.mettreAJourStatutCommande = async (req, res) => {
 // Obtenir l'historique des statuts d'une commande
 exports.obtenirHistoriqueStatuts = async (req, res) => {
   try {
+    // Vérifier que l'utilisateur a accès à cette commande
+    const commande = await Commande.findById(req.params.id);
+    if (!commande) {
+      return res.status(404).json({
+        success: false,
+        message: 'Commande non trouvée'
+      });
+    }
+
+    const boutique = await Boutique.findOne({ gerant: req.user.id });
+    
+    if (req.user.role === 'acheteur' && !commande.client.equals(req.user.id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Vous n\'êtes pas autorisé à voir cette commande'
+      });
+    }
+
+    if (req.user.role === 'boutique' && boutique && !commande.boutique.equals(boutique._id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cette commande ne vous appartient pas'
+      });
+    }
+
     const historique = await CommandeStatutHistorique.find({ 
       commande: req.params.id 
     })
@@ -452,15 +566,16 @@ exports.obtenirHistoriqueStatuts = async (req, res) => {
       historique
     });
   } catch (error) {
+    console.error('Erreur historique commande:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération de l\'historique',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Annuler une commande (pour les clients)
+// Client: Annuler une commande
 exports.annulerCommande = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -541,10 +656,68 @@ exports.annulerCommande = async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     
+    console.error('Erreur annulation commande:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de l\'annulation de la commande',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Admin: Obtenir toutes les commandes
+exports.obtenirToutesCommandes = async (req, res) => {
+  try {
+    const { statut, page = 1, limit = 10, date_debut, date_fin, boutique, client } = req.query;
+    
+    const query = {};
+    
+    if (statut) {
+      query.statut = statut;
+    }
+    
+    if (boutique) {
+      query.boutique = boutique;
+    }
+    
+    if (client) {
+      query.client = client;
+    }
+    
+    if (date_debut || date_fin) {
+      query.date_commande = {};
+      if (date_debut) {
+        query.date_commande.$gte = new Date(date_debut);
+      }
+      if (date_fin) {
+        query.date_fin = new Date(date_fin);
+        query.date_fin.setHours(23, 59, 59, 999);
+        query.date_commande.$lte = query.date_fin;
+      }
+    }
+    
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      populate: [
+        { path: 'boutique', select: 'nom' },
+        { path: 'client', select: 'nom prenom email' }
+      ],
+      sort: { date_commande: -1 }
+    };
+    
+    const commandes = await Commande.paginate(query, options);
+    
+    res.status(200).json({
+      success: true,
+      ...commandes
+    });
+  } catch (error) {
+    console.error('Erreur toutes commandes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des commandes',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

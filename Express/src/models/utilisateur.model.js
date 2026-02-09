@@ -27,10 +27,10 @@ const utilisateurSchema = new mongoose.Schema({
     trim: true
   },
   adresse: {
-    rue: String,
-    ville: String,
-    code_postal: String,
-    pays: String
+    rue: { type: String, trim: true },
+    ville: { type: String, trim: true },
+    code_postal: { type: String, trim: true },
+    pays: { type: String, trim: true, default: 'France' }
   },
   role: {
     type: mongoose.Schema.Types.ObjectId,
@@ -45,15 +45,24 @@ const utilisateurSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Boutique'
   },
+  avatar_url: {
+    type: String,
+    default: null
+  },
   date_naissance: {
     type: Date
   },
   preferences: {
     newsletter: { type: Boolean, default: false },
-    notifications: { type: Boolean, default: true }
+    notifications: { type: Boolean, default: true },
+    langue: { type: String, default: 'fr' }
   },
   date_derniere_connexion: {
     type: Date
+  },
+  verifie_email: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: { createdAt: 'date_creation', updatedAt: 'date_modification' }
@@ -63,5 +72,13 @@ const utilisateurSchema = new mongoose.Schema({
 utilisateurSchema.index({ email: 1 });
 utilisateurSchema.index({ role: 1 });
 utilisateurSchema.index({ est_actif: 1 });
+utilisateurSchema.index({ boutique_associee: 1 });
+
+// Méthode pour masquer le mot de passe
+utilisateurSchema.methods.toJSON = function() {
+  const obj = this.toObject();
+  delete obj.mot_de_passe_hash;
+  return obj;
+};
 
 module.exports = mongoose.model('Utilisateur', utilisateurSchema);

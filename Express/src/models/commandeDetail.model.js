@@ -32,7 +32,11 @@ const commandeDetailSchema = new mongoose.Schema({
   },
   image_produit: {
     type: String
-  }
+  },
+  caracteristiques: [{
+    nom: String,
+    valeur: String
+  }]
 }, {
   timestamps: true
 });

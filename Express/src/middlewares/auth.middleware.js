@@ -1,14 +1,16 @@
 const { verifierToken } = require("../utils/token.util");
 
 module.exports = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
-
-  if (!token) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ 
       success: false, 
       message: "Token d'authentification manquant" 
     });
   }
+
+  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = verifierToken(token);
