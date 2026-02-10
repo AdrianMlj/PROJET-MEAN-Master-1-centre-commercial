@@ -1,0 +1,105 @@
+<div class="dashboard">
+  <div class="container">
+    <div class="dashboard-header">
+      <h1>
+        <i class="fas fa-user-shield"></i>
+        Tableau de Bord Administrateur
+      </h1>
+      <p class="welcome-message" *ngIf="currentUser">
+        Bienvenue, <strong>{{ currentUser.prenom || currentUser.nom }}</strong> - Administrateur du centre
+      </p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <i class="fas fa-users"></i>
+        <h3>{{ stats.utilisateurs }}</h3>
+        <p>Utilisateurs</p>
+      </div>
+
+      <div class="stat-card">
+        <i class="fas fa-store"></i>
+        <h3>{{ stats.boutiques }}</h3>
+        <p>Boutiques</p>
+      </div>
+
+      <div class="stat-card">
+        <i class="fas fa-boxes"></i>
+        <h3>{{ stats.produits }}</h3>
+        <p>Produits</p>
+      </div>
+
+      <div class="stat-card">
+        <i class="fas fa-chart-line"></i>
+        <h3>{{ stats.revenus | currency:'EUR' }}</h3>
+        <p>Revenus totaux</p>
+      </div>
+    </div>
+
+    <div class="dashboard-content mt-20">
+      <div class="row">
+        <div class="card">
+          <h3>
+            <i class="fas fa-bolt"></i>
+            Actions Administratives
+          </h3>
+          <div class="quick-actions">
+            <button class="btn btn-primary">
+              <i class="fas fa-user-cog"></i>
+              Gérer les utilisateurs
+            </button>
+            <button class="btn btn-success">
+              <i class="fas fa-store-alt"></i>
+              Gérer les boutiques
+            </button>
+            <button class="btn btn-secondary">
+              <i class="fas fa-chart-bar"></i>
+              Statistiques globales
+            </button>
+            <button class="btn btn-danger">
+              <i class="fas fa-cog"></i>
+              Paramètres système
+            </button>
+            <button class="btn btn-primary">
+              <i class="fas fa-file-invoice-dollar"></i>
+              Rapports financiers
+            </button>
+            <button class="btn btn-success">
+              <i class="fas fa-shield-alt"></i>
+              Gérer les rôles
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>
+            <i class="fas fa-info-circle"></i>
+            Informations Administrateur
+          </h3>
+          <div class="admin-info" *ngIf="currentUser">
+            <div class="info-item">
+              <span class="label">Administrateur :</span>
+              <span class="value">{{ currentUser.prenom }} {{ currentUser.nom }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Email :</span>
+              <span class="value">{{ currentUser.email }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Rôle :</span>
+              <span class="value badge admin">Administrateur Centre</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Statut :</span>
+              <span class="value active">Super Administrateur</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Dernière connexion :</span>
+              <span class="value">{{ currentUser.date_creation | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
