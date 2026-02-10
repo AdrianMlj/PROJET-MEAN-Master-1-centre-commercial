@@ -1,0 +1,99 @@
+<div class="dashboard">
+  <div class="container">
+    <div class="dashboard-header">
+      <h1>
+        <i class="fas fa-store"></i>
+        Tableau de Bord Boutique
+      </h1>
+      <p class="welcome-message" *ngIf="currentUser">
+        Bienvenue, <strong>{{ currentUser.prenom || currentUser.nom }}</strong> - Gérant de boutique
+      </p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <i class="fas fa-box"></i>
+        <h3>{{ stats.produits }}</h3>
+        <p>Produits</p>
+      </div>
+
+      <div class="stat-card">
+        <i class="fas fa-shopping-bag"></i>
+        <h3>{{ stats.commandes }}</h3>
+        <p>Commandes</p>
+      </div>
+
+      <div class="stat-card">
+        <i class="fas fa-euro-sign"></i>
+        <h3>{{ stats.revenus | currency:'EUR' }}</h3>
+        <p>Revenus</p>
+      </div>
+
+      <div class="stat-card">
+        <i class="fas fa-star"></i>
+        <h3>{{ stats.avis }}</h3>
+        <p>Avis clients</p>
+      </div>
+    </div>
+
+    <div class="dashboard-content mt-20">
+      <div class="row">
+        <div class="card">
+          <h3>
+            <i class="fas fa-bolt"></i>
+            Actions Rapides
+          </h3>
+          <div class="quick-actions">
+            <button class="btn btn-primary">
+              <i class="fas fa-plus"></i>
+              Ajouter un produit
+            </button>
+            <button class="btn btn-success">
+              <i class="fas fa-list"></i>
+              Gérer les produits
+            </button>
+            <button class="btn btn-secondary">
+              <i class="fas fa-clipboard-list"></i>
+              Voir les commandes
+            </button>
+            <button class="btn btn-primary">
+              <i class="fas fa-chart-line"></i>
+              Statistiques
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>
+            <i class="fas fa-info-circle"></i>
+            Informations de la boutique
+          </h3>
+          <div class="boutique-info" *ngIf="currentUser">
+            <div class="info-item">
+              <span class="label">Gérant :</span>
+              <span class="value">{{ currentUser.prenom }} {{ currentUser.nom }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Email :</span>
+              <span class="value">{{ currentUser.email }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Téléphone :</span>
+              <span class="value">{{ currentUser.telephone || 'Non renseigné' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Rôle :</span>
+              <span class="value badge boutique">Gérant de boutique</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Statut boutique :</span>
+              <span class="value" [ngClass]="currentUser.est_actif ? 'active' : 'inactive'">
+                {{ currentUser.est_actif ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
