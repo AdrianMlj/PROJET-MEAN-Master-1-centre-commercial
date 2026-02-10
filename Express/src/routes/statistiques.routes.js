@@ -13,7 +13,7 @@ const roleMiddleware = require('../middlewares/role.middleware');
 
 /**
  * @swagger
- * /api/statistiques/globales:
+ * /statistiques/globales:
  *   get:
  *     summary: Statistiques globales (admin seulement)
  *     description: Récupère les statistiques globales du centre commercial
@@ -121,7 +121,7 @@ router.get('/globales',
 
 /**
  * @swagger
- * /api/statistiques/admin/dashboard:
+ * /statistiques/admin/dashboard:
  *   get:
  *     summary: Dashboard administrateur
  *     description: Récupère le dashboard complet pour l'administration
@@ -201,7 +201,7 @@ router.get('/admin/dashboard',
 
 /**
  * @swagger
- * /api/statistiques/boutique:
+ * /statistiques/boutique:
  *   get:
  *     summary: Statistiques de la boutique (gérants seulement)
  *     description: Récupère les statistiques d'une boutique spécifique
@@ -295,7 +295,7 @@ router.get('/boutique',
 
 /**
  * @swagger
- * /api/statistiques/boutique/produits:
+ * /statistiques/boutique/produits:
  *   get:
  *     summary: Statistiques des produits de la boutique
  *     description: Récupère les statistiques détaillées des produits d'une boutique

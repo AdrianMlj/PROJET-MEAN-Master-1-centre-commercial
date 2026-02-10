@@ -13,7 +13,7 @@ const roleMiddleware = require('../middlewares/role.middleware');
 
 /**
  * @swagger
- * /api/favoris:
+ * /favoris:
  *   get:
  *     summary: Obtenir tous les favoris de l'utilisateur connecté
  *     tags: [Favoris]
@@ -54,7 +54,7 @@ router.get('/',
 
 /**
  * @swagger
- * /api/favoris/produit:
+ * /favoris/produit:
  *   post:
  *     summary: Ajouter un produit aux favoris
  *     tags: [Favoris]
@@ -106,7 +106,7 @@ router.post('/produit',
 
 /**
  * @swagger
- * /api/favoris/boutique:
+ * /favoris/boutique:
  *   post:
  *     summary: Ajouter une boutique aux favoris
  *     tags: [Favoris]
@@ -158,7 +158,7 @@ router.post('/boutique',
 
 /**
  * @swagger
- * /api/favoris/produit/{produitId}/verifier:
+ * /favoris/produit/{produitId}/verifier:
  *   get:
  *     summary: Vérifier si un produit est dans les favoris
  *     tags: [Favoris]
@@ -198,7 +198,7 @@ router.get('/produit/:produitId/verifier',
 
 /**
  * @swagger
- * /api/favoris/boutique/{boutiqueId}/verifier:
+ * /favoris/boutique/{boutiqueId}/verifier:
  *   get:
  *     summary: Vérifier si une boutique est dans les favoris
  *     tags: [Favoris]
@@ -238,7 +238,7 @@ router.get('/boutique/:boutiqueId/verifier',
 
 /**
  * @swagger
- * /api/favoris/produit/{produitId}:
+ * /favoris/produit/{produitId}:
  *   delete:
  *     summary: Retirer un produit des favoris
  *     tags: [Favoris]
@@ -280,7 +280,7 @@ router.delete('/produit/:produitId',
 
 /**
  * @swagger
- * /api/favoris/boutique/{boutiqueId}:
+ * /favoris/boutique/{boutiqueId}:
  *   delete:
  *     summary: Retirer une boutique des favoris
  *     tags: [Favoris]
