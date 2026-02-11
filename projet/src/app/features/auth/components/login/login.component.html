@@ -1,0 +1,88 @@
+<div class="login-container">
+  <div class="container">
+    <div class="login-card">
+      <div class="login-header">
+        <i class="fas fa-lock"></i>
+        <h2>Connexion</h2>
+        <p>Connectez-vous à votre compte</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <div class="form-group">
+          <label for="email">
+            <i class="fas fa-envelope"></i>
+            Adresse Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            class="form-control"
+            placeholder="entrez votre email"
+            [ngClass]="{
+              'is-invalid': loginForm.get('email')?.touched && loginForm.get('email')?.invalid
+            }"
+          >
+          <div class="error-message" *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid">
+            <span *ngIf="loginForm.get('email')?.errors?.['required']">
+              L'email est requis
+            </span>
+            <span *ngIf="loginForm.get('email')?.errors?.['email']">
+              Format d'email invalide
+            </span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">
+            <i class="fas fa-key"></i>
+            Mot de passe
+          </label>
+          <input
+            type="password"
+            id="password"
+            formControlName="mot_de_passe"
+            class="form-control"
+            placeholder="entrez votre mot de passe"
+            [ngClass]="{
+              'is-invalid': loginForm.get('mot_de_passe')?.touched && loginForm.get('mot_de_passe')?.invalid
+            }"
+          >
+          <div class="error-message" *ngIf="loginForm.get('mot_de_passe')?.touched && loginForm.get('mot_de_passe')?.invalid">
+            <span *ngIf="loginForm.get('mot_de_passe')?.errors?.['required']">
+              Le mot de passe est requis
+            </span>
+            <span *ngIf="loginForm.get('mot_de_passe')?.errors?.['minlength']">
+              Minimum 6 caractères
+            </span>
+          </div>
+        </div>
+
+        <div class="error-message mb-10" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ errorMessage }}
+        </div>
+
+        <button 
+          type="submit" 
+          class="btn btn-primary btn-block"
+          [disabled]="loginForm.invalid || loading"
+        >
+          <i class="fas fa-sign-in-alt" *ngIf="!loading"></i>
+          <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+          {{ loading ? 'Connexion...' : 'Se connecter' }}
+        </button>
+
+        <div class="login-footer mt-20">
+          <p class="text-center">
+            Vous n'avez pas de compte ?
+            <a [routerLink]="['/auth/inscription']" class="link">
+              <i class="fas fa-user-plus"></i>
+              S'inscrire
+            </a>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

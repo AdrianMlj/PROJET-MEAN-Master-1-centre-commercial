@@ -1,0 +1,231 @@
+<div class="inscription-container">
+  <div class="container">
+    <div class="inscription-card">
+      <div class="inscription-header">
+        <i class="fas fa-user-plus"></i>
+        <h2>Inscription Acheteur</h2>
+        <p>Créez votre compte d'acheteur</p>
+      </div>
+
+      <form [formGroup]="inscriptionForm" (ngSubmit)="onSubmit()" class="inscription-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nom">
+              <i class="fas fa-user"></i>
+              Nom *
+            </label>
+            <input
+              type="text"
+              id="nom"
+              formControlName="nom"
+              class="form-control"
+              placeholder="Votre nom"
+              [ngClass]="{
+                'is-invalid': inscriptionForm.get('nom')?.touched && inscriptionForm.get('nom')?.invalid
+              }"
+            >
+            <div class="error-message" *ngIf="inscriptionForm.get('nom')?.touched && inscriptionForm.get('nom')?.invalid">
+              <span *ngIf="inscriptionForm.get('nom')?.errors?.['required']">
+                Le nom est requis
+              </span>
+              <span *ngIf="inscriptionForm.get('nom')?.errors?.['minlength']">
+                Minimum 2 caractères
+              </span>
+              <span *ngIf="inscriptionForm.get('nom')?.errors?.['maxlength']">
+                Maximum 50 caractères
+              </span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="prenom">
+              <i class="fas fa-user"></i>
+              Prénom
+            </label>
+            <input
+              type="text"
+              id="prenom"
+              formControlName="prenom"
+              class="form-control"
+              placeholder="Votre prénom"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">
+            <i class="fas fa-envelope"></i>
+            Adresse Email *
+          </label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            class="form-control"
+            placeholder="exemple@email.com"
+            [ngClass]="{
+              'is-invalid': inscriptionForm.get('email')?.touched && inscriptionForm.get('email')?.invalid
+            }"
+          >
+          <div class="error-message" *ngIf="inscriptionForm.get('email')?.touched && inscriptionForm.get('email')?.invalid">
+            <span *ngIf="inscriptionForm.get('email')?.errors?.['required']">
+              L'email est requis
+            </span>
+            <span *ngIf="inscriptionForm.get('email')?.errors?.['email']">
+              Format d'email invalide
+            </span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="mot_de_passe">
+              <i class="fas fa-key"></i>
+              Mot de passe *
+            </label>
+            <input
+              type="password"
+              id="mot_de_passe"
+              formControlName="mot_de_passe"
+              class="form-control"
+              placeholder="Minimum 6 caractères"
+              [ngClass]="{
+                'is-invalid': inscriptionForm.get('mot_de_passe')?.touched && inscriptionForm.get('mot_de_passe')?.invalid
+              }"
+            >
+            <div class="error-message" *ngIf="inscriptionForm.get('mot_de_passe')?.touched && inscriptionForm.get('mot_de_passe')?.invalid">
+              <span *ngIf="inscriptionForm.get('mot_de_passe')?.errors?.['required']">
+                Le mot de passe est requis
+              </span>
+              <span *ngIf="inscriptionForm.get('mot_de_passe')?.errors?.['minlength']">
+                Minimum 6 caractères
+              </span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirm_password">
+              <i class="fas fa-key"></i>
+              Confirmer le mot de passe *
+            </label>
+            <input
+              type="password"
+              id="confirm_password"
+              formControlName="confirm_password"
+              class="form-control"
+              placeholder="Retapez votre mot de passe"
+              [ngClass]="{
+                'is-invalid': inscriptionForm.get('confirm_password')?.touched && inscriptionForm.get('confirm_password')?.invalid
+              }"
+            >
+            <div class="error-message" *ngIf="inscriptionForm.get('confirm_password')?.touched">
+              <span *ngIf="inscriptionForm.errors?.['passwordMismatch'] && inscriptionForm.get('confirm_password')?.value">
+                Les mots de passe ne correspondent pas
+              </span>
+              <span *ngIf="inscriptionForm.get('confirm_password')?.errors?.['required']">
+                La confirmation est requise
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="telephone">
+            <i class="fas fa-phone"></i>
+            Téléphone
+          </label>
+          <input
+            type="text"
+            id="telephone"
+            formControlName="telephone"
+            class="form-control"
+            placeholder="+33 6 12 34 56 78"
+          >
+        </div>
+
+        <div class="section-title">
+          <i class="fas fa-map-marker-alt"></i>
+          Adresse (optionnel)
+        </div>
+
+        <div class="address-group">
+          <div class="form-group">
+            <label for="rue">Rue</label>
+            <input
+              type="text"
+              id="rue"
+              formControlName="adresse.rue"
+              class="form-control"
+              placeholder="Numéro et nom de rue"
+            >
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ville">Ville</label>
+              <input
+                type="text"
+                id="ville"
+                formControlName="adresse.ville"
+                class="form-control"
+                placeholder="Ville"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="code_postal">Code Postal</label>
+              <input
+                type="text"
+                id="code_postal"
+                formControlName="adresse.code_postal"
+                class="form-control"
+                placeholder="Code postal"
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="pays">Pays</label>
+            <input
+              type="text"
+              id="pays"
+              formControlName="adresse.pays"
+              class="form-control"
+              placeholder="Pays"
+            >
+          </div>
+        </div>
+
+        <div class="error-message mb-10" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ errorMessage }}
+        </div>
+
+        <div class="success-message mb-10" *ngIf="successMessage">
+          <i class="fas fa-check-circle"></i>
+          {{ successMessage }}
+        </div>
+
+        <button 
+          type="submit" 
+          class="btn btn-success btn-block"
+          [disabled]="inscriptionForm.invalid || loading"
+        >
+          <i class="fas fa-user-plus" *ngIf="!loading"></i>
+          <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+          {{ loading ? 'Inscription...' : 'S\'inscrire' }}
+        </button>
+
+        <div class="inscription-footer mt-20">
+          <p class="text-center">
+            Vous avez déjà un compte ?
+            <a [routerLink]="['/auth/login']" class="link">
+              <i class="fas fa-sign-in-alt"></i>
+              Se connecter
+            </a>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
