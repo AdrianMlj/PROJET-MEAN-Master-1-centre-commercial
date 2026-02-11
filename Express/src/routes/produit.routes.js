@@ -7,7 +7,7 @@ const { uploadProduitImage, handleUploadError } = require('../middlewares/upload
 
 /**
  * @swagger
- * /api/produits:
+ * /produits:
  *   get:
  *     summary: Lister les produits
  *     description: Retourne la liste des produits avec filtres et pagination (publique)
@@ -83,7 +83,7 @@ router.get('/', produitController.listerProduits);
 
 /**
  * @swagger
- * /api/produits/{id}:
+ * /produits/{id}:
  *   get:
  *     summary: Obtenir un produit
  *     description: Récupère les détails complets d'un produit spécifique
@@ -117,7 +117,7 @@ router.get('/:id', produitController.obtenirProduit);
 
 /**
  * @swagger
- * /api/produits/gerant/mes-produits:
+ * /produits/gerant/mes-produits:
  *   get:
  *     summary: Obtenir les produits de sa boutique
  *     description: Retourne tous les produits de la boutique du gérant authentifié
@@ -186,7 +186,7 @@ router.get('/gerant/mes-produits',
 
 /**
  * @swagger
- * /api/produits:
+ * /produits:
  *   post:
  *     summary: Créer un produit
  *     description: Crée un nouveau produit pour la boutique du gérant authentifié
@@ -296,7 +296,7 @@ router.post('/',
 
 /**
  * @swagger
- * /api/produits/{id}:
+ * /produits/{id}:
  *   put:
  *     summary: Modifier un produit
  *     description: Met à jour les informations d'un produit existant
@@ -394,7 +394,7 @@ router.put('/:id',
 
 /**
  * @swagger
- * /api/produits/{id}:
+ * /produits/{id}:
  *   delete:
  *     summary: Supprimer un produit
  *     description: Désactive un produit (soft delete)
@@ -439,7 +439,7 @@ router.delete('/:id',
 
 /**
  * @swagger
- * /api/produits/{id}/stock:
+ * /produits/{id}/stock:
  *   put:
  *     summary: Gérer le stock d'un produit
  *     description: Ajoute, retire ou définit la quantité en stock d'un produit
@@ -509,7 +509,7 @@ router.put('/:id/stock',
 
 /**
  * @swagger
- * /api/produits/{id}/images:
+ * /produits/{id}/images:
  *   post:
  *     summary: Uploader une image pour un produit
  *     description: Ajoute une nouvelle image à un produit existant
@@ -582,7 +582,7 @@ router.post('/:id/images',
 
 /**
  * @swagger
- * /api/produits/{produitId}/images/{imageId}:
+ * /produits/{produitId}/images/{imageId}:
  *   delete:
  *     summary: Supprimer une image d'un produit
  *     description: Supprime une image spécifique d'un produit

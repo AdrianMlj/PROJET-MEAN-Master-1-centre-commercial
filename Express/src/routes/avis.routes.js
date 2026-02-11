@@ -13,7 +13,7 @@ const roleMiddleware = require('../middlewares/role.middleware');
 
 /**
  * @swagger
- * /api/avis/produit/{id}:
+ * /avis/produit/{id}:
  *   get:
  *     summary: Obtenir les avis d'un produit
  *     description: Récupère tous les avis d'un produit spécifique
@@ -101,7 +101,7 @@ router.get('/produit/:id', avisController.obtenirAvisProduit);
 
 /**
  * @swagger
- * /api/avis/boutique/{id}:
+ * /avis/boutique/{id}:
  *   get:
  *     summary: Obtenir les avis d'une boutique
  *     description: Récupère tous les avis d'une boutique spécifique
@@ -182,7 +182,7 @@ router.get('/boutique/:id', avisController.obtenirAvisBoutique);
 
 /**
  * @swagger
- * /api/avis/produit:
+ * /avis/produit:
  *   post:
  *     summary: Ajouter un avis sur un produit
  *     description: Ajoute un avis et une note pour un produit acheté
@@ -250,7 +250,7 @@ router.post('/produit',
 
 /**
  * @swagger
- * /api/avis/boutique:
+ * /avis/boutique:
  *   post:
  *     summary: Ajouter un avis sur une boutique
  *     description: Ajoute un avis et une note pour une boutique
@@ -312,7 +312,7 @@ router.post('/boutique',
 
 /**
  * @swagger
- * /api/avis/{id}/repondre:
+ * /avis/{id}/repondre:
  *   post:
  *     summary: Répondre à un avis (gérants seulement)
  *     description: Permet à un gérant de boutique de répondre à un avis
@@ -372,7 +372,7 @@ router.post('/:id/repondre',
 
 /**
  * @swagger
- * /api/avis/{id}/signaler:
+ * /avis/{id}/signaler:
  *   post:
  *     summary: Signaler un avis
  *     description: Signale un avis inapproprié ou abusif
@@ -430,7 +430,7 @@ router.post('/:id/signaler',
 
 /**
  * @swagger
- * /api/avis/{id}/aimer:
+ * /avis/{id}/aimer:
  *   post:
  *     summary: Aimer un avis
  *     description: Ajoute ou retire un like sur un avis
@@ -476,7 +476,7 @@ router.post('/:id/aimer',
 
 /**
  * @swagger
- * /api/avis/{id}/moderer:
+ * /avis/{id}/moderer:
  *   put:
  *     summary: Modérer un avis (admin seulement)
  *     description: Valide ou invalide un avis (modération)

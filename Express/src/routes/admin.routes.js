@@ -13,7 +13,7 @@ const roleMiddleware = require('../middlewares/role.middleware');
 
 /**
  * @swagger
- * /api/admin/dashboard:
+ * /admin/dashboard:
  *   get:
  *     summary: Dashboard administrateur avec statistiques complètes
  *     tags: [Administration]
@@ -167,7 +167,7 @@ router.get('/dashboard',
 
 /**
  * @swagger
- * /api/admin/parametres:
+ * /admin/parametres:
  *   put:
  *     summary: Gérer les paramètres du centre commercial
  *     tags: [Administration]
@@ -253,7 +253,7 @@ router.put('/parametres',
 
 /**
  * @swagger
- * /api/admin/categories-boutique:
+ * /admin/categories-boutique:
  *   post:
  *     summary: Créer une nouvelle catégorie de boutique
  *     tags: [Administration]
@@ -323,7 +323,7 @@ router.post('/categories-boutique',
 
 /**
  * @swagger
- * /api/admin/categories-boutique/{id}:
+ * /admin/categories-boutique/{id}:
  *   put:
  *     summary: Modifier une catégorie de boutique existante
  *     tags: [Administration]
@@ -397,7 +397,7 @@ router.put('/categories-boutique/:id',
 
 /**
  * @swagger
- * /api/admin/categories-boutique/{id}:
+ * /admin/categories-boutique/{id}:
  *   delete:
  *     summary: Supprimer une catégorie de boutique
  *     tags: [Administration]
@@ -454,7 +454,7 @@ router.delete('/categories-boutique/:id',
 
 /**
  * @swagger
- * /api/admin/roles-permissions:
+ * /admin/roles-permissions:
  *   put:
  *     summary: Gérer les permissions des rôles
  *     tags: [Administration]
@@ -530,7 +530,7 @@ router.put('/roles-permissions',
 
 /**
  * @swagger
- * /api/admin/rapports:
+ * /admin/rapports:
  *   post:
  *     summary: Générer des rapports détaillés
  *     tags: [Administration]

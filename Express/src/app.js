@@ -86,7 +86,16 @@ app.use('*', (req, res) => {
       '/api/boutiques/* - Boutiques',
       '/api/produits/* - Produits',
       '/api/panier/* - Panier',
-      '/api/commandes/* - Commandes'
+      '/api/commandes/* - Commandes',
+      '/api/admin/* - Admin',
+      '/api/categories-boutique/* - Categorie Boutique',
+      '/api/categories-produit/* - Categorie Produit',
+      '/api/paiements/* - Paiements',
+      '/api/statistiques/* - Statisques',
+      '/api/utilisateurs/* - Utilisateurs',
+      '/api/avis/* - Avis',
+      '/api/favoris/* - Favoris',
+      '/api/roles/* - Roles',
     ]
   });
 });

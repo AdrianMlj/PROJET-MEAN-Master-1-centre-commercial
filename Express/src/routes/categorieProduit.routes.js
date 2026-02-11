@@ -6,7 +6,7 @@ const roleMiddleware = require('../middlewares/role.middleware');
 
 /**
  * @swagger
- * /api/categories-produit:
+ * /categories-produit:
  *   get:
  *     summary: Lister les catégories de produits de sa boutique
  *     description: Retourne toutes les catégories de produits créées par le gérant de boutique authentifié
@@ -48,7 +48,7 @@ router.get('/',
 
 /**
  * @swagger
- * /api/categories-produit:
+ * /categories-produit:
  *   post:
  *     summary: Créer une catégorie de produits
  *     description: Crée une nouvelle catégorie de produits pour la boutique du gérant authentifié
@@ -112,7 +112,7 @@ router.post('/',
 
 /**
  * @swagger
- * /api/categories-produit/{id}:
+ * /categories-produit/{id}:
  *   get:
  *     summary: Obtenir une catégorie de produits
  *     description: Récupère les détails d'une catégorie de produits spécifique
@@ -156,7 +156,7 @@ router.get('/:id',
 
 /**
  * @swagger
- * /api/categories-produit/{id}:
+ * /categories-produit/{id}:
  *   put:
  *     summary: Modifier une catégorie de produits
  *     description: Met à jour les informations d'une catégorie de produits existante
@@ -227,7 +227,7 @@ router.put('/:id',
 
 /**
  * @swagger
- * /api/categories-produit/{id}:
+ * /categories-produit/{id}:
  *   delete:
  *     summary: Supprimer une catégorie de produits
  *     description: Supprime une catégorie de produits (si aucun produit n'y est associé)
