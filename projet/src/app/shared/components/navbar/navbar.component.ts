@@ -47,8 +47,6 @@ export class NavbarComponent implements OnInit {
     if (!this.currentUser) return 'Dashboard';
 
     switch (this.currentUser.role) {
-      case 'admin_centre':
-        return 'Dashboard Admin';
       case 'boutique':
         return 'Dashboard Boutique';
       case 'acheteur':
@@ -61,5 +59,9 @@ export class NavbarComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
+  }
+
+  isAdmin(): boolean {
+    return this.currentUser?.role === 'admin_centre';
   }
 }

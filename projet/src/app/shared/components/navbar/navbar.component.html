@@ -1,4 +1,5 @@
-<nav class="navbar">
+<!-- Navbar pour Acheteur et Boutique uniquement -->
+<nav class="navbar" *ngIf="!isAdmin()">
   <div class="container">
     <div class="nav-container">
       <div class="nav-brand">
@@ -23,12 +24,10 @@
             </span>
             <span class="role-badge" [ngClass]="currentUser.role">
               <i class="fas" 
-                 [class.fa-user-shield]="currentUser.role === 'admin_centre'"
                  [class.fa-store]="currentUser.role === 'boutique'"
                  [class.fa-shopping-cart]="currentUser.role === 'acheteur'">
               </i>
-              {{ currentUser.role === 'admin_centre' ? 'Admin' : 
-                 currentUser.role === 'boutique' ? 'Boutique' : 'Acheteur' }}
+              {{ currentUser.role === 'boutique' ? 'Boutique' : 'Acheteur' }}
             </span>
           </div>
           <button class="nav-link btn-logout" (click)="logout()">
@@ -51,3 +50,4 @@
     </div>
   </div>
 </nav>
+

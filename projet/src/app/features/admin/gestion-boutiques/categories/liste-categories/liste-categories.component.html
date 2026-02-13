@@ -1,0 +1,195 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-list"></i>
+        Gestion des catégories
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/admin/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Gestion Boutiques</span>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Liste des catégories</span>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary" routerLink="/admin/boutiques/categories/creer">
+        <i class="fas fa-plus-circle"></i>
+        Nouvelle catégorie
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Filters Card -->
+  <div class="filters-card">
+    <div class="filters-header">
+      <h3>
+        <i class="fas fa-filter"></i>
+        Filtres
+      </h3>
+      <button class="btn-clear" (click)="clearFilters()" *ngIf="searchTerm || filterActif !== null">
+        <i class="fas fa-times"></i>
+        Effacer les filtres
+      </button>
+    </div>
+
+    <div class="filters-body">
+      <div class="filter-group">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            placeholder="Rechercher une catégorie..."
+            class="form-control"
+          >
+        </div>
+
+        <div class="status-filters">
+          <button 
+            class="filter-btn" 
+            [class.active]="filterActif === null"
+            (click)="onFilterStatus(null)">
+            Tous
+          </button>
+          <button 
+            class="filter-btn" 
+            [class.active]="filterActif === true"
+            (click)="onFilterStatus(true)">
+            <span class="badge active">Actifs</span>
+          </button>
+          <button 
+            class="filter-btn" 
+            [class.active]="filterActif === false"
+            (click)="onFilterStatus(false)">
+            <span class="badge inactive">Inactifs</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="stats-badge">
+        <i class="fas fa-tags"></i>
+        {{ filteredCategories.length }} catégorie(s) trouvée(s)
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des catégories...</p>
+  </div>
+
+  <!-- Categories Grid -->
+  <div class="categories-grid" *ngIf="!loading">
+    <div class="category-card" *ngFor="let categorie of filteredCategories">
+      <!-- Image - CORRIGÉ: Affichage des images -->
+      <div class="card-image">
+        <!-- Si image URL valide -->
+        <div class="image-wrapper" *ngIf="hasValidImage(categorie); else noImageBlock">
+          <img 
+            [src]="categorie.image_url" 
+            [alt]="categorie.nom_categorie" 
+            (error)="onImageError($event)"
+            loading="lazy"
+          >
+        </div>
+        
+        <!-- Si pas d'image -->
+        <ng-template #noImageBlock>
+          <div class="no-image">
+            <i class="fas fa-image"></i>
+            <span>Aucune image</span>
+          </div>
+        </ng-template>
+        
+        <!-- Status Badge -->
+        <div class="status-badge" [ngClass]="categorie.est_active ? 'active' : 'inactive'">
+          {{ categorie.est_active ? 'Active' : 'Inactive' }}
+        </div>
+      </div>
+
+      <!-- Content - SANS ICÔNE -->
+      <div class="card-content">
+        <div class="card-header">
+          <h3 class="category-name">
+            {{ categorie.nom_categorie }}
+          </h3>
+          <span class="order-badge">
+            <i class="fas fa-sort"></i>
+            Ordre: {{ categorie.ordre_affichage }}
+          </span>
+        </div>
+
+        <p class="description">
+          {{ categorie.description || 'Aucune description' }}
+        </p>
+
+        <div class="meta-info">
+          <div class="boutique-count">
+            <i class="fas fa-store"></i>
+            {{ categorie.nombre_boutiques }} boutique(s)
+          </div>
+          <div class="date-info">
+            <i class="fas fa-calendar-alt"></i>
+            {{ categorie.date_creation | date:'dd/MM/yyyy' }}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card-actions">
+          <button class="btn-edit" (click)="onEdit(categorie._id)">
+            <i class="fas fa-edit"></i>
+            Modifier
+          </button>
+          <button class="btn-delete" (click)="onDelete(categorie._id)">
+            <i class="fas fa-trash"></i>
+            Supprimer
+          </button>
+          <button 
+            class="btn-toggle" 
+            [ngClass]="categorie.est_active ? 'active' : 'inactive'"
+            (click)="onToggleStatus(categorie)">
+            <i class="fas" [class.fa-toggle-on]="categorie.est_active" [class.fa-toggle-off]="!categorie.est_active"></i>
+            {{ categorie.est_active ? 'Désactiver' : 'Activer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredCategories.length === 0">
+      <div class="empty-icon">
+        <i class="fas fa-folder-open"></i>
+      </div>
+      <h3>Aucune catégorie trouvée</h3>
+      <p>
+        {{ searchTerm || filterActif !== null ? 
+           'Aucune catégorie ne correspond à vos critères de recherche.' : 
+           'Commencez par créer votre première catégorie de boutique.' }}
+      </p>
+      <button class="btn btn-primary" routerLink="/admin/boutiques/categories/creer" *ngIf="!searchTerm && filterActif === null">
+        <i class="fas fa-plus-circle"></i>
+        Créer une catégorie
+      </button>
+      <button class="btn btn-secondary" (click)="clearFilters()" *ngIf="searchTerm || filterActif !== null">
+        <i class="fas fa-times"></i>
+        Effacer les filtres
+      </button>
+    </div>
+  </div>
+</div>
