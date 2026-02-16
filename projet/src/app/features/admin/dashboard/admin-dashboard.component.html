@@ -1,212 +1,105 @@
-<div class="dashboard-container">
-  <!-- Header -->
-  <div class="dashboard-header">
-    <div class="header-left">
+<div class="dashboard">
+  <div class="container">
+    <div class="dashboard-header">
       <h1>
-        <i class="fas fa-tachometer-alt"></i>
+        <i class="fas fa-user-shield"></i>
         Tableau de Bord Administrateur
       </h1>
-      <p class="welcome-message">
-        Bienvenue, <strong>{{ currentUser?.prenom || currentUser?.nom || 'Administrateur' }}</strong>
+      <p class="welcome-message" *ngIf="currentUser">
+        Bienvenue, <strong>{{ currentUser.prenom || currentUser.nom }}</strong> - Administrateur du centre
       </p>
     </div>
-    <div class="header-right">
-      <span class="date">
-        <i class="fas fa-calendar-alt"></i>
-        {{ date | date:'EEEE d MMMM yyyy' }}
-      </span>
-    </div>
-  </div>
 
-  <!-- Stats Cards -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-icon">
+    <div class="stats-grid">
+      <div class="stat-card">
         <i class="fas fa-users"></i>
-      </div>
-      <div class="stat-content">
         <h3>{{ stats.utilisateurs }}</h3>
         <p>Utilisateurs</p>
-        <span class="stat-trend positive">
-          <i class="fas fa-arrow-up"></i> +12%
-        </span>
       </div>
-    </div>
 
-    <div class="stat-card">
-      <div class="stat-icon">
+      <div class="stat-card">
         <i class="fas fa-store"></i>
-      </div>
-      <div class="stat-content">
         <h3>{{ stats.boutiques }}</h3>
         <p>Boutiques</p>
-        <span class="stat-trend positive">
-          <i class="fas fa-arrow-up"></i> +5%
-        </span>
       </div>
-    </div>
 
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="fas fa-tags"></i>
-      </div>
-      <div class="stat-content">
-        <h3>{{ stats.categories }}</h3>
-        <p>Catégories</p>
-        <span class="stat-trend">
-          <i class="fas fa-minus"></i> 0%
-        </span>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="fas fa-shopping-bag"></i>
-      </div>
-      <div class="stat-content">
+      <div class="stat-card">
+        <i class="fas fa-boxes"></i>
         <h3>{{ stats.produits }}</h3>
         <p>Produits</p>
-        <span class="stat-trend positive">
-          <i class="fas fa-arrow-up"></i> +8%
-        </span>
       </div>
-    </div>
 
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="fas fa-euro-sign"></i>
-      </div>
-      <div class="stat-content">
+      <div class="stat-card">
+        <i class="fas fa-chart-line"></i>
         <h3>{{ stats.revenus | currency:'EUR' }}</h3>
-        <p>Revenus</p>
-        <span class="stat-trend positive">
-          <i class="fas fa-arrow-up"></i> +15%
-        </span>
+        <p>Revenus totaux</p>
       </div>
     </div>
 
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="fas fa-clipboard-list"></i>
+    <div class="dashboard-content mt-20">
+      <div class="row">
+        <div class="card">
+          <h3>
+            <i class="fas fa-bolt"></i>
+            Actions Administratives
+          </h3>
+          <div class="quick-actions">
+            <button class="btn btn-primary">
+              <i class="fas fa-user-cog"></i>
+              Gérer les utilisateurs
+            </button>
+            <button class="btn btn-success">
+              <i class="fas fa-store-alt"></i>
+              Gérer les boutiques
+            </button>
+            <button class="btn btn-secondary">
+              <i class="fas fa-chart-bar"></i>
+              Statistiques globales
+            </button>
+            <button class="btn btn-danger">
+              <i class="fas fa-cog"></i>
+              Paramètres système
+            </button>
+            <button class="btn btn-primary">
+              <i class="fas fa-file-invoice-dollar"></i>
+              Rapports financiers
+            </button>
+            <button class="btn btn-success">
+              <i class="fas fa-shield-alt"></i>
+              Gérer les rôles
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>
+            <i class="fas fa-info-circle"></i>
+            Informations Administrateur
+          </h3>
+          <div class="admin-info" *ngIf="currentUser">
+            <div class="info-item">
+              <span class="label">Administrateur :</span>
+              <span class="value">{{ currentUser.prenom }} {{ currentUser.nom }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Email :</span>
+              <span class="value">{{ currentUser.email }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Rôle :</span>
+              <span class="value badge admin">Administrateur Centre</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Statut :</span>
+              <span class="value active">Super Administrateur</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Dernière connexion :</span>
+              <span class="value">{{ currentUser.date_creation | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="stat-content">
-        <h3>{{ stats.nouvellesCommandes }}</h3>
-        <p>Nouvelles commandes</p>
-        <span class="stat-trend positive">
-          <i class="fas fa-arrow-up"></i> +3
-        </span>
-      </div>
     </div>
-  </div>
-
-  <!-- Quick Actions -->
-  <div class="quick-actions">
-    <h2>
-      <i class="fas fa-bolt"></i>
-      Actions Rapides
-    </h2>
-    <div class="actions-grid">
-      <button class="action-btn" routerLink="/admin/boutiques/categories/creer">
-        <i class="fas fa-plus-circle"></i>
-        <span>Nouvelle catégorie</span>
-      </button>
-      <button class="action-btn" routerLink="/admin/boutiques/categories/liste">
-        <i class="fas fa-list"></i>
-        <span>Gérer catégories</span>
-      </button>
-      <button class="action-btn">
-        <i class="fas fa-user-plus"></i>
-        <span>Nouvel utilisateur</span>
-      </button>
-      <button class="action-btn">
-        <i class="fas fa-store-alt"></i>
-        <span>Nouvelle boutique</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Recent Categories -->
-  <div class="recent-section">
-    <div class="section-header">
-      <h2>
-        <i class="fas fa-history"></i>
-        Dernières catégories ajoutées
-      </h2>
-      <a routerLink="/admin/boutiques/categories/liste" class="view-all">
-        Voir tout
-        <i class="fas fa-arrow-right"></i>
-      </a>
-    </div>
-
-    <div class="table-responsive" *ngIf="!loading; else loadingTemplate">
-      <table class="modern-table">
-        <thead>
-          <tr>
-            <th>Image</th>
-            <th>Nom</th>
-            <th>Description</th>
-            <th>Boutiques</th>
-            <th>Statut</th>
-            <th>Date création</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let categorie of recentCategories">
-            <td>
-              <div class="category-image" *ngIf="categorie.image_url; else noImage">
-                <img [src]="categorie.image_url" [alt]="categorie.nom_categorie">
-              </div>
-              <ng-template #noImage>
-                <div class="no-image">
-                  <i class="fas fa-image"></i>
-                </div>
-              </ng-template>
-            </td>
-            <td class="category-name">
-              <span class="name">{{ categorie.nom_categorie }}</span>
-              <span class="icone">{{ categorie.icone }}</span>
-            </td>
-            <td class="description">{{ categorie.description || 'Aucune description' }}</td>
-            <td>
-              <span class="badge boutique-count">
-                {{ categorie.nombre_boutiques }} boutique(s)
-              </span>
-            </td>
-            <td>
-              <span class="badge" [ngClass]="categorie.est_active ? 'active' : 'inactive'">
-                {{ categorie.est_active ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-            <td>{{ categorie.date_creation | date:'dd/MM/yyyy' }}</td>
-            <td>
-              <div class="action-buttons">
-                <button class="btn-edit" [routerLink]="['/admin/boutiques/categories/modifier', categorie._id]">
-                  <i class="fas fa-edit"></i>
-                  Modifier
-                </button>
-                <button class="btn-delete" (click)="onDeleteCategorie(categorie._id)">
-                  <i class="fas fa-trash"></i>
-                  Supprimer
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr *ngIf="recentCategories.length === 0">
-            <td colspan="7" class="empty-state">
-              <i class="fas fa-folder-open"></i>
-              <p>Aucune catégorie trouvée</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <ng-template #loadingTemplate>
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Chargement des catégories...</p>
-      </div>
-    </ng-template>
   </div>
 </div>

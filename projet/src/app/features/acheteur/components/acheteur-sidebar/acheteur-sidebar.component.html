@@ -1,0 +1,142 @@
+<div class="admin-layout">
+  <!-- Sidebar - FIXE -->
+  <aside class="sidebar" [class.collapsed]="isCollapsed" [class.active]="isMobileMenuOpen">
+    <!-- Header toujours visible -->
+    <div class="sidebar-header">
+      <div class="logo">
+        <i class="fas fa-shopping-bag"></i>
+        <span *ngIf="!isCollapsed">ACHETEUR</span>
+      </div>
+      <button class="toggle-btn" (click)="toggleSidebar()" [attr.aria-label]="isCollapsed ? 'Étendre' : 'Réduire'">
+        <i class="fas" [class.fa-chevron-left]="!isCollapsed" [class.fa-chevron-right]="isCollapsed"></i>
+      </button>
+    </div>
+
+    <!-- Profil acheteur - TOUJOURS VISIBLE EN HAUT -->
+    <div class="admin-profile" *ngIf="!isCollapsed">
+      <div class="avatar">
+        <i class="fas fa-user"></i>
+      </div>
+      <div class="info">
+        <h4>{{ getCurrentUserName() }}</h4>
+        <span class="badge">Acheteur</span>
+      </div>
+    </div>
+
+    <!-- Version mobile du profil (quand collapsed) -->
+    <div class="admin-profile-mobile" *ngIf="isCollapsed" title="{{ getCurrentUserName() }}">
+      <div class="avatar">
+        <i class="fas fa-user"></i>
+      </div>
+    </div>
+
+    <!-- Navigation - SCROLLABLE -->
+    <nav class="sidebar-nav">
+      <!-- Dashboard -->
+      <a routerLink="/acheteur/home" routerLinkActive="active" class="nav-item" [routerLinkActiveOptions]="{exact: true}">
+        <i class="fas fa-home"></i>
+        <span *ngIf="!isCollapsed">Accueil</span>
+      </a>
+
+      <!-- Boutique -->
+      <div class="nav-section">
+        <div class="nav-header" (click)="toggleMenu('boutique')" [class.active]="menuOpen['boutique']">
+          <i class="fas fa-store"></i>
+          <span *ngIf="!isCollapsed">Boutiques</span>
+          <i *ngIf="!isCollapsed" class="fas" 
+             [class.fa-chevron-down]="menuOpen['boutique']"
+             [class.fa-chevron-right]="!menuOpen['boutique']"></i>
+        </div>
+        <div class="sub-menu" *ngIf="menuOpen['boutique'] || isCollapsed">
+          <a routerLink="/acheteur/produits" 
+             routerLinkActive="active" 
+             class="sub-item"
+             [class.collapsed]="isCollapsed"
+             [title]="isCollapsed ? 'Tous les produits' : ''">
+            <i class="fas fa-boxes"></i>
+            <span *ngIf="!isCollapsed">Tous les produits</span>
+          </a>
+          <a routerLink="/acheteur/boutiques" 
+             routerLinkActive="active" 
+             class="sub-item"
+             [class.collapsed]="isCollapsed"
+             [title]="isCollapsed ? 'Nos boutiques' : ''">
+            <i class="fas fa-store-alt"></i>
+            <span *ngIf="!isCollapsed">Nos boutiques</span>
+          </a>
+          <a routerLink="/acheteur/recherche" 
+             routerLinkActive="active" 
+             class="sub-item"
+             [class.collapsed]="isCollapsed"
+             [title]="isCollapsed ? 'Recherche' : ''">
+            <i class="fas fa-search"></i>
+            <span *ngIf="!isCollapsed">Recherche</span>
+          </a>
+          <a routerLink="/acheteur/promotions" 
+             routerLinkActive="active" 
+             class="sub-item"
+             [class.collapsed]="isCollapsed"
+             [title]="isCollapsed ? 'Promotions' : ''">
+            <i class="fas fa-tags"></i>
+            <span *ngIf="!isCollapsed">Promotions</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Mon Compte -->
+      <div class="nav-section">
+        <div class="nav-header" (click)="toggleMenu('compte')" [class.active]="menuOpen['compte']">
+          <i class="fas fa-user-cog"></i>
+          <span *ngIf="!isCollapsed">Mon Compte</span>
+          <i *ngIf="!isCollapsed" class="fas" 
+             [class.fa-chevron-down]="menuOpen['compte']"
+             [class.fa-chevron-right]="!menuOpen['compte']"></i>
+        </div>
+        <div class="sub-menu" *ngIf="menuOpen['compte'] || isCollapsed">
+          <a routerLink="/acheteur/commandes" 
+             routerLinkActive="active" 
+             class="sub-item"
+             [class.collapsed]="isCollapsed"
+             [title]="isCollapsed ? 'Mes commandes' : ''">
+            <i class="fas fa-shopping-bag"></i>
+            <span *ngIf="!isCollapsed">Mes commandes</span>
+          </a>
+          <a routerLink="/acheteur/profil" 
+             routerLinkActive="active" 
+             class="sub-item"
+             [class.collapsed]="isCollapsed"
+             [title]="isCollapsed ? 'Mon profil' : ''">
+            <i class="fas fa-user-edit"></i>
+            <span *ngIf="!isCollapsed">Mon profil</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Panier -->
+      <a routerLink="/acheteur/panier" routerLinkActive="active" class="nav-item cart-item">
+        <i class="fas fa-shopping-cart"></i>
+        <span *ngIf="!isCollapsed">Mon Panier</span>
+        <span class="cart-badge" *ngIf="cartCount > 0">{{ cartCount }}</span>
+      </a>
+      
+      <!-- Espace pour le scroll -->
+      <div class="nav-footer-space"></div>
+    </nav>
+
+    <!-- Footer avec bouton déconnexion - TOUJOURS VISIBLE EN BAS -->
+    <div class="sidebar-footer">
+      <button class="nav-item logout-btn" (click)="logout()" [title]="isCollapsed ? 'Déconnexion' : ''">
+        <i class="fas fa-sign-out-alt"></i>
+        <span *ngIf="!isCollapsed">Déconnexion</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content - SCROLLABLE -->
+  <main class="main-content" [class.expanded]="isCollapsed">
+    <router-outlet></router-outlet>
+  </main>
+  
+  <!-- Overlay mobile -->
+  <div class="mobile-overlay" *ngIf="isMobileMenuOpen" (click)="toggleMobileMenu()"></div>
+</div>

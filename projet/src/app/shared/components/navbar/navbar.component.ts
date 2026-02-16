@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { PanierService } from '../../../core/services/panier.service';
 import { User } from '../../../core/models/auth.model';
 
 @Component({
@@ -12,15 +13,21 @@ import { User } from '../../../core/models/auth.model';
 export class NavbarComponent implements OnInit {
   currentUser: User | null = null;
   isMenuOpen = false;
+  cartCount = 0;
 
   constructor(
     private authService: AuthService,
+    private panierService: PanierService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+    });
+
+    this.panierService.nombreArticles$.subscribe(count => {
+      this.cartCount = count;
     });
   }
 
@@ -47,6 +54,8 @@ export class NavbarComponent implements OnInit {
     if (!this.currentUser) return 'Dashboard';
 
     switch (this.currentUser.role) {
+      case 'admin_centre':
+        return 'Dashboard Admin';
       case 'boutique':
         return 'Dashboard Boutique';
       case 'acheteur':
@@ -59,9 +68,5 @@ export class NavbarComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
-  }
-
-  isAdmin(): boolean {
-    return this.currentUser?.role === 'admin_centre';
   }
 }

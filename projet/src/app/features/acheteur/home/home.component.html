@@ -1,0 +1,189 @@
+<div class="home-container">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1>Bienvenue au Centre Commercial</h1>
+      <p>Découvrez des milliers de produits de nos boutiques partenaires</p>
+      
+      <div class="search-box">
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          placeholder="Rechercher un produit ou une boutique..."
+          (keyup.enter)="rechercher()"
+        >
+        <button class="btn btn-primary" (click)="rechercher()">
+          <i class="fas fa-search"></i>
+          Rechercher
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Promotions Section -->
+  <section class="section promotions-section">
+    <div class="container">
+      <div class="section-header">
+        <h2><i class="fas fa-tags"></i> Promotions</h2>
+        <a (click)="voirTousLesProduits()" class="voir-plus">
+          Voir tout <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      
+      <div class="products-grid" *ngIf="!loading.promotions && produitsEnPromotion.length > 0">
+        <div class="product-card" *ngFor="let produit of produitsEnPromotion" (click)="voirProduit(produit._id)">
+          <div class="product-image">
+            <img [src]="produit.images && produit.images[0] ? produit.images[0] : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction(produit) }}%</span>
+          </div>
+          <div class="product-info">
+            <h3>{{ produit.nom }}</h3>
+            <p class="boutique-name">{{ produit.boutique?.nom }}</p>
+            <div class="price-container">
+              <span class="price" [class.promo-price]="produit.en_promotion">{{ getPrixAffiche(produit) | number:'1.2-2' }} €</span>
+              <span class="old-price" *ngIf="produit.en_promotion">{{ produit.prix | number:'1.2-2' }} €</span>
+            </div>
+            <div class="rating" *ngIf="produit.note_moyenne > 0">
+              <i class="fas fa-star"></i>
+              <span>{{ produit.note_moyenne | number:'1.1-1' }}</span>
+              <span class="reviews">({{ produit.nombre_avis }})</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="loading-spinner" *ngIf="loading.promotions">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des promotions...</p>
+      </div>
+      
+      <div class="empty-state" *ngIf="!loading.promotions && produitsEnPromotion.length === 0">
+        <i class="fas fa-tag"></i>
+        <p>Aucune promotion en cours</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Nouveautés Section -->
+  <section class="section nouveautes-section">
+    <div class="container">
+      <div class="section-header">
+        <h2><i class="fas fa-sparkles"></i> Nouveautés</h2>
+        <a (click)="voirTousLesProduits()" class="voir-plus">
+          Voir tout <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      
+      <div class="products-grid" *ngIf="!loading.nouveautes && nouveautes.length > 0">
+        <div class="product-card" *ngFor="let produit of nouveautes" (click)="voirProduit(produit._id)">
+          <div class="product-image">
+            <img [src]="produit.images && produit.images[0] ? produit.images[0] : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <span class="badge new">Nouveau</span>
+          </div>
+          <div class="product-info">
+            <h3>{{ produit.nom }}</h3>
+            <p class="boutique-name">{{ produit.boutique?.nom }}</p>
+            <div class="price-container">
+              <span class="price" [class.promo-price]="produit.en_promotion">{{ getPrixAffiche(produit) | number:'1.2-2' }} €</span>
+              <span class="old-price" *ngIf="produit.en_promotion">{{ produit.prix | number:'1.2-2' }} €</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="loading-spinner" *ngIf="loading.nouveautes">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des nouveautés...</p>
+      </div>
+      
+      <div class="empty-state" *ngIf="!loading.nouveautes && nouveautes.length === 0">
+        <i class="fas fa-box-open"></i>
+        <p>Aucune nouveauté pour le moment</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Boutiques Section -->
+  <section class="section boutiques-section">
+    <div class="container">
+      <div class="section-header">
+        <h2><i class="fas fa-store"></i> Nos Boutiques</h2>
+        <a (click)="voirToutesLesBoutiques()" class="voir-plus">
+          Voir toutes <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      
+      <div class="boutiques-grid" *ngIf="!loading.boutiques && boutiques.length > 0">
+        <div class="boutique-card" *ngFor="let boutique of boutiques" (click)="voirBoutique(boutique._id)">
+          <div class="boutique-logo">
+            <img [src]="boutique.logo_url || 'assets/placeholder-boutique.png'" [alt]="boutique.nom">
+          </div>
+          <div class="boutique-info">
+            <h3>{{ boutique.nom }}</h3>
+            <p class="categorie">{{ boutique.categorie?.nom }}</p>
+            <p class="description" *ngIf="boutique.description">{{ boutique.description | slice:0:80 }}...</p>
+            <div class="boutique-stats" *ngIf="boutique.statistiques">
+              <span><i class="fas fa-box"></i> {{ boutique.statistiques.nombre_produits || 0 }} produits</span>
+              <span *ngIf="boutique.statistiques.note_moyenne">
+                <i class="fas fa-star"></i> {{ boutique.statistiques.note_moyenne | number:'1.1-1' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="loading-spinner" *ngIf="loading.boutiques">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des boutiques...</p>
+      </div>
+      
+      <div class="empty-state" *ngIf="!loading.boutiques && boutiques.length === 0">
+        <i class="fas fa-store-slash"></i>
+        <p>Aucune boutique disponible</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Meilleures Ventes Section -->
+  <section class="section ventes-section">
+    <div class="container">
+      <div class="section-header">
+        <h2><i class="fas fa-fire"></i> Meilleures Ventes</h2>
+        <a (click)="voirTousLesProduits()" class="voir-plus">
+          Voir tout <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      
+      <div class="products-grid" *ngIf="!loading.ventes && meilleuresVentes.length > 0">
+        <div class="product-card" *ngFor="let produit of meilleuresVentes" (click)="voirProduit(produit._id)">
+          <div class="product-image">
+            <img [src]="produit.images && produit.images[0] ? produit.images[0] : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <span class="badge bestseller">Top vente</span>
+          </div>
+          <div class="product-info">
+            <h3>{{ produit.nom }}</h3>
+            <p class="boutique-name">{{ produit.boutique?.nom }}</p>
+            <div class="price-container">
+              <span class="price" [class.promo-price]="produit.en_promotion">{{ getPrixAffiche(produit) | number:'1.2-2' }} €</span>
+              <span class="old-price" *ngIf="produit.en_promotion">{{ produit.prix | number:'1.2-2' }} €</span>
+            </div>
+            <div class="sales-count">
+              <i class="fas fa-shopping-bag"></i>
+              {{ produit.nombre_ventes }} vendus
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="loading-spinner" *ngIf="loading.ventes">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des meilleures ventes...</p>
+      </div>
+      
+      <div class="empty-state" *ngIf="!loading.ventes && meilleuresVentes.length === 0">
+        <i class="fas fa-chart-line"></i>
+        <p>Aucune vente enregistrée</p>
+      </div>
+    </div>
+  </section>
+</div>
