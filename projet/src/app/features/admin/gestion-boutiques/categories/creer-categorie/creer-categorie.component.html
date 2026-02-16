@@ -1,0 +1,265 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-plus-circle"></i>
+        Créer une catégorie
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/admin/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Gestion Boutiques</span>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Créer catégorie</span>
+      </nav>
+    </div>
+  </div>
+
+  <div class="content-wrapper">
+    <div class="form-card">
+      <!-- En-tête du formulaire -->
+      <div class="form-header">
+        <div class="form-icon">
+          <i class="fas fa-tag"></i>
+        </div>
+        <div class="form-title">
+          <h2>Nouvelle catégorie de boutique</h2>
+          <p>Ajoutez une nouvelle catégorie pour organiser les boutiques</p>
+        </div>
+      </div>
+
+      <!-- Formulaire -->
+      <form [formGroup]="categorieForm" (ngSubmit)="onSubmit()" class="modern-form" novalidate>
+        
+        <!-- Message de succès -->
+        <div class="alert alert-success" *ngIf="successMessage">
+          <div class="alert-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="alert-content">
+            <strong>Succès !</strong> {{ successMessage }}
+          </div>
+          <div class="alert-progress"></div>
+        </div>
+
+        <!-- Message d'erreur global (uniquement pour les erreurs non liées au champ nom) -->
+        <div class="alert alert-danger" *ngIf="errorMessage && !categorieForm.get('nom_categorie')?.errors?.['nomExiste']">
+          <div class="alert-icon">
+            <i class="fas fa-exclamation-circle"></i>
+          </div>
+          <div class="alert-content">
+            <strong>Erreur :</strong> {{ errorMessage }}
+          </div>
+          <button type="button" class="alert-close" (click)="errorMessage = ''" *ngIf="!loading">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <!-- NOM CATÉGORIE - AVEC VALIDATION EN TEMPS RÉEL -->
+        <div class="form-group">
+          <label for="nom_categorie">
+            <i class="fas fa-tag"></i>
+            Nom de la catégorie <span class="required-star">*</span>
+          </label>
+          
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="nom_categorie"
+              formControlName="nom_categorie"
+              class="form-control"
+              placeholder="Ex: Mode, Électronique, Alimentation..."
+              [ngClass]="{
+                'is-invalid': categorieForm.get('nom_categorie')?.touched && 
+                             categorieForm.get('nom_categorie')?.invalid,
+                'is-valid': categorieForm.get('nom_categorie')?.touched && 
+                           categorieForm.get('nom_categorie')?.valid,
+                'is-pending': isCheckingNom
+              }"
+              autocomplete="off"
+            >
+            
+            <!-- Icône de statut en temps réel -->
+            <span class="input-icon">
+              <i class="fas" 
+                 [class.fa-spinner]="isCheckingNom"
+                 [class.fa-spin]="isCheckingNom"
+                 [class.fa-check-circle]="categorieForm.get('nom_categorie')?.valid && !isCheckingNom"
+                 [class.fa-exclamation-circle]="categorieForm.get('nom_categorie')?.invalid && !isCheckingNom"
+                 [class.text-success]="categorieForm.get('nom_categorie')?.valid"
+                 [class.text-danger]="categorieForm.get('nom_categorie')?.invalid && !isCheckingNom"
+                 [class.text-warning]="isCheckingNom">
+              </i>
+            </span>
+          </div>
+
+          <!-- ✅ MESSAGE D'ERREUR EN TEMPS RÉEL - S'AFFICHE IMMÉDIATEMENT PENDANT LA SAISIE -->
+          <div class="error-message" *ngIf="categorieForm.get('nom_categorie')?.touched || categorieForm.get('nom_categorie')?.dirty">
+            <!-- Message personnalisé selon l'erreur -->
+            <div *ngIf="getNomCategorieError()" class="error-content">
+              <i class="fas" 
+                 [class.fa-exclamation-triangle]="!categorieForm.get('nom_categorie')?.errors?.['nomExiste']"
+                 [class.fa-ban]="categorieForm.get('nom_categorie')?.errors?.['nomExiste']">
+              </i>
+              <span>{{ getNomCategorieError() }}</span>
+            </div>
+            
+            <!-- Indicateur de vérification -->
+            <div *ngIf="isCheckingNom" class="checking-indicator">
+              <i class="fas fa-spinner fa-spin"></i>
+              Vérification du nom...
+            </div>
+          </div>
+
+          <!-- ✅ SUGGESTIONS AUTOMATIQUES - APPARAISSENT SI LE NOM EXISTE DÉJÀ -->
+          <div class="suggestion-box" *ngIf="categorieForm.get('nom_categorie')?.errors?.['nomExiste']">
+            <i class="fas fa-lightbulb"></i>
+            <span>Suggestions :</span>
+            <div class="suggestion-buttons">
+              <button type="button" class="suggestion-btn" (click)="suggestionNom(categorieForm.get('nom_categorie')?.value + ' 2')">
+                {{ categorieForm.get('nom_categorie')?.value }} 2
+              </button>
+              <button type="button" class="suggestion-btn" (click)="suggestionNom('Nouvelle ' + categorieForm.get('nom_categorie')?.value)">
+                Nouvelle {{ categorieForm.get('nom_categorie')?.value }}
+              </button>
+              <button type="button" class="suggestion-btn" (click)="suggestionNom(categorieForm.get('nom_categorie')?.value + ' Premium')">
+                {{ categorieForm.get('nom_categorie')?.value }} Premium
+              </button>
+            </div>
+          </div>
+
+          <!-- Message quand le nom est disponible -->
+          <small class="form-text success-text" *ngIf="categorieForm.get('nom_categorie')?.valid && !isCheckingNom && !categorieForm.get('nom_categorie')?.errors?.['nomExiste']">
+            <i class="fas fa-check-circle"></i>
+            Nom disponible ✓
+          </small>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="description">
+            <i class="fas fa-align-left"></i>
+            Description
+          </label>
+          <textarea
+            id="description"
+            formControlName="description"
+            class="form-control"
+            rows="4"
+            placeholder="Décrivez cette catégorie (optionnel)"
+            [ngClass]="{
+              'is-invalid': categorieForm.get('description')?.touched && 
+                           categorieForm.get('description')?.invalid
+            }"
+          ></textarea>
+          <div class="char-counter" [class.text-warning]="(categorieForm.get('description')?.value?.length || 0) > 400">
+            <i class="fas fa-text-height"></i>
+            {{ categorieForm.get('description')?.value?.length || 0 }}/500 caractères
+          </div>
+        </div>
+
+        <!-- Image URL -->
+        <div class="form-group">
+          <label for="image_url">
+            <i class="fas fa-image"></i>
+            URL de l'image
+          </label>
+          <input
+            type="url"
+            id="image_url"
+            formControlName="image_url"
+            class="form-control"
+            placeholder="https://exemple.com/image.jpg (optionnel)"
+          >
+          <small class="form-text">
+            <i class="fas fa-info-circle"></i>
+            Lien vers une image représentant la catégorie
+          </small>
+        </div>
+
+        <!-- Preview Image -->
+        <div class="image-preview" *ngIf="categorieForm.get('image_url')?.value">
+          <div class="preview-header">
+            <label>
+              <i class="fas fa-eye"></i>
+              Aperçu de l'image
+            </label>
+          </div>
+          <div class="preview-container">
+            <img 
+              [src]="categorieForm.get('image_url')?.value" 
+              alt="Aperçu de la catégorie" 
+              (error)="onImageError($event)"
+              loading="lazy"
+            >
+            <div class="preview-overlay">
+              <button type="button" class="btn-preview-remove" (click)="categorieForm.patchValue({image_url: ''})">
+                <i class="fas fa-trash"></i>
+                Supprimer l'image
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ordre d'affichage -->
+        <div class="form-group">
+          <label for="ordre_affichage">
+            <i class="fas fa-sort-numeric-up"></i>
+            Ordre d'affichage
+          </label>
+          <div class="input-group">
+            <input
+              type="number"
+              id="ordre_affichage"
+              formControlName="ordre_affichage"
+              class="form-control"
+              min="0"
+              max="999"
+              step="1"
+            >
+            <span class="input-group-text">
+              <i class="fas fa-arrow-up"></i>
+              <i class="fas fa-arrow-down"></i>
+            </span>
+          </div>
+          <small class="form-text">
+            <i class="fas fa-lightbulb"></i>
+            Plus le nombre est petit, plus la catégorie apparaît en premier (0 = tout en haut)
+          </small>
+        </div>
+
+        <!-- Actions du formulaire -->
+        <div class="form-actions">
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="annuler()" 
+            [disabled]="loading"
+          >
+            <i class="fas fa-times"></i>
+            Annuler
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary" 
+            [disabled]="isSubmitDisabled"
+            [ngClass]="{'btn-loading': loading}"
+          >
+            <span class="btn-content">
+              <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+              <i class="fas fa-save" *ngIf="!loading"></i>
+              <span>{{ loading ? 'Création en cours...' : 'Créer la catégorie' }}</span>
+            </span>
+          </button>
+        </div>
+
+        <!-- Résumé des erreurs du formulaire -->
+        <div class="form-summary" *ngIf="categorieForm.invalid && categorieForm.touched && !loading && !categorieForm.get('nom_categorie')?.pending">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>Veuillez corriger les erreurs avant de soumettre.</span>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
