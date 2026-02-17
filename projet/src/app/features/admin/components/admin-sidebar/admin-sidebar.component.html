@@ -47,27 +47,59 @@
              [class.fa-chevron-down]="menuOpen['gestionBoutiques']"
              [class.fa-chevron-right]="!menuOpen['gestionBoutiques']"></i>
         </div>
-        <div class="sub-menu" *ngIf="menuOpen['gestionBoutiques'] || isCollapsed">
-          <a routerLink="/admin/boutiques/categories/creer" 
-             routerLinkActive="active" 
-             class="sub-item"
-             [class.collapsed]="isCollapsed"
-             [title]="isCollapsed ? 'Créer catégorie' : ''">
-            <i class="fas fa-plus-circle"></i>
-            <span *ngIf="!isCollapsed">Créer catégorie</span>
-          </a>
-          <a routerLink="/admin/boutiques/categories/liste" 
-             routerLinkActive="active" 
-             class="sub-item"
-             [class.collapsed]="isCollapsed"
-             [title]="isCollapsed ? 'Listes catégories' : ''">
-            <i class="fas fa-list"></i>
-            <span *ngIf="!isCollapsed">Listes catégories</span>
-          </a>
+        
+        <!-- Sous-menu CATÉGORIES -->
+        <div class="sub-menu" *ngIf="menuOpen['gestionBoutiques']">
+          <div class="sub-header" (click)="toggleMenu('categories')" [class.active]="menuOpen['categories']">
+            <i class="fas fa-tags"></i>
+            <span *ngIf="!isCollapsed">Catégories</span>
+            <i *ngIf="!isCollapsed" class="fas" 
+               [class.fa-chevron-down]="menuOpen['categories']"
+               [class.fa-chevron-right]="!menuOpen['categories']"></i>
+          </div>
+          
+          <div class="sub-sub-menu" *ngIf="menuOpen['categories']">
+            <a routerLink="/admin/boutiques/categories/creer" 
+               routerLinkActive="active" 
+               class="sub-item">
+              <i class="fas fa-plus-circle"></i>
+              <span *ngIf="!isCollapsed">Créer catégorie</span>
+            </a>
+            <a routerLink="/admin/boutiques/categories/liste" 
+               routerLinkActive="active" 
+               class="sub-item">
+              <i class="fas fa-list"></i>
+              <span *ngIf="!isCollapsed">Listes catégories</span>
+            </a>
+          </div>
+
+          <!-- Sous-menu BOUTIQUES -->
+          <div class="sub-header" (click)="toggleMenu('boutiques')" [class.active]="menuOpen['boutiques']">
+            <i class="fas fa-store"></i>
+            <span *ngIf="!isCollapsed">Boutiques</span>
+            <i *ngIf="!isCollapsed" class="fas" 
+               [class.fa-chevron-down]="menuOpen['boutiques']"
+               [class.fa-chevron-right]="!menuOpen['boutiques']"></i>
+          </div>
+          
+          <div class="sub-sub-menu" *ngIf="menuOpen['boutiques']">
+            <a routerLink="/admin/boutiques/boutiques/creer" 
+               routerLinkActive="active" 
+               class="sub-item">
+              <i class="fas fa-plus-circle"></i>
+              <span *ngIf="!isCollapsed">Création boutique</span>
+            </a>
+            <a routerLink="/admin/boutiques/boutiques/liste" 
+               routerLinkActive="active" 
+               class="sub-item">
+              <i class="fas fa-list"></i>
+              <span *ngIf="!isCollapsed">Listes boutique</span>
+            </a>
+          </div>
         </div>
       </div>
 
-      <!-- Gestion Utilisateurs -->
+      <!-- Autres sections à venir -->
       <div class="nav-section">
         <div class="nav-header">
           <i class="fas fa-users"></i>
@@ -75,7 +107,6 @@
         </div>
       </div>
 
-      <!-- Statistiques -->
       <div class="nav-section">
         <div class="nav-header">
           <i class="fas fa-chart-line"></i>

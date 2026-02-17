@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const boutiqueSchema = new mongoose.Schema({
   nom: {
@@ -35,6 +36,12 @@ const boutiqueSchema = new mongoose.Schema({
   est_active: {
     type: Boolean,
     default: true
+  },
+  // ✅ NOUVEAU CHAMP POUR LE PAIEMENT DE LOCATION
+  statut_paiement: {
+    type: String,
+    enum: ['paye', 'impaye'],
+    default: 'impaye'  // Par défaut, la boutique n'a pas payé
   },
   contact: {
     email: { type: String, lowercase: true },
@@ -78,12 +85,16 @@ const boutiqueSchema = new mongoose.Schema({
   timestamps: { createdAt: 'date_creation', updatedAt: 'date_modification' }
 });
 
+boutiqueSchema.plugin(mongoosePaginate);
+
 // Indexes
 boutiqueSchema.index({ categorie: 1 });
 boutiqueSchema.index({ gerant: 1 });
 boutiqueSchema.index({ est_active: 1 });
 boutiqueSchema.index({ 'statistiques.note_moyenne': -1 });
 boutiqueSchema.index({ 'statistiques.chiffre_affaires': -1 });
+// ✅ Nouvel index pour le statut de paiement
+boutiqueSchema.index({ statut_paiement: 1 });
 
 // Virtual pour le nombre de produits actifs
 boutiqueSchema.virtual('nombre_produits', {

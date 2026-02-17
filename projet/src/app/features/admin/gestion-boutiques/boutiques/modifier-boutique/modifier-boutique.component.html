@@ -1,0 +1,350 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-edit"></i>
+        Modifier la boutique
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/admin/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <a routerLink="/admin/boutiques/boutiques/liste">Boutiques</a>
+        <i class="fas fa-chevron-right"></i>
+        <a [routerLink]="['/admin/boutiques/boutiques/details', boutiqueId]">Détails</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">{{ boutique?.nom || 'Modification' }}</span>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loadingBoutique">
+    <div class="spinner"></div>
+    <p>Chargement des informations...</p>
+  </div>
+
+  <!-- Form Card -->
+  <div class="content-wrapper" *ngIf="!loadingBoutique">
+    <div class="form-card">
+      <!-- En-tête -->
+      <div class="form-header">
+        <div class="form-icon">
+          <i class="fas fa-store"></i>
+        </div>
+        <div class="form-title">
+          <h2>{{ boutique?.nom }}</h2>
+          <p>Modifiez les informations de la boutique</p>
+        </div>
+        <div class="status-indicator" [ngClass]="boutique?.est_active ? 'active' : 'inactive'">
+          <i class="fas" [class.fa-check-circle]="boutique?.est_active" [class.fa-times-circle]="!boutique?.est_active"></i>
+          {{ boutique?.est_active ? 'Active' : 'Inactive' }}
+        </div>
+      </div>
+
+      <!-- Formulaire -->
+      <form [formGroup]="boutiqueForm" (ngSubmit)="onSubmit()" class="modern-form" novalidate>
+        
+        <!-- Messages -->
+        <div class="alert alert-success" *ngIf="successMessage">
+          <i class="fas fa-check-circle"></i>
+          {{ successMessage }}
+        </div>
+
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ errorMessage }}
+        </div>
+
+        <!-- Logo Preview -->
+        <!-- <div class="logo-preview" *ngIf="boutique?.logo_url">
+          <label>Logo actuel :</label>
+          <div class="preview-container">
+            <img [src]="boutique?.logo_url" alt="Logo" (error)="onLogoError($event)">
+          </div>
+        </div> -->
+
+        <!-- Informations de base -->
+        <div class="form-section">
+          <h3>
+            <i class="fas fa-info-circle"></i>
+            Informations de base
+          </h3>
+
+          <!-- Nom -->
+          <div class="form-group">
+            <label for="nom">
+              <i class="fas fa-store"></i>
+              Nom de la boutique *
+            </label>
+            <input
+              type="text"
+              id="nom"
+              formControlName="nom"
+              class="form-control"
+              [ngClass]="{
+                'is-invalid': boutiqueForm.get('nom')?.touched && boutiqueForm.get('nom')?.invalid
+              }"
+            >
+            <div class="error-message" *ngIf="boutiqueForm.get('nom')?.touched && boutiqueForm.get('nom')?.invalid">
+              <span *ngIf="boutiqueForm.get('nom')?.errors?.['required']">Le nom est requis</span>
+              <span *ngIf="boutiqueForm.get('nom')?.errors?.['minlength']">Minimum 2 caractères</span>
+              <span *ngIf="boutiqueForm.get('nom')?.errors?.['maxlength']">Maximum 100 caractères</span>
+            </div>
+          </div>
+
+          <!-- Slogan -->
+          <!-- <div class="form-group">
+            <label for="slogan">
+              <i class="fas fa-quote-right"></i>
+              Slogan
+            </label>
+            <input
+              type="text"
+              id="slogan"
+              formControlName="slogan"
+              class="form-control"
+              placeholder="Le slogan de la boutique (optionnel)"
+            >
+          </div> -->
+
+          <!-- Description -->
+          <!-- <div class="form-group">
+            <label for="description">
+              <i class="fas fa-align-left"></i>
+              Description
+            </label>
+            <textarea
+              id="description"
+              formControlName="description"
+              class="form-control"
+              rows="4"
+              placeholder="Description de la boutique (optionnel)"
+            ></textarea>
+          </div> -->
+
+          <!-- Catégorie -->
+          <div class="form-group">
+            <label for="categorie">
+              <i class="fas fa-tags"></i>
+              Catégorie *
+            </label>
+            <select
+              id="categorie"
+              formControlName="categorie"
+              class="form-control"
+              [ngClass]="{
+                'is-invalid': boutiqueForm.get('categorie')?.touched && boutiqueForm.get('categorie')?.invalid
+              }"
+            >
+              <option value="" disabled>Sélectionnez une catégorie</option>
+              <option *ngFor="let cat of categories" [value]="cat._id">
+                {{ cat.nom_categorie }}
+              </option>
+            </select>
+            <div class="error-message" *ngIf="boutiqueForm.get('categorie')?.touched && boutiqueForm.get('categorie')?.invalid">
+              La catégorie est requise
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact -->
+        <!-- <div class="form-section" formGroupName="contact">
+          <h3>
+            <i class="fas fa-address-card"></i>
+            Contact
+          </h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="contact-email">
+                <i class="fas fa-envelope"></i>
+                Email
+              </label>
+              <input
+                type="email"
+                id="contact-email"
+                formControlName="email"
+                class="form-control"
+                placeholder="contact@boutique.com"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="contact-telephone">
+                <i class="fas fa-phone"></i>
+                Téléphone
+              </label>
+              <input
+                type="text"
+                id="contact-telephone"
+                formControlName="telephone"
+                class="form-control"
+                placeholder="+33 1 23 45 67 89"
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="contact-horaires">
+              <i class="fas fa-clock"></i>
+              Horaires d'ouverture
+            </label>
+            <input
+              type="text"
+              id="contact-horaires"
+              formControlName="horaires"
+              class="form-control"
+              placeholder="Lundi - Vendredi: 9h-18h"
+            >
+          </div>
+        </div> -->
+
+        <!-- Localisation -->
+        <!-- <div class="form-section" formGroupName="adresse">
+          <h3>
+            <i class="fas fa-map-marker-alt"></i>
+            Localisation dans le centre
+          </h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="adresse-etage">
+                <i class="fas fa-layer-group"></i>
+                Étage
+              </label>
+              <input
+                type="text"
+                id="adresse-etage"
+                formControlName="etage"
+                class="form-control"
+                placeholder="Ex: RDC, 1er étage..."
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="adresse-numero">
+                <i class="fas fa-hashtag"></i>
+                Numéro
+              </label>
+              <input
+                type="text"
+                id="adresse-numero"
+                formControlName="numero"
+                class="form-control"
+                placeholder="Ex: 42, 12B..."
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="adresse-aile">
+                <i class="fas fa-arrows-alt-h"></i>
+                Aile
+              </label>
+              <input
+                type="text"
+                id="adresse-aile"
+                formControlName="aile"
+                class="form-control"
+                placeholder="Ex: Nord, Sud, Est, Ouest..."
+              >
+            </div>
+          </div>
+        </div> -->
+
+        <!-- Paramètres -->
+        <!-- <div class="form-section" formGroupName="parametres">
+          <h3>
+            <i class="fas fa-cog"></i>
+            Paramètres
+          </h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="parametres-frais">
+                <i class="fas fa-truck"></i>
+                Frais de livraison (€)
+              </label>
+              <input
+                type="number"
+                id="parametres-frais"
+                formControlName="frais_livraison"
+                class="form-control"
+                min="0"
+                step="0.01"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="parametres-delai">
+                <i class="fas fa-clock"></i>
+                Délai préparation (min)
+              </label>
+              <input
+                type="number"
+                id="parametres-delai"
+                formControlName="delai_preparation"
+                class="form-control"
+                min="0"
+                step="5"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="parametres-gratuit">
+                <i class="fas fa-gift"></i>
+                Livraison gratuite après (€)
+              </label>
+              <input
+                type="number"
+                id="parametres-gratuit"
+                formControlName="livraison_gratuite_apres"
+                class="form-control"
+                min="0"
+                step="5"
+              >
+            </div>
+          </div>
+        </div> -->
+
+        <!-- Statut -->
+        <div class="form-section">
+          <h3>
+            <i class="fas fa-toggle-on"></i>
+            Statut
+          </h3>
+
+          <div class="form-group">
+            <div class="toggle-switch">
+              <label class="switch">
+                <input type="checkbox" formControlName="est_active">
+                <span class="slider round"></span>
+              </label>
+              <span class="toggle-label" [ngClass]="boutiqueForm.get('est_active')?.value ? 'text-success' : 'text-danger'">
+                <i class="fas" [class.fa-check-circle]="boutiqueForm.get('est_active')?.value" 
+                   [class.fa-times-circle]="!boutiqueForm.get('est_active')?.value"></i>
+                {{ boutiqueForm.get('est_active')?.value ? 'Boutique active' : 'Boutique inactive' }}
+              </span>
+            </div>
+            <small class="form-text">
+              Les boutiques inactives ne sont pas visibles par les acheteurs
+            </small>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="annuler()" [disabled]="loading">
+            <i class="fas fa-times"></i>
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="boutiqueForm.invalid || loading">
+            <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+            <i class="fas fa-save" *ngIf="!loading"></i>
+            {{ loading ? 'Modification...' : 'Enregistrer les modifications' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

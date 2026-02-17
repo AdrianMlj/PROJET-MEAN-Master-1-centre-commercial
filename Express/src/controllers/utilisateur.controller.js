@@ -393,3 +393,70 @@ exports.statistiquesUtilisateurs = async (req, res) => {
     });
   }
 };
+// ============================================
+// Récupérer les gérants disponibles avec recherche
+// ============================================
+exports.gerantsDisponibles = async (req, res) => {
+  try {
+    const { recherche, page = 1, limit = 10 } = req.query;
+    
+    // 1. Récupérer le rôle "boutique"
+    const Role = require('../models/role.model');
+    const roleBoutique = await Role.findOne({ nom_role: 'boutique' });
+    
+    if (!roleBoutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rôle boutique non trouvé'
+      });
+    }
+    
+    // 2. Construction de la requête
+    const query = {
+      role: roleBoutique._id,
+      boutique_associee: { $exists: false } // Pas de boutique associée
+    };
+    
+    // 3. Recherche textuelle (si fournie)
+    if (recherche && recherche.trim() !== '') {
+      query.$or = [
+        { nom: { $regex: recherche, $options: 'i' } },
+        { prenom: { $regex: recherche, $options: 'i' } },
+        { email: { $regex: recherche, $options: 'i' } }
+      ];
+    }
+    
+    // 4. Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // 5. Exécuter les requêtes en parallèle
+    const [gerants, total] = await Promise.all([
+      Utilisateur.find(query)
+        .select('_id nom prenom email') // On ne prend que l'essentiel
+        .sort({ nom: 1, prenom: 1 })
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Utilisateur.countDocuments(query)
+    ]);
+    
+    // 6. Réponse
+    res.status(200).json({
+      success: true,
+      gerants,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+    
+  } catch (error) {
+    console.error('Erreur récupération gérants:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des gérants',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};

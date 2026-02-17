@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const utilisateurSchema = new mongoose.Schema({
   email: {
@@ -67,6 +68,8 @@ const utilisateurSchema = new mongoose.Schema({
 }, {
   timestamps: { createdAt: 'date_creation', updatedAt: 'date_modification' }
 });
+
+utilisateurSchema.plugin(mongoosePaginate);
 
 // Indexes
 utilisateurSchema.index({ email: 1 });

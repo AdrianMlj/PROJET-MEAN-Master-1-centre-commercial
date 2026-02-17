@@ -12,7 +12,9 @@ export class AdminSidebarComponent implements OnInit {
   isCollapsed = false;
   isMobileMenuOpen = false;
   menuOpen: { [key: string]: boolean } = {
-    gestionBoutiques: true
+    gestionBoutiques: true,
+    categories: true,
+    boutiques: true
   };
 
   constructor(

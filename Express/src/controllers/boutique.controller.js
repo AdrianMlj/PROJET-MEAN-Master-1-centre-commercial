@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Boutique = require('../models/boutique.model');
 const CategorieBoutique = require('../models/categorieBoutique.model');
 const Utilisateur = require('../models/utilisateur.model');
@@ -82,6 +83,113 @@ exports.listerBoutiques = async (req, res) => {
   }
 };
 
+// ============================================
+// ADMIN: Lister toutes les boutiques (même inactives)
+// ============================================
+exports.listerToutesBoutiques = async (req, res) => {
+  try {
+    const { 
+      page = 1, 
+      limit = 10, 
+      categorie, 
+      est_active,
+      recherche,
+      tri = 'date_creation',
+      statut_paiement 
+    } = req.query;
+    
+    // Construction de la requête
+    const query = {};
+    
+    // Filtres optionnels
+    if (categorie) {
+      query.categorie = categorie;
+    }
+    
+    if (est_active !== undefined) {
+      query.est_active = est_active === 'true';
+    }
+    
+    if (statut_paiement) {
+      query.statut_paiement = statut_paiement; // 'paye' ou 'impaye'
+    }
+    
+    // Recherche par nom, description ou slogan
+    if (recherche) {
+      query.$or = [
+        { nom: { $regex: recherche, $options: 'i' } },
+        { description: { $regex: recherche, $options: 'i' } },
+        { slogan: { $regex: recherche, $options: 'i' } },
+        { 'contact.email': { $regex: recherche, $options: 'i' } }
+      ];
+    }
+    
+    // Tri
+    let sort = {};
+    switch (tri) {
+      case 'date_creation':
+        sort = { date_creation: -1 };
+        break;
+      case 'nom_asc':
+        sort = { nom: 1 };
+        break;
+      case 'nom_desc':
+        sort = { nom: -1 };
+        break;
+      case 'ventes':
+        sort = { 'statistiques.commandes_traitees': -1 };
+        break;
+      case 'chiffre_affaires':
+        sort = { 'statistiques.chiffre_affaires': -1 };
+        break;
+      case 'note':
+        sort = { 'statistiques.note_moyenne': -1 };
+        break;
+      case 'paiement':
+        sort = { statut_paiement: 1 }; // Les impayés d'abord
+        break;
+      default:
+        sort = { date_creation: -1 };
+    }
+    
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      populate: [
+        { path: 'categorie', select: 'nom_categorie icone' },
+        { path: 'gerant', select: 'nom prenom email telephone' }
+      ],
+      sort,
+      select: '-informations_bancaires' // On cache toujours les infos bancaires
+    };
+    
+    const boutiques = await Boutique.paginate(query, options);
+    
+    // Statistiques supplémentaires pour l'admin
+    const stats = {
+      total: boutiques.totalDocs,
+      actives: boutiques.docs.filter(b => b.est_active).length,
+      inactives: boutiques.docs.filter(b => !b.est_active).length,
+      payees: boutiques.docs.filter(b => b.statut_paiement === 'paye').length,
+      impayees: boutiques.docs.filter(b => b.statut_paiement === 'impaye').length
+    };
+    
+    res.status(200).json({
+      success: true,
+      stats, // Statistiques en plus
+      ...boutiques
+    });
+    
+  } catch (error) {
+    console.error('Erreur liste toutes boutiques:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération de toutes les boutiques',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 // Obtenir une boutique par ID (publique)
 exports.obtenirBoutique = async (req, res) => {
   try {
@@ -111,6 +219,51 @@ exports.obtenirBoutique = async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur obtention boutique:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération de la boutique',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ============================================
+// ADMIN: Récupérer une boutique par ID (même inactive)
+// ============================================
+exports.obtenirBoutiqueAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const boutique = await Boutique.findById(id)
+      .populate('categorie')
+      .populate('gerant', 'nom prenom email telephone avatar_url')
+      .select('-informations_bancaires'); // On cache toujours les infos bancaires
+
+    if (!boutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Boutique non trouvée'
+      });
+    }
+
+    // ✅ Pas de vérification de est_active - l'admin voit tout !
+
+    res.status(200).json({
+      success: true,
+      boutique
+    });
+
+  } catch (error) {
+    console.error('Erreur récupération boutique admin:', error);
+    
+    // Gérer les erreurs d'ID invalide
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: 'ID de boutique invalide'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération de la boutique',
@@ -479,7 +632,9 @@ exports.obtenirMaBoutique = async (req, res) => {
   }
 };
 
-// Upload logo boutique
+// ============================================
+// UPLOADER LE LOGO (POST)
+// ============================================
 exports.uploadLogo = async (req, res) => {
   try {
     if (!req.file) {
@@ -497,10 +652,7 @@ exports.uploadLogo = async (req, res) => {
       });
     }
 
-    // Construire l'URL du logo
     const logoUrl = `/uploads/boutiques/${req.file.filename}`;
-    
-    // Mettre à jour le logo
     boutique.logo_url = logoUrl;
     await boutique.save();
 
@@ -514,6 +666,350 @@ exports.uploadLogo = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erreur lors de l\'upload du logo',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ============================================
+// METTRE À JOUR LE LOGO (PUT)
+// ============================================
+exports.updateLogo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Aucun fichier uploadé'
+      });
+    }
+
+    const boutique = await Boutique.findOne({ gerant: req.user.id });
+    if (!boutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Boutique non trouvée'
+      });
+    }
+
+    const logoUrl = `/uploads/boutiques/${req.file.filename}`;
+    boutique.logo_url = logoUrl;
+    await boutique.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Logo mis à jour avec succès',
+      logo_url: logoUrl
+    });
+  } catch (error) {
+    console.error('Erreur mise à jour logo:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la mise à jour du logo',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ============================================
+// UPLOADER PLUSIEURS IMAGES (POST)
+// ============================================
+exports.uploadImages = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Aucun fichier uploadé'
+      });
+    }
+
+    const boutique = await Boutique.findOne({ gerant: req.user.id });
+    if (!boutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Boutique non trouvée pour cet utilisateur'
+      });
+    }
+
+    // Limiter le nombre total d'images (max 10)
+    const MAX_IMAGES = 10;
+    if (boutique.images.length + req.files.length > MAX_IMAGES) {
+      return res.status(400).json({
+        success: false,
+        message: `Vous ne pouvez pas avoir plus de ${MAX_IMAGES} images au total. Actuellement: ${boutique.images.length}`
+      });
+    }
+
+    const nouvellesImages = req.files.map(file => 
+      `/uploads/boutiques/${file.filename}`
+    );
+
+    boutique.images = [...boutique.images, ...nouvellesImages];
+    await boutique.save();
+
+    res.status(200).json({
+      success: true,
+      message: `${req.files.length} image(s) uploadée(s) avec succès`,
+      images: boutique.images,
+      total_images: boutique.images.length
+    });
+  } catch (error) {
+    console.error('Erreur upload multiple images:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de l\'upload des images',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ============================================
+// SUPPRIMER UNE IMAGE (DELETE)
+// ============================================
+exports.supprimerImage = async (req, res) => {
+  try {
+    const { index } = req.params;
+    const imageIndex = parseInt(index);
+    
+    const boutique = await Boutique.findOne({ gerant: req.user.id });
+    
+    if (!boutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Boutique non trouvée'
+      });
+    }
+
+    // Vérifier si l'index est valide
+    if (isNaN(imageIndex) || imageIndex < 0 || imageIndex >= boutique.images.length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Index d\'image invalide'
+      });
+    }
+
+    // Supprimer l'image du tableau
+    const imageSupprimee = boutique.images.splice(imageIndex, 1);
+    
+    await boutique.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Image supprimée avec succès',
+      image_supprimee: imageSupprimee[0],
+      images: boutique.images
+    });
+
+  } catch (error) {
+    console.error('Erreur suppression image:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la suppression de l\'image',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ============================================
+// RÉCUPÉRER TOUTES LES IMAGES (GET)
+// ============================================
+exports.getImages = async (req, res) => {
+  try {
+    const boutique = await Boutique.findOne({ gerant: req.user.id });
+    
+    if (!boutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Boutique non trouvée'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      logo_url: boutique.logo_url,
+      images: boutique.images,
+      total_images: boutique.images.length + (boutique.logo_url ? 1 : 0)
+    });
+
+  } catch (error) {
+    console.error('Erreur récupération images:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des images',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ============================================
+// DÉFINIR UNE IMAGE COMME PRINCIPALE (PATCH)
+// ============================================
+exports.setImagePrincipale = async (req, res) => {
+  try {
+    const { index } = req.params;
+    const imageIndex = parseInt(index);
+    
+    const boutique = await Boutique.findOne({ gerant: req.user.id });
+    
+    if (!boutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Boutique non trouvée'
+      });
+    }
+
+    // Vérifier si l'index est valide
+    if (isNaN(imageIndex) || imageIndex < 0 || imageIndex >= boutique.images.length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Index d\'image invalide'
+      });
+    }
+
+    // Récupérer l'image à définir comme principale
+    const imagePrincipale = boutique.images[imageIndex];
+    
+    // Supprimer l'image du tableau
+    boutique.images.splice(imageIndex, 1);
+    
+    // Définir comme nouveau logo
+    boutique.logo_url = imagePrincipale;
+    
+    await boutique.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Image principale mise à jour avec succès',
+      logo_url: boutique.logo_url,
+      images: boutique.images
+    });
+
+  } catch (error) {
+    console.error('Erreur définition image principale:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la définition de l\'image principale',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ============================================
+// ✅ API POUR PAYER LA LOCATION (NOUVEAU)
+// ============================================
+exports.payerLocation = async (req, res) => {
+  try {
+    // 1. Récupérer la boutique du gérant connecté
+    const boutique = await Boutique.findOne({ gerant: req.user.id });
+    
+    if (!boutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Boutique non trouvée'
+      });
+    }
+
+    // 2. Vérifier si la boutique a déjà payé
+    if (boutique.statut_paiement === 'paye') {
+      return res.status(400).json({
+        success: false,
+        message: 'La boutique a déjà payé sa location'
+      });
+    }
+
+    // 3. SIMULATION DE PAIEMENT (ici vous intégrerez Stripe plus tard)
+    // Pour l'instant, on suppose que le paiement réussit toujours
+    
+    // 4. ✅ METTRE À JOUR LE STATUT DE PAIEMENT
+    boutique.statut_paiement = 'paye';
+    
+    // 5. Sauvegarder
+    await boutique.save();
+
+    // 6. Réponse
+    res.status(200).json({
+      success: true,
+      message: '✅ Paiement de la location effectué avec succès',
+      boutique: {
+        id: boutique._id,
+        nom: boutique.nom,
+        statut_paiement: boutique.statut_paiement,
+        est_active: boutique.est_active
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur paiement location:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors du paiement de la location',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ============================================
+// ADMIN: Supprimer une boutique (VERSION SANS TRANSACTION)
+// ============================================
+exports.supprimerBoutique = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // 1. Récupérer la boutique
+    const boutique = await Boutique.findById(id).populate('gerant');
+    
+    if (!boutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Boutique non trouvée'
+      });
+    }
+
+    // 2. Récupérer le nom pour le message
+    const nomBoutique = boutique.nom;
+
+    // 3. SUPPRIMER LES PRODUITS
+    const Produit = require('../models/produit.model');
+    await Produit.deleteMany({ boutique: boutique._id });
+
+    // 4. SUPPRIMER LES CATÉGORIES DE PRODUITS
+    const CategorieProduit = require('../models/categorieProduit.model');
+    await CategorieProduit.deleteMany({ boutique: boutique._id });
+
+    // 5. DISSOCIER LE GÉRANT
+    if (boutique.gerant) {
+      const Utilisateur = require('../models/utilisateur.model');
+      await Utilisateur.findByIdAndUpdate(
+        boutique.gerant._id,
+        { boutique_associee: null }
+      );
+    }
+
+    // 6. SUPPRIMER LA BOUTIQUE
+    await boutique.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: `✅ Boutique "${nomBoutique}" supprimée avec succès`,
+      details: {
+        boutique_supprimee: nomBoutique,
+        produits_supprimes: true,
+        gerant_dissocie: true
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur suppression boutique:', error);
+    
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: 'ID de boutique invalide'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la suppression de la boutique',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

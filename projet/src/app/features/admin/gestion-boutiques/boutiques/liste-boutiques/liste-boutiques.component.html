@@ -1,0 +1,300 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-store"></i>
+        Gestion des boutiques
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/admin/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Gestion Boutiques</span>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Liste des boutiques</span>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary" routerLink="/admin/boutiques/boutiques/creer">
+        <i class="fas fa-plus-circle"></i>
+        Nouvelle boutique
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-icon">
+        <i class="fas fa-store"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.total }}</h3>
+        <p>Total boutiques</p>
+      </div>
+    </div>
+
+    <div class="stat-card active">
+      <div class="stat-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.actives }}</h3>
+        <p>Actives</p>
+      </div>
+    </div>
+
+    <div class="stat-card inactive">
+      <div class="stat-icon">
+        <i class="fas fa-times-circle"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.inactives }}</h3>
+        <p>Inactives</p>
+      </div>
+    </div>
+
+    <div class="stat-card paye">
+      <div class="stat-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.payees }}</h3>
+        <p>Payées</p>
+      </div>
+    </div>
+
+    <div class="stat-card impaye">
+      <div class="stat-icon">
+        <i class="fas fa-exclamation-circle"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.impayees }}</h3>
+        <p>Impayées</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="filters-card">
+    <div class="filters-header">
+      <h3>
+        <i class="fas fa-filter"></i>
+        Filtres
+      </h3>
+      <button class="btn-clear" (click)="clearFilters()" *ngIf="searchTerm || selectedCategorie || selectedStatut || selectedPaiement">
+        <i class="fas fa-times"></i>
+        Effacer les filtres
+      </button>
+    </div>
+
+    <div class="filters-body">
+      <div class="filter-row">
+        <!-- Recherche -->
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            placeholder="Rechercher une boutique..."
+            class="form-control"
+          >
+        </div>
+
+        <!-- Tri -->
+        <div class="sort-box">
+          <select [(ngModel)]="selectedTri" (change)="onTriChange()" class="form-control">
+            <option *ngFor="let opt of triOptions" [value]="opt.value">
+              Trier par : {{ opt.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <!-- Filtre Catégorie -->
+        <div class="filter-group">
+          <label>Catégorie</label>
+          <select [(ngModel)]="selectedCategorie" (change)="onFilterChange()" class="form-control">
+            <option value="">Toutes les catégories</option>
+            <option *ngFor="let cat of categories" [value]="cat._id">
+              {{ cat.nom_categorie }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Filtre Statut -->
+        <div class="filter-group">
+          <label>Statut</label>
+          <select [(ngModel)]="selectedStatut" (change)="onFilterChange()" class="form-control">
+            <option value="">Tous les statuts</option>
+            <option value="true">Actives</option>
+            <option value="false">Inactives</option>
+          </select>
+        </div>
+
+        <!-- Filtre Paiement -->
+        <div class="filter-group">
+          <label>Paiement</label>
+          <select [(ngModel)]="selectedPaiement" (change)="onFilterChange()" class="form-control">
+            <option value="">Tous</option>
+            <option value="paye">Payées</option>
+            <option value="impaye">Impayées</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des boutiques...</p>
+  </div>
+
+  <!-- Boutiques Grid -->
+  <div class="boutiques-grid" *ngIf="!loading">
+    <div class="boutique-card" *ngFor="let boutique of filteredBoutiques">
+      <!-- En-tête de la carte avec logo -->
+      <div class="card-header">
+        <div class="logo-wrapper">
+          <img [src]="getLogoUrl(boutique.logo_url)" 
+            [alt]="boutique.nom" 
+            (error)="onLogoError($event)"
+            class="boutique-logo">
+        </div>
+        <div class="header-info">
+          <h3 class="boutique-nom">{{ boutique.nom }}</h3>
+          <span class="boutique-categorie">{{ getCategorieName(boutique.categorie) }}</span>
+        </div>
+        <div class="header-badges">
+          <span class="badge statut" [ngClass]="boutique.est_active ? 'active' : 'inactive'">
+            <i class="fas" [class.fa-check-circle]="boutique.est_active" [class.fa-times-circle]="!boutique.est_active"></i>
+            {{ boutique.est_active ? 'Active' : 'Inactive' }}
+          </span>
+          <span class="badge paiement" [ngClass]="getStatutPaiementClass(boutique.statut_paiement)">
+            <i class="fas" [ngClass]="getStatutPaiementIcon(boutique.statut_paiement)"></i>
+            {{ getStatutPaiementText(boutique.statut_paiement) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Informations gérant -->
+      <div class="gerant-info">
+        <i class="fas fa-user-tie"></i>
+        <div class="gerant-details">
+            <span class="gerant-nom">{{ getGerantName(boutique.gerant) }}</span>
+            <span class="gerant-email" *ngIf="getGerantEmail(boutique.gerant)">
+            {{ getGerantEmail(boutique.gerant) }}
+            </span>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="contact-info" *ngIf="boutique.contact">
+        <div class="contact-item" *ngIf="boutique.contact.email">
+          <i class="fas fa-envelope"></i>
+          <span>{{ boutique.contact.email }}</span>
+        </div>
+        <div class="contact-item" *ngIf="boutique.contact.telephone">
+          <i class="fas fa-phone"></i>
+          <span>{{ boutique.contact.telephone }}</span>
+        </div>
+      </div>
+
+      <!-- Statistiques -->
+      <div class="stats">
+        <div class="stat-item" title="Note moyenne">
+          <i class="fas fa-star"></i>
+          <span>{{ boutique.statistiques.note_moyenne.toFixed(1) }}</span>
+        </div>
+        <div class="stat-item" title="Nombre d'avis">
+          <i class="fas fa-comments"></i>
+          <span>{{ formatNumber(boutique.statistiques.nombre_avis) }}</span>
+        </div>
+        <div class="stat-item" title="Commandes traitées">
+          <i class="fas fa-shopping-bag"></i>
+          <span>{{ formatNumber(boutique.statistiques.commandes_traitees) }}</span>
+        </div>
+        <div class="stat-item" title="Chiffre d'affaires">
+          <i class="fas fa-euro-sign"></i>
+          <span>{{ formatCurrency(boutique.statistiques.chiffre_affaires) }}</span>
+        </div>
+      </div>
+
+      <!-- Date d'ouverture -->
+      <div class="date-info">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Ouverte le {{ formatDate(boutique.date_ouverture) }}</span>
+      </div>
+
+      <!-- Actions -->
+      <div class="card-actions">
+        <button class="btn-view" (click)="onViewDetails(boutique._id)" title="Voir détails">
+          <i class="fas fa-eye"></i>
+          Voir détails
+        </button>
+        <button class="btn-edit" (click)="onEdit(boutique._id)" title="Modifier">
+          <i class="fas fa-edit"></i>
+          Modifier
+        </button>
+        <button class="btn-toggle" 
+                [ngClass]="boutique.est_active ? 'active' : 'inactive'"
+                (click)="onToggleStatus(boutique)"
+                [title]="boutique.est_active ? 'Désactiver' : 'Activer'">
+          <i class="fas" [class.fa-toggle-on]="boutique.est_active" [class.fa-toggle-off]="!boutique.est_active"></i>
+          {{ boutique.est_active ? 'Désactiver' : 'Activer' }}
+        </button>
+        <button class="btn-delete" (click)="onDelete(boutique._id)" title="Supprimer">
+          <i class="fas fa-trash"></i>
+          Supprimer
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredBoutiques.length === 0">
+      <div class="empty-icon">
+        <i class="fas fa-store"></i>
+      </div>
+      <h3>Aucune boutique trouvée</h3>
+      <p>
+        {{ searchTerm || selectedCategorie || selectedStatut || selectedPaiement ? 
+           'Aucune boutique ne correspond à vos critères de recherche.' : 
+           'Commencez par créer votre première boutique.' }}
+      </p>
+      <button class="btn btn-primary" routerLink="/admin/boutiques/boutiques/creer" *ngIf="!searchTerm && !selectedCategorie && !selectedStatut && !selectedPaiement">
+        <i class="fas fa-plus-circle"></i>
+        Créer une boutique
+      </button>
+      <button class="btn btn-secondary" (click)="clearFilters()" *ngIf="searchTerm || selectedCategorie || selectedStatut || selectedPaiement">
+        <i class="fas fa-times"></i>
+        Effacer les filtres
+      </button>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <app-pagination
+    *ngIf="!loading && totalPages > 1"
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    [totalItems]="totalDocs"
+    [limit]="limit"
+    [hasPrevPage]="hasPrevPage"
+    [hasNextPage]="hasNextPage"
+    (pageChange)="onPageChange($event)">
+  </app-pagination>
+</div>

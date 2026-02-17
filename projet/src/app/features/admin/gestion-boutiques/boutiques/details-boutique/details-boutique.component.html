@@ -1,0 +1,312 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-store"></i>
+        Détails de la boutique
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/admin/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <a routerLink="/admin/boutiques/boutiques/liste">Boutiques</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">{{ boutique?.nom || 'Détails' }}</span>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-secondary" (click)="onBack()">
+        <i class="fas fa-arrow-left"></i>
+        Retour à la liste
+      </button>
+      <button class="btn btn-primary" (click)="onEdit()" *ngIf="boutique">
+        <i class="fas fa-edit"></i>
+        Modifier
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des informations...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Details Card -->
+  <div class="details-card" *ngIf="!loading && boutique">
+    <!-- En-tête avec logo -->
+    <div class="details-header">
+      <div class="header-content">
+        <div class="logo-container">
+          <img [src]="getLogoUrl(boutique.logo_url)" 
+            [alt]="boutique.nom" 
+            (error)="onLogoError($event)"
+            class="boutique-logo">
+        </div>
+        <div class="title-container">
+          <h2>{{ boutique.nom }}</h2>
+          <p class="slogan" *ngIf="boutique.slogan">"{{ boutique.slogan }}"</p>
+          <div class="badges">
+            <span class="badge categorie">
+              {{ getCategorieIcone() }} {{ getCategorieName() }}
+            </span>
+            <span class="badge statut" [ngClass]="boutique.est_active ? 'active' : 'inactive'">
+              <i class="fas" [class.fa-check-circle]="boutique.est_active" [class.fa-times-circle]="!boutique.est_active"></i>
+              {{ boutique.est_active ? 'Active' : 'Inactive' }}
+            </span>
+            <span class="badge paiement" [ngClass]="boutique.statut_paiement">
+              <i class="fas" [class.fa-check-circle]="boutique.statut_paiement === 'paye'" 
+                 [class.fa-exclamation-circle]="boutique.statut_paiement === 'impaye'"></i>
+              {{ boutique.statut_paiement === 'paye' ? 'Payé' : 'Impayé' }}
+            </span>
+          </div>
+        </div>
+        <button class="btn-toggle-status" 
+                [ngClass]="boutique.est_active ? 'active' : 'inactive'"
+                (click)="onToggleStatus()">
+          <i class="fas" [class.fa-toggle-on]="boutique.est_active" [class.fa-toggle-off]="!boutique.est_active"></i>
+          {{ boutique.est_active ? 'Désactiver' : 'Activer' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenu -->
+    <div class="details-content">
+      <!-- Description -->
+      <div class="info-section" *ngIf="boutique.description">
+        <h3>
+          <i class="fas fa-align-left"></i>
+          Description
+        </h3>
+        <p class="description">{{ boutique.description }}</p>
+      </div>
+
+      <!-- Grille d'informations -->
+      <div class="info-grid">
+        <!-- Gérant -->
+        <div class="info-card">
+          <h3>
+            <i class="fas fa-user-tie"></i>
+            Gérant
+          </h3>
+          <div class="info-content">
+            <p class="info-name">{{ getGerantName() }}</p>
+            <p class="info-email" *ngIf="getGerantEmail()">
+              <i class="fas fa-envelope"></i>
+              {{ getGerantEmail() }}
+            </p>
+            <p class="info-phone" *ngIf="getGerantTelephone()">
+              <i class="fas fa-phone"></i>
+              {{ getGerantTelephone() }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="info-card">
+          <h3>
+            <i class="fas fa-address-card"></i>
+            Contact
+          </h3>
+          <div class="info-content">
+            <p *ngIf="getContactEmail()">
+              <i class="fas fa-envelope"></i>
+              {{ getContactEmail() }}
+            </p>
+            <p *ngIf="getContactTelephone()">
+              <i class="fas fa-phone"></i>
+              {{ getContactTelephone() }}
+            </p>
+            <p *ngIf="getContactHoraires()">
+              <i class="fas fa-clock"></i>
+              {{ getContactHoraires() }}
+            </p>
+            <p *ngIf="!hasContact()">
+              Aucune information de contact
+            </p>
+          </div>
+        </div>
+
+        <!-- Adresse dans le centre -->
+        <div class="info-card">
+          <h3>
+            <i class="fas fa-map-marker-alt"></i>
+            Localisation
+          </h3>
+          <div class="info-content">
+            <p *ngIf="getAdresseEtage()">
+              <i class="fas fa-layer-group"></i>
+              Étage: {{ getAdresseEtage() }}
+            </p>
+            <p *ngIf="getAdresseNumero()">
+              <i class="fas fa-hashtag"></i>
+              Numéro: {{ getAdresseNumero() }}
+            </p>
+            <p *ngIf="getAdresseAile()">
+              <i class="fas fa-arrows-alt-h"></i>
+              Aile: {{ getAdresseAile() }}
+            </p>
+            <p *ngIf="!hasAdresse()">
+              Aucune information de localisation
+            </p>
+          </div>
+        </div>
+
+        <!-- Dates -->
+        <div class="info-card">
+          <h3>
+            <i class="fas fa-calendar-alt"></i>
+            Dates
+          </h3>
+          <div class="info-content">
+            <p>
+              <i class="fas fa-store"></i>
+              Ouverture: {{ formatDate(boutique.date_ouverture) }}
+            </p>
+            <p>
+              <i class="fas fa-plus-circle"></i>
+              Création: {{ formatDate(boutique.date_creation) }}
+            </p>
+            <p *ngIf="boutique.date_modification">
+              <i class="fas fa-edit"></i>
+              Modification: {{ formatDate(boutique.date_modification) }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paramètres -->
+      <div class="info-section">
+        <h3>
+          <i class="fas fa-cog"></i>
+          Paramètres
+        </h3>
+        <div class="params-grid">
+          <div class="param-item">
+            <span class="param-label">Frais de livraison</span>
+            <span class="param-value">{{ formatCurrency(getParametresFraisLivraison()) }}</span>
+          </div>
+          <div class="param-item">
+            <span class="param-label">Délai de préparation</span>
+            <span class="param-value">{{ getParametresDelaiPreparation() }} min</span>
+          </div>
+          <div class="param-item">
+            <span class="param-label">Livraison gratuite après</span>
+            <span class="param-value">{{ formatCurrency(getParametresLivraisonGratuiteApres()) }}</span>
+          </div>
+          <div class="param-item">
+            <span class="param-label">Retrait en magasin</span>
+            <span class="param-value">
+              <i class="fas" [class.fa-check-circle]="getParametresAccepteRetrait()" 
+                 [class.fa-times-circle]="!getParametresAccepteRetrait()"
+                 [class.accepte]="getParametresAccepteRetrait()"
+                 [class.refuse]="!getParametresAccepteRetrait()"></i>
+            </span>
+          </div>
+          <div class="param-item">
+            <span class="param-label">Livraison à domicile</span>
+            <span class="param-value">
+              <i class="fas" [class.fa-check-circle]="getParametresAccepteLivraison()" 
+                 [class.fa-times-circle]="!getParametresAccepteLivraison()"
+                 [class.accepte]="getParametresAccepteLivraison()"
+                 [class.refuse]="!getParametresAccepteLivraison()"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistiques détaillées -->
+      <div class="info-section">
+        <h3>
+          <i class="fas fa-chart-line"></i>
+          Statistiques
+        </h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <i class="fas fa-star"></i>
+              <span>Note moyenne</span>
+            </div>
+            <div class="stat-value">{{ getStatistiquesNoteMoyenne().toFixed(1) }} / 5</div>
+            <div class="stat-detail">{{ formatNumber(getStatistiquesNombreAvis()) }} avis</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <i class="fas fa-shopping-bag"></i>
+              <span>Commandes</span>
+            </div>
+            <div class="stat-value">{{ formatNumber(getStatistiquesCommandesTraitees()) }}</div>
+            <div class="stat-detail">commandes traitées</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <i class="fas fa-box"></i>
+              <span>Produits vendus</span>
+            </div>
+            <div class="stat-value">{{ formatNumber(getStatistiquesProduitsVendus()) }}</div>
+            <div class="stat-detail">unités</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <i class="fas fa-euro-sign"></i>
+              <span>Chiffre d'affaires</span>
+            </div>
+            <div class="stat-value">{{ formatCurrency(getStatistiquesChiffreAffaires()) }}</div>
+            <div class="stat-detail">total</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations bancaires -->
+      <div class="info-section" *ngIf="hasInformationsBancaires()">
+        <h3>
+          <i class="fas fa-university"></i>
+          Informations bancaires
+        </h3>
+        <div class="bank-info">
+          <p *ngIf="getIban()">
+            <strong>IBAN:</strong> {{ getIban() }}
+          </p>
+          <p *ngIf="getBic()">
+            <strong>BIC:</strong> {{ getBic() }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Réseaux sociaux -->
+      <div class="info-section" *ngIf="hasSocialLinks()">
+        <h3>
+          <i class="fas fa-share-alt"></i>
+          Réseaux sociaux
+        </h3>
+        <div class="social-links">
+          <a *ngIf="getSocialWebsite()" [href]="getSocialWebsite()" target="_blank" class="social-link website">
+            <i class="fas fa-globe"></i>
+            Site web
+          </a>
+          <a *ngIf="getSocialFacebook()" [href]="getSocialFacebook()" target="_blank" class="social-link facebook">
+            <i class="fab fa-facebook"></i>
+            Facebook
+          </a>
+          <a *ngIf="getSocialInstagram()" [href]="getSocialInstagram()" target="_blank" class="social-link instagram">
+            <i class="fab fa-instagram"></i>
+            Instagram
+          </a>
+          <a *ngIf="getSocialTwitter()" [href]="getSocialTwitter()" target="_blank" class="social-link twitter">
+            <i class="fab fa-twitter"></i>
+            Twitter
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

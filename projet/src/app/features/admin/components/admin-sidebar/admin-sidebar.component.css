@@ -360,3 +360,101 @@
     width: 80px;
   }
 }
+
+/* AJOUTER CES STYLES À LA FIN DU FICHIER CSS EXISTANT */
+
+/* Sous-menu header (pour catégories et boutiques) */
+.sub-header {
+  padding: 10px 20px 10px 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 13px;
+  font-weight: 500;
+  background: #f5f5f5;
+  border-left: 3px solid transparent;
+}
+
+.sub-header:hover {
+  background: #e9ecef;
+  color: #667eea;
+}
+
+.sub-header.active {
+  color: #667eea;
+  border-left-color: #667eea;
+}
+
+.sub-header i:first-child {
+  font-size: 14px;
+  width: 20px;
+  color: #667eea;
+}
+
+.sub-header i:last-child {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+/* Sous-sous-menu (pour les actions) */
+.sub-sub-menu {
+  background: #f8f9fa;
+  padding: 5px 0;
+}
+
+.sub-sub-menu .sub-item {
+  padding-left: 72px;
+  font-size: 13px;
+}
+
+.sub-sub-menu .sub-item i {
+  font-size: 14px;
+  width: 18px;
+}
+
+/* Mode collapsed */
+.sidebar.collapsed .sub-header {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.sidebar.collapsed .sub-header span {
+  display: none;
+}
+
+.sidebar.collapsed .sub-header i:last-child {
+  display: none;
+}
+
+.sidebar.collapsed .sub-sub-menu {
+  display: none;
+}
+
+/* Style pour les badges dans les sous-menus */
+.sub-header .badge-count {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 10px;
+  margin-left: auto;
+}
+
+/* Animation pour les sous-menus */
+.sub-menu, .sub-sub-menu {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

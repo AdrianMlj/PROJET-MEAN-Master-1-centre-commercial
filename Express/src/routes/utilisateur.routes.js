@@ -79,6 +79,92 @@ router.get('/',
 
 /**
  * @swagger
+ * /utilisateurs/gerants-disponibles:
+ *   get:
+ *     tags: [Utilisateurs]
+ *     summary: Récupérer les gérants disponibles (admin)
+ *     description: |
+ *       Liste des utilisateurs avec rôle boutique qui n'ont pas encore de boutique.
+ *       Supporte la recherche et la pagination.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: recherche
+ *         schema:
+ *           type: string
+ *         description: Terme de recherche (nom, prénom ou email)
+ *         example: "jean"
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
+ *     responses:
+ *       200:
+ *         description: Liste des gérants disponibles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 gerants:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "65b3a1f2e4b0a1b2c3d4e5f6"
+ *                       nom:
+ *                         type: string
+ *                         example: "Dupont"
+ *                       prenom:
+ *                         type: string
+ *                         example: "Jean"
+ *                       email:
+ *                         type: string
+ *                         example: "jean.dupont@email.com"
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 25
+ *                     pages:
+ *                       type: integer
+ *                       example: 3
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       500:
+ *         $ref: '#/components/responses/Error'
+ */
+router.get('/gerants-disponibles',
+  authMiddleware,
+  roleMiddleware('admin_centre'),
+  utilisateurController.gerantsDisponibles
+);
+
+/**
+ * @swagger
  * /utilisateurs/statistiques:
  *   get:
  *     summary: Statistiques des utilisateurs
@@ -484,5 +570,6 @@ router.put('/:id/toggle-activation',
   roleMiddleware('admin_centre'), 
   utilisateurController.toggleActivationUtilisateur
 );
+
 
 module.exports = router;

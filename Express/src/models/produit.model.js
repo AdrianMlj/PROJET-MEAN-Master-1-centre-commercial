@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
+
 
 const produitSchema = new mongoose.Schema({
   nom: {
@@ -96,6 +98,9 @@ const produitSchema = new mongoose.Schema({
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
+
+produitSchema.plugin(mongoosePaginate);
+
 
 // Indexes
 produitSchema.index({ boutique: 1 });
