@@ -58,13 +58,13 @@
 
         <div class="commande-body">
           <div class="boutique-info">
-            <img [src]="commande.boutique?.logo_url || 'assets/placeholder-boutique.png'" [alt]="commande.boutique?.nom">
+            <img [src]="commande.boutique?.logo_url ? 'http://localhost:3000' + commande.boutique.logo_url : 'assets/placeholder-boutique.png'" [alt]="commande.boutique?.nom">
             <span>{{ commande.boutique?.nom }}</span>
           </div>
 
           <div class="articles-preview">
             <div class="article" *ngFor="let detail of commande.details.slice(0, 3)">
-              <img [src]="detail.produit?.images && detail.produit.images[0] ? detail.produit.images[0] : 'assets/placeholder-product.png'" [alt]="detail.produit?.nom">
+              <img [src]="detail.produit?.images && detail.produit.images[0] ? 'http://localhost:3000' + detail.produit.images[0].url : 'assets/placeholder-product.png'" [alt]="detail.produit?.nom">
             </div>
             <div class="more-articles" *ngIf="commande.details.length > 3">
               +{{ commande.details.length - 3 }}

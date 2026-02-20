@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
+
 const { genererNumeroCommande } = require('../utils/generateur');
 
 const commandeSchema = new mongoose.Schema({
@@ -80,6 +82,8 @@ const commandeSchema = new mongoose.Schema({
 }, {
   timestamps: { createdAt: 'date_commande', updatedAt: 'date_modification_statut' }
 });
+
+commandeSchema.plugin(mongoosePaginate);
 
 // Indexes
 commandeSchema.index({ client: 1 });

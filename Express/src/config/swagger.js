@@ -11,7 +11,7 @@ const options = {
       contact: {
         name: 'Support Technique',
         email: 'support@commerce-m1p13.com',
-        url: 'https://commerce-m1p13.com'
+        url: 'https://projet-mean-master-1-centre-commercial.onrender.com'
       },
       license: {
         name: 'MIT',
@@ -24,7 +24,7 @@ const options = {
         description: 'Serveur de développement local'
       },
       {
-        url: 'https://api.commerce-m1p13.com/api',
+        url: ' https://projet-mean-master-1-centre-commercial.onrender.com/api',
         description: 'Serveur de production'
       }
     ],

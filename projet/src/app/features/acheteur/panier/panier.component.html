@@ -42,7 +42,7 @@
         <div class="cart-item" *ngFor="let element of panier.elements" [class.updating]="updating[element._id]">
           <div class="col-product">
             <div class="product-image" (click)="voirProduit(element.produit._id)">
-              <img [src]="element.produit.images && element.produit.images[0] ? element.produit.images[0] : 'assets/placeholder-product.png'" [alt]="element.produit.nom">
+              <img [src]="element.produit.images && element.produit.images[0] ? 'http://localhost:3000' + element.produit.images[0].url : 'assets/placeholder-product.png'" [alt]="element.produit.nom">
             </div>
             <div class="product-details">
               <h3 (click)="voirProduit(element.produit._id)">{{ element.produit.nom }}</h3>

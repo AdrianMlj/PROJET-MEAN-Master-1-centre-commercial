@@ -8,7 +8,11 @@ export interface Produit {
   en_promotion: boolean;
   date_fin_promotion?: Date;
   quantite_stock: number;
-  images: string[];
+  images: {
+    url: string;
+    ordre?: number;
+    is_principale?: boolean;
+  }[];
   boutique: {
     _id: string;
     nom: string;

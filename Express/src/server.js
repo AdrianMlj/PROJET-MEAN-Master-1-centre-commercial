@@ -1,21 +1,9 @@
-const path = require("path");
-const result = require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
-if (result.error) {
-  console.error("❌ Erreur loading .env:", result.error.message);
-} else if (Object.keys(result.parsed || {}).length === 0) {
-  console.warn("⚠️ Warning: .env file loaded but no variables found");
-} else {
-  console.log("✅ .env loaded successfully:", Object.keys(result.parsed).length, "variables");
-}
-
-// Charger la configuration de la base de données AVANT les modèles
-require("./config/database");
-
+require("dotenv").config();
 const express = require("express");
 const app = require("./app");
+const connectDB = require("./config/database");
 
 // Connexion à MongoDB
-const connectDB = require("./config/database");
 connectDB();
 
 const server = express();

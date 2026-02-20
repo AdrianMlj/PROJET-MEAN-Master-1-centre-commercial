@@ -33,7 +33,7 @@
       <div class="products-grid" *ngIf="!loading.promotions && produitsEnPromotion.length > 0">
         <div class="product-card" *ngFor="let produit of produitsEnPromotion" (click)="voirProduit(produit._id)">
           <div class="product-image">
-            <img [src]="produit.images && produit.images[0] ? produit.images[0] : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
             <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction(produit) }}%</span>
           </div>
           <div class="product-info">
@@ -77,7 +77,7 @@
       <div class="products-grid" *ngIf="!loading.nouveautes && nouveautes.length > 0">
         <div class="product-card" *ngFor="let produit of nouveautes" (click)="voirProduit(produit._id)">
           <div class="product-image">
-            <img [src]="produit.images && produit.images[0] ? produit.images[0] : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
             <span class="badge new">Nouveau</span>
           </div>
           <div class="product-info">
@@ -116,7 +116,7 @@
       <div class="boutiques-grid" *ngIf="!loading.boutiques && boutiques.length > 0">
         <div class="boutique-card" *ngFor="let boutique of boutiques" (click)="voirBoutique(boutique._id)">
           <div class="boutique-logo">
-            <img [src]="boutique.logo_url || 'assets/placeholder-boutique.png'" [alt]="boutique.nom">
+            <img [src]="'http://localhost:3000' + boutique.logo_url" [alt]="boutique.nom" onError="this.src='assets/placeholder-boutique.png'">
           </div>
           <div class="boutique-info">
             <h3>{{ boutique.nom }}</h3>
@@ -157,7 +157,7 @@
       <div class="products-grid" *ngIf="!loading.ventes && meilleuresVentes.length > 0">
         <div class="product-card" *ngFor="let produit of meilleuresVentes" (click)="voirProduit(produit._id)">
           <div class="product-image">
-            <img [src]="produit.images && produit.images[0] ? produit.images[0] : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
             <span class="badge bestseller">Top vente</span>
           </div>
           <div class="product-info">
