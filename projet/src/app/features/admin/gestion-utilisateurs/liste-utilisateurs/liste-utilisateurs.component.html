@@ -1,0 +1,262 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-users"></i>
+        Gestion des utilisateurs
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/admin/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Gestion Utilisateurs</span>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Liste des utilisateurs</span>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary" routerLink="/admin/utilisateurs/creer-boutique">
+        <i class="fas fa-user-plus"></i>
+        Nouveau compte boutique
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.total }}</h3>
+        <p>Total utilisateurs</p>
+      </div>
+    </div>
+
+    <div class="stat-card admin">
+      <div class="stat-icon">
+        <i class="fas fa-user-shield"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.admins }}</h3>
+        <p>Administrateurs</p>
+      </div>
+    </div>
+
+    <div class="stat-card boutique">
+      <div class="stat-icon">
+        <i class="fas fa-store"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.boutiques }}</h3>
+        <p>Gérants boutique</p>
+      </div>
+    </div>
+
+    <div class="stat-card acheteur">
+      <div class="stat-icon">
+        <i class="fas fa-shopping-cart"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.acheteurs }}</h3>
+        <p>Acheteurs</p>
+      </div>
+    </div>
+
+    <div class="stat-card actif">
+      <div class="stat-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.actifs }}</h3>
+        <p>Comptes actifs</p>
+      </div>
+    </div>
+
+    <div class="stat-card inactif">
+      <div class="stat-icon">
+        <i class="fas fa-times-circle"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.inactifs }}</h3>
+        <p>Comptes inactifs</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="filters-card">
+    <div class="filters-header">
+      <h3>
+        <i class="fas fa-filter"></i>
+        Filtres
+      </h3>
+      <button class="btn-clear" (click)="clearFilters()" *ngIf="searchTerm || selectedRole || selectedStatut">
+        <i class="fas fa-times"></i>
+        Effacer les filtres
+      </button>
+    </div>
+
+    <div class="filters-body">
+      <div class="filter-row">
+        <!-- Recherche -->
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            placeholder="Rechercher par nom, prénom ou email..."
+            class="form-control"
+          >
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <!-- Filtre Rôle -->
+        <div class="filter-group">
+          <label>Rôle</label>
+          <select [(ngModel)]="selectedRole" (change)="onFilterChange()" class="form-control">
+            <option *ngFor="let opt of roleOptions" [value]="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Filtre Statut -->
+        <div class="filter-group">
+          <label>Statut</label>
+          <select [(ngModel)]="selectedStatut" (change)="onFilterChange()" class="form-control">
+            <option *ngFor="let opt of statutOptions" [value]="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des utilisateurs...</p>
+  </div>
+
+  <!-- Users Grid -->
+  <div class="users-grid" *ngIf="!loading">
+    <div class="user-card" *ngFor="let user of filteredUtilisateurs">
+      <!-- En-tête avec avatar -->
+      <div class="card-header">
+        <div class="avatar-wrapper">
+          <img [src]="getAvatarUrl(user.avatar_url)" 
+               [alt]="user.nom" 
+               (error)="onAvatarError($event)"
+               class="user-avatar">
+        </div>
+        <div class="header-info">
+          <h3 class="user-nom">{{ user.prenom }} {{ user.nom }}</h3>
+          <span class="user-role" [ngClass]="getRoleBadgeClass(user.role.nom_role)">
+            <i class="fas" [ngClass]="getRoleIcon(user.role.nom_role)"></i>
+            {{ getRoleLabel(user.role.nom_role) }}
+          </span>
+        </div>
+        <div class="header-badge">
+          <span class="badge statut" [ngClass]="user.est_actif ? 'actif' : 'inactif'">
+            <i class="fas" [class.fa-check-circle]="user.est_actif" [class.fa-times-circle]="!user.est_actif"></i>
+            {{ user.est_actif ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Informations de contact -->
+      <div class="contact-info">
+        <div class="info-item">
+          <i class="fas fa-envelope"></i>
+          <span>{{ user.email }}</span>
+        </div>
+        <div class="info-item" *ngIf="user.telephone">
+          <i class="fas fa-phone"></i>
+          <span>{{ user.telephone }}</span>
+        </div>
+      </div>
+
+      <!-- Boutique associée (pour les gérants) -->
+      <div class="boutique-info" *ngIf="user.role.nom_role === 'boutique'">
+        <i class="fas fa-store"></i>
+        <span>{{ getBoutiqueInfo(user) }}</span>
+      </div>
+
+      <!-- Dates -->
+      <div class="dates-info">
+        <div class="date-item" title="Date d'inscription">
+          <i class="fas fa-calendar-plus"></i>
+          <span>{{ formatSimpleDate(user.date_creation) }}</span>
+        </div>
+        <div class="date-item" title="Dernière connexion">
+          <i class="fas fa-clock"></i>
+          <span>{{ user.date_derniere_connexion ? formatSimpleDate(user.date_derniere_connexion) : 'Jamais' }}</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="card-actions">
+        <button class="btn-toggle" 
+                [ngClass]="user.est_actif ? 'active' : 'inactive'"
+                (click)="onToggleStatus(user)"
+                [title]="user.est_actif ? 'Désactiver' : 'Activer'">
+          <i class="fas" [class.fa-toggle-on]="user.est_actif" [class.fa-toggle-off]="!user.est_actif"></i>
+          {{ user.est_actif ? 'Désactiver' : 'Activer' }}
+        </button>
+        <button class="btn-delete" (click)="onDelete(user._id)" title="Supprimer">
+          <i class="fas fa-trash"></i>
+          Supprimer
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredUtilisateurs.length === 0">
+      <div class="empty-icon">
+        <i class="fas fa-users-slash"></i>
+      </div>
+      <h3>Aucun utilisateur trouvé</h3>
+      <p>
+        {{ searchTerm || selectedRole || selectedStatut ? 
+           'Aucun utilisateur ne correspond à vos critères de recherche.' : 
+           'Commencez par créer votre premier utilisateur.' }}
+      </p>
+      <button class="btn btn-primary" routerLink="/admin/utilisateurs/creer-boutique" *ngIf="!searchTerm && !selectedRole && !selectedStatut">
+        <i class="fas fa-user-plus"></i>
+        Créer un compte boutique
+      </button>
+      <button class="btn btn-secondary" (click)="clearFilters()" *ngIf="searchTerm || selectedRole || selectedStatut">
+        <i class="fas fa-times"></i>
+        Effacer les filtres
+      </button>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <app-pagination
+    *ngIf="!loading && totalPages > 1"
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    [totalItems]="totalDocs"
+    [limit]="limit"
+    [hasPrevPage]="hasPrevPage"
+    [hasNextPage]="hasNextPage"
+    (pageChange)="onPageChange($event)">
+  </app-pagination>
+</div>

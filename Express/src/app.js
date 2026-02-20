@@ -95,7 +95,7 @@ app.use('*', (req, res) => {
       '/api/utilisateurs/* - Utilisateurs',
       '/api/avis/* - Avis',
       '/api/favoris/* - Favoris',
-      '/api/roles/* - Roles',
+      '/api/roles/* - Roles'
     ]
   });
 });

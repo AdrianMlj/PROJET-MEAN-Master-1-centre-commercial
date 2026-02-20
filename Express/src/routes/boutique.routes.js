@@ -643,7 +643,7 @@ router.post('/',
  *   put:
  *     tags: [Boutiques]
  *     summary: Modifier une boutique (admin)
- *     description: Permet à l'admin de modifier une boutique existante
+ *     description: Permet à l'admin de modifier une boutique existante, y compris le gérant
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -664,12 +664,20 @@ router.post('/',
  *                 type: string
  *                 minLength: 2
  *                 maxLength: 100
+ *                 example: "Nouveau nom"
  *               description:
  *                 type: string
+ *                 example: "Nouvelle description"
  *               slogan:
  *                 type: string
+ *                 example: "Nouveau slogan"
  *               categorie:
  *                 type: string
+ *                 example: "65b3a1f2e4b0a1b2c3d4e5f6"
+ *               gerant:  
+ *                 type: string
+ *                 description: ID du nouveau gérant (doit avoir rôle boutique)
+ *                 example: "65b3a1f2e4b0a1b2c3d4e5f7"
  *               contact:
  *                 type: object
  *                 properties:
@@ -703,20 +711,12 @@ router.post('/',
  *                     minimum: 0
  *               est_active:
  *                 type: boolean
+ *                 example: true
  *     responses:
  *       200:
  *         description: Boutique mise à jour avec succès
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 boutique:
- *                   $ref: '#/components/schemas/Boutique'
+ *       400:
+ *         description: Erreur de validation (gérant non trouvé, mauvais rôle, etc.)
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       403:

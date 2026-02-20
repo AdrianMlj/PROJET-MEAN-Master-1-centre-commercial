@@ -18,6 +18,12 @@ import { ListeBoutiquesComponent } from './gestion-boutiques/boutiques/liste-bou
 import { DetailsBoutiqueComponent } from './gestion-boutiques/boutiques/details-boutique/details-boutique.component';
 import { ModifierBoutiqueComponent } from './gestion-boutiques/boutiques/modifier-boutique/modifier-boutique.component';
 
+// ✅ NOUVEAU: Utilisateurs
+import { CreerUtilisateurBoutiqueComponent } from './gestion-utilisateurs/creer-utilisateur-boutique/creer-utilisateur-boutique.component';
+import { ListeUtilisateursComponent } from './gestion-utilisateurs/liste-utilisateurs/liste-utilisateurs.component';
+
+import { StatistiquesComponent } from './statistiques/statistiques.component';
+
 @NgModule({
   declarations: [
     AdminSidebarComponent,
@@ -28,7 +34,11 @@ import { ModifierBoutiqueComponent } from './gestion-boutiques/boutiques/modifie
     CreerBoutiqueComponent,
     ListeBoutiquesComponent,
     DetailsBoutiqueComponent,
-    ModifierBoutiqueComponent
+    ModifierBoutiqueComponent,
+    // ✅ NOUVEAU
+    CreerUtilisateurBoutiqueComponent,
+    ListeUtilisateursComponent,
+    StatistiquesComponent
   ],
   imports: [
     CommonModule,

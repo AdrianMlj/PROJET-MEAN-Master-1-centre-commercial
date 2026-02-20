@@ -585,3 +585,30 @@
     justify-content: center;
   }
 }
+
+/* Style pour l'image par défaut */
+.default-image {
+  opacity: 0.8;
+  filter: brightness(0.95);
+  transition: all 0.3s;
+  object-fit: cover;
+}
+
+.default-image:hover {
+  opacity: 1;
+  filter: brightness(1);
+}
+
+/* Pour les logos dans les cartes */
+.logo-wrapper .default-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Pour les logos dans les détails */
+.logo-container .default-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

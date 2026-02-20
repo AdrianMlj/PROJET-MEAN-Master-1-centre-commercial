@@ -1,0 +1,202 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-user-plus"></i>
+        Créer un compte boutique
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/admin/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <a routerLink="/admin/utilisateurs/liste">Utilisateurs</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Créer compte boutique</span>
+      </nav>
+    </div>
+  </div>
+
+  <div class="content-wrapper">
+    <div class="form-card">
+      <!-- En-tête -->
+      <div class="form-header">
+        <div class="form-icon">
+          <i class="fas fa-store"></i>
+        </div>
+        <div class="form-title">
+          <h2>Nouveau compte gérant de boutique</h2>
+          <p>Créez un compte pour un nouveau gérant de boutique</p>
+        </div>
+      </div>
+
+      <!-- Formulaire -->
+      <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="modern-form" novalidate>
+        
+        <!-- Messages -->
+        <div class="alert alert-success" *ngIf="successMessage">
+          <i class="fas fa-check-circle"></i>
+          {{ successMessage }}
+        </div>
+
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ errorMessage }}
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email">
+            <i class="fas fa-envelope"></i>
+            Email *
+          </label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            class="form-control"
+            placeholder="exemple@email.com"
+            [ngClass]="{
+              'is-invalid': userForm.get('email')?.touched && userForm.get('email')?.invalid
+            }"
+          >
+          <div class="error-message" *ngIf="userForm.get('email')?.touched && userForm.get('email')?.invalid">
+            <span *ngIf="userForm.get('email')?.errors?.['required']">L'email est requis</span>
+            <span *ngIf="userForm.get('email')?.errors?.['email']">Format d'email invalide</span>
+          </div>
+        </div>
+
+        <!-- Mot de passe -->
+        <div class="form-group">
+          <label for="mot_de_passe">
+            <i class="fas fa-key"></i>
+            Mot de passe *
+          </label>
+          <input
+            type="password"
+            id="mot_de_passe"
+            formControlName="mot_de_passe"
+            class="form-control"
+            placeholder="Minimum 6 caractères"
+            [ngClass]="{
+              'is-invalid': userForm.get('mot_de_passe')?.touched && userForm.get('mot_de_passe')?.invalid
+            }"
+          >
+          <div class="error-message" *ngIf="userForm.get('mot_de_passe')?.touched && userForm.get('mot_de_passe')?.invalid">
+            <span *ngIf="userForm.get('mot_de_passe')?.errors?.['required']">Le mot de passe est requis</span>
+            <span *ngIf="userForm.get('mot_de_passe')?.errors?.['minlength']">Minimum 6 caractères</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <!-- Nom -->
+          <div class="form-group">
+            <label for="nom">
+              <i class="fas fa-user"></i>
+              Nom *
+            </label>
+            <input
+              type="text"
+              id="nom"
+              formControlName="nom"
+              class="form-control"
+              placeholder="Nom"
+              [ngClass]="{
+                'is-invalid': userForm.get('nom')?.touched && userForm.get('nom')?.invalid
+              }"
+            >
+            <div class="error-message" *ngIf="userForm.get('nom')?.touched && userForm.get('nom')?.invalid">
+              <span *ngIf="userForm.get('nom')?.errors?.['required']">Le nom est requis</span>
+              <span *ngIf="userForm.get('nom')?.errors?.['minlength']">Minimum 2 caractères</span>
+            </div>
+          </div>
+
+          <!-- Prénom -->
+          <div class="form-group">
+            <label for="prenom">
+              <i class="fas fa-user"></i>
+              Prénom
+            </label>
+            <input
+              type="text"
+              id="prenom"
+              formControlName="prenom"
+              class="form-control"
+              placeholder="Prénom"
+            >
+          </div>
+        </div>
+
+        <!-- Téléphone -->
+        <div class="form-group">
+          <label for="telephone">
+            <i class="fas fa-phone"></i>
+            Téléphone
+          </label>
+          <input
+            type="text"
+            id="telephone"
+            formControlName="telephone"
+            class="form-control"
+            placeholder="+33 6 12 34 56 78"
+          >
+        </div>
+
+        <!-- Rôle (fixé à boutique) -->
+        <div class="form-group">
+          <label for="role">
+            <i class="fas fa-user-tag"></i>
+            Rôle
+          </label>
+          <input
+            type="text"
+            id="role"
+            class="form-control"
+            value="Gérant de boutique"
+            readonly
+            disabled
+          >
+          <input type="hidden" formControlName="role">
+          <small class="form-text">
+            <i class="fas fa-info-circle"></i>
+            Le rôle est fixé à "boutique" pour ce formulaire
+          </small>
+        </div>
+
+        <!-- Statut actif -->
+        <div class="form-group">
+          <label for="est_actif">
+            <i class="fas fa-toggle-on"></i>
+            Statut du compte
+          </label>
+          <div class="toggle-switch">
+            <label class="switch">
+              <input type="checkbox" formControlName="est_actif">
+              <span class="slider round"></span>
+            </label>
+            <span class="toggle-label" [ngClass]="userForm.get('est_actif')?.value ? 'text-success' : 'text-danger'">
+              <i class="fas" [class.fa-check-circle]="userForm.get('est_actif')?.value" 
+                 [class.fa-times-circle]="!userForm.get('est_actif')?.value"></i>
+              {{ userForm.get('est_actif')?.value ? 'Compte actif' : 'Compte inactif' }}
+            </span>
+          </div>
+          <small class="form-text">
+            Les comptes inactifs ne peuvent pas se connecter
+          </small>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="annuler()" [disabled]="loading">
+            <i class="fas fa-times"></i>
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="userForm.invalid || loading">
+            <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+            <i class="fas fa-save" *ngIf="!loading"></i>
+            {{ loading ? 'Création...' : 'Créer le compte' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

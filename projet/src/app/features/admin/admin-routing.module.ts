@@ -14,8 +14,15 @@ import { ListeBoutiquesComponent } from './gestion-boutiques/boutiques/liste-bou
 import { DetailsBoutiqueComponent } from './gestion-boutiques/boutiques/details-boutique/details-boutique.component';
 import { ModifierBoutiqueComponent } from './gestion-boutiques/boutiques/modifier-boutique/modifier-boutique.component';
 
+// ✅ NOUVEAU: Utilisateurs
+import { CreerUtilisateurBoutiqueComponent } from './gestion-utilisateurs/creer-utilisateur-boutique/creer-utilisateur-boutique.component';
+import { ListeUtilisateursComponent } from './gestion-utilisateurs/liste-utilisateurs/liste-utilisateurs.component';
+
 import { AuthGuard } from '../../core/guards/auth.guard';
 import { RoleGuard } from '../../core/guards/role.guard';
+
+import { StatistiquesComponent } from './statistiques/statistiques.component';
+
 
 const routes: Routes = [
   {
@@ -36,6 +43,13 @@ const routes: Routes = [
       { path: 'boutiques/boutiques/liste', component: ListeBoutiquesComponent },
       { path: 'boutiques/boutiques/details/:id', component: DetailsBoutiqueComponent },
       { path: 'boutiques/boutiques/modifier/:id', component: ModifierBoutiqueComponent },
+      
+      // ✅ NOUVEAU: Utilisateurs
+      { path: 'utilisateurs/creer-boutique', component: CreerUtilisateurBoutiqueComponent },
+      { path: 'utilisateurs/liste', component: ListeUtilisateursComponent },
+
+      { path: 'statistiques', component: StatistiquesComponent },
+
       
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

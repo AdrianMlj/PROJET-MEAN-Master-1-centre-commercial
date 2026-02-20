@@ -646,3 +646,219 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Style pour l'image par défaut */
+.default-image {
+  opacity: 0.8;
+  filter: brightness(0.95);
+  transition: all 0.3s;
+  object-fit: cover;
+}
+
+.default-image:hover {
+  opacity: 1;
+  filter: brightness(1);
+}
+
+/* Pour les logos dans les cartes */
+.logo-wrapper .default-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Pour les logos dans les détails */
+.logo-container .default-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* ===== STYLES POUR LES FILTRES ===== */
+
+/* Recherche en pleine largeur */
+.search-box.full-width {
+  flex: 1;
+  width: 100%;
+}
+
+.search-box.full-width input {
+  width: 100%;
+  padding: 14px 15px 14px 45px;
+  font-size: 16px;
+}
+
+/* Styles pour les filtres de plage (min/max) */
+.range-filter, .date-filter {
+  flex: 1;
+}
+
+.range-filter input, .date-filter input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s;
+  background: white;
+}
+
+.range-filter input:focus, .date-filter input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
+}
+
+.range-filter input:hover, .date-filter input:hover {
+  border-color: #adb5bd;
+}
+
+/* Style pour les labels avec icônes */
+.filter-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.filter-group label i {
+  font-size: 14px;
+  width: 18px;
+}
+
+/* Indicateurs de filtres actifs */
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border: 1px solid #e9ecef;
+}
+
+.active-filters-label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 13px;
+  margin-right: 5px;
+  padding: 5px 0;
+}
+
+.active-filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s;
+}
+
+.active-filter-tag i {
+  font-size: 11px;
+}
+
+.active-filter-tag:hover {
+  background: #1976d2;
+  color: white;
+  cursor: default;
+  transform: translateY(-2px);
+}
+
+/* Animation pour les filtres */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filters-card .filter-row {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Style pour l'image par défaut */
+.default-image {
+  opacity: 0.8;
+  filter: brightness(0.95);
+  transition: all 0.3s;
+  object-fit: cover;
+}
+
+.default-image:hover {
+  opacity: 1;
+  filter: brightness(1);
+  transform: scale(1.02);
+}
+
+/* Responsive pour les filtres */
+@media (max-width: 1200px) {
+  .range-filter, .date-filter {
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 992px) {
+  .filter-row {
+    flex-wrap: wrap;
+  }
+  
+  .range-filter, .date-filter {
+    flex: 1 1 calc(50% - 10px);
+    min-width: 0;
+  }
+  
+  .active-filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .active-filter-tag {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .range-filter, .date-filter {
+    flex: 1 1 100%;
+  }
+  
+  .active-filters {
+    padding: 12px;
+  }
+  
+  .filter-group label {
+    font-size: 12px;
+  }
+  
+  .search-box.full-width input {
+    padding: 12px 15px 12px 40px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .active-filters-label {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+  
+  .active-filter-tag {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+}

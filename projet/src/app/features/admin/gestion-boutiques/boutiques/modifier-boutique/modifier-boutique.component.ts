@@ -1,10 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 import { BoutiqueService } from '../../../../../core/services/boutique.service';
 import { CategorieBoutiqueService } from '../../../../../core/services/categorie-boutique.service';
+import { UtilisateurService } from '../../../../../core/services/utilisateur.service';
 import { Boutique } from '../../../../../core/models/boutique.model';
 import { CategorieBoutique } from '../../../../../core/models/categorie-boutique.model';
+import { Gerant } from '../../../../../core/models/utilisateur.model';
 
 @Component({
   selector: 'app-modifier-boutique',
@@ -16,6 +20,15 @@ export class ModifierBoutiqueComponent implements OnInit {
   boutiqueForm: FormGroup;
   categories: CategorieBoutique[] = [];
   boutique: Boutique | null = null;
+  
+  // Pour la recherche de gérants
+  gerants: Gerant[] = [];
+  searchTerm = '';
+  showGerantDropdown = false;
+  selectedGerant: Gerant | null = null;
+  loadingGerants = false;
+  private searchSubject = new Subject<string>();
+
   loading = false;
   loadingBoutique = true;
   errorMessage = '';
@@ -26,6 +39,7 @@ export class ModifierBoutiqueComponent implements OnInit {
     private formBuilder: FormBuilder,
     private boutiqueService: BoutiqueService,
     private categorieService: CategorieBoutiqueService,
+    private utilisateurService: UtilisateurService,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -34,6 +48,7 @@ export class ModifierBoutiqueComponent implements OnInit {
       description: [''],
       slogan: [''],
       categorie: ['', Validators.required],
+      gerant: ['', Validators.required], // ← AJOUT du champ gérant
       contact: this.formBuilder.group({
         email: ['', [Validators.email]],
         telephone: [''],
@@ -57,6 +72,29 @@ export class ModifierBoutiqueComponent implements OnInit {
     this.boutiqueId = this.route.snapshot.paramMap.get('id') || '';
     this.loadCategories();
     this.loadBoutique();
+    this.setupGerantSearch();
+  }
+
+  setupGerantSearch(): void {
+    this.searchSubject.pipe(
+      debounceTime(500),
+      distinctUntilChanged(),
+      switchMap(term => {
+        this.loadingGerants = true;
+        return this.utilisateurService.getGerantsDisponibles({ recherche: term, limit: 10 });
+      })
+    ).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.gerants = response.gerants;
+        }
+        this.loadingGerants = false;
+      },
+      error: (error) => {
+        console.error('Erreur recherche gérants:', error);
+        this.loadingGerants = false;
+      }
+    });
   }
 
   loadCategories(): void {
@@ -91,11 +129,18 @@ export class ModifierBoutiqueComponent implements OnInit {
   }
 
   patchFormValues(boutique: Boutique): void {
+    // Initialiser le gérant sélectionné
+    if (boutique.gerant && typeof boutique.gerant !== 'string') {
+      this.selectedGerant = boutique.gerant;
+      this.searchTerm = `${boutique.gerant.prenom || ''} ${boutique.gerant.nom || ''} (${boutique.gerant.email})`.trim();
+    }
+
     this.boutiqueForm.patchValue({
       nom: boutique.nom,
       description: boutique.description || '',
       slogan: boutique.slogan || '',
       categorie: typeof boutique.categorie === 'string' ? boutique.categorie : boutique.categorie._id,
+      gerant: typeof boutique.gerant === 'string' ? boutique.gerant : boutique.gerant._id,
       contact: {
         email: boutique.contact?.email || '',
         telephone: boutique.contact?.telephone || '',
@@ -113,6 +158,32 @@ export class ModifierBoutiqueComponent implements OnInit {
       },
       est_active: boutique.est_active
     });
+  }
+
+  onSearchGerant(event: any): void {
+    const term = event.target.value;
+    this.searchTerm = term;
+    if (term.length >= 2) {
+      this.searchSubject.next(term);
+      this.showGerantDropdown = true;
+    } else {
+      this.gerants = [];
+      this.showGerantDropdown = false;
+    }
+  }
+
+  selectGerant(gerant: Gerant): void {
+    this.selectedGerant = gerant;
+    this.searchTerm = `${gerant.prenom || ''} ${gerant.nom} (${gerant.email})`.trim();
+    this.boutiqueForm.patchValue({ gerant: gerant._id });
+    this.showGerantDropdown = false;
+  }
+
+  clearGerant(): void {
+    this.selectedGerant = null;
+    this.searchTerm = '';
+    this.boutiqueForm.patchValue({ gerant: '' });
+    this.gerants = [];
   }
 
   onSubmit(): void {

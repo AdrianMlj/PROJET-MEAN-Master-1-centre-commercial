@@ -13,10 +13,9 @@ const categorieBoutiqueSchema = new mongoose.Schema({
   },
   icone: {
     type: String,
-    default: '🛍️'
   },
   image_url: {
-    type: String
+    type: String,
   },
   est_active: {
     type: Boolean,

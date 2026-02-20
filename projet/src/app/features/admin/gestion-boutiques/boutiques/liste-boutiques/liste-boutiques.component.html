@@ -93,40 +93,34 @@
         <i class="fas fa-filter"></i>
         Filtres
       </h3>
-      <button class="btn-clear" (click)="clearFilters()" *ngIf="searchTerm || selectedCategorie || selectedStatut || selectedPaiement">
+      <button class="btn-clear" (click)="clearFilters()" *ngIf="hasActiveFilters()">
         <i class="fas fa-times"></i>
-        Effacer les filtres
+        Effacer tous les filtres
       </button>
     </div>
 
     <div class="filters-body">
+      <!-- Recherche textuelle (pleine largeur) -->
       <div class="filter-row">
-        <!-- Recherche -->
-        <div class="search-box">
+        <div class="search-box full-width">
           <i class="fas fa-search"></i>
           <input
             type="text"
             [(ngModel)]="searchTerm"
             (input)="onSearch()"
-            placeholder="Rechercher une boutique..."
+            placeholder="Rechercher une boutique par nom, description ou slogan..."
             class="form-control"
           >
         </div>
-
-        <!-- Tri -->
-        <div class="sort-box">
-          <select [(ngModel)]="selectedTri" (change)="onTriChange()" class="form-control">
-            <option *ngFor="let opt of triOptions" [value]="opt.value">
-              Trier par : {{ opt.label }}
-            </option>
-          </select>
-        </div>
       </div>
 
+      <!-- Filtres de base (catégorie, statut, paiement) -->
       <div class="filter-row">
-        <!-- Filtre Catégorie -->
         <div class="filter-group">
-          <label>Catégorie</label>
+          <label>
+            <i class="fas fa-tags"></i>
+            Catégorie
+          </label>
           <select [(ngModel)]="selectedCategorie" (change)="onFilterChange()" class="form-control">
             <option value="">Toutes les catégories</option>
             <option *ngFor="let cat of categories" [value]="cat._id">
@@ -135,25 +129,171 @@
           </select>
         </div>
 
-        <!-- Filtre Statut -->
         <div class="filter-group">
-          <label>Statut</label>
+          <label>
+            <i class="fas fa-power-off"></i>
+            Statut
+          </label>
           <select [(ngModel)]="selectedStatut" (change)="onFilterChange()" class="form-control">
-            <option value="">Tous les statuts</option>
-            <option value="true">Actives</option>
-            <option value="false">Inactives</option>
+            <option *ngFor="let opt of statutOptions" [value]="opt.value">
+              {{ opt.label }}
+            </option>
           </select>
         </div>
 
-        <!-- Filtre Paiement -->
         <div class="filter-group">
-          <label>Paiement</label>
+          <label>
+            <i class="fas fa-credit-card"></i>
+            Paiement
+          </label>
           <select [(ngModel)]="selectedPaiement" (change)="onFilterChange()" class="form-control">
-            <option value="">Tous</option>
-            <option value="paye">Payées</option>
-            <option value="impaye">Impayées</option>
+            <option *ngFor="let opt of paiementOptions" [value]="opt.value">
+              {{ opt.label }}
+            </option>
           </select>
         </div>
+      </div>
+
+      <!-- Filtre par note (min/max) -->
+      <div class="filter-row">
+        <div class="filter-group range-filter">
+          <label>
+            <i class="fas fa-star" style="color: #ffc107;"></i>
+            Note minimum
+          </label>
+          <input
+            type="number"
+            [(ngModel)]="noteMin"
+            (input)="onFilterChange()"
+            placeholder="Min (0-5)"
+            min="0"
+            max="5"
+            step="0.1"
+            class="form-control"
+          >
+        </div>
+
+        <div class="filter-group range-filter">
+          <label>
+            <i class="fas fa-star" style="color: #ffc107;"></i>
+            Note maximum
+          </label>
+          <input
+            type="number"
+            [(ngModel)]="noteMax"
+            (input)="onFilterChange()"
+            placeholder="Max (0-5)"
+            min="0"
+            max="5"
+            step="0.1"
+            class="form-control"
+          >
+        </div>
+      </div>
+
+      <!-- Filtre par chiffre d'affaires (min/max) -->
+      <div class="filter-row">
+        <div class="filter-group range-filter">
+          <label>
+            <i class="fas fa-euro-sign" style="color: #28a745;"></i>
+            CA minimum (€)
+          </label>
+          <input
+            type="number"
+            [(ngModel)]="caMin"
+            (input)="onFilterChange()"
+            placeholder="Min en €"
+            min="0"
+            step="100"
+            class="form-control"
+          >
+        </div>
+
+        <div class="filter-group range-filter">
+          <label>
+            <i class="fas fa-euro-sign" style="color: #28a745;"></i>
+            CA maximum (€)
+          </label>
+          <input
+            type="number"
+            [(ngModel)]="caMax"
+            (input)="onFilterChange()"
+            placeholder="Max en €"
+            min="0"
+            step="100"
+            class="form-control"
+          >
+        </div>
+      </div>
+
+      <!-- Filtre par date de création -->
+      <div class="filter-row">
+        <div class="filter-group date-filter">
+          <label>
+            <i class="fas fa-calendar-alt" style="color: #667eea;"></i>
+            Date de début
+          </label>
+          <input
+            type="date"
+            [(ngModel)]="dateDebut"
+            (change)="onFilterChange()"
+            class="form-control"
+          >
+        </div>
+
+        <div class="filter-group date-filter">
+          <label>
+            <i class="fas fa-calendar-alt" style="color: #667eea;"></i>
+            Date de fin
+          </label>
+          <input
+            type="date"
+            [(ngModel)]="dateFin"
+            (change)="onFilterChange()"
+            class="form-control"
+          >
+        </div>
+      </div>
+
+      <!-- Indicateur de filtres actifs -->
+      <div class="active-filters" *ngIf="hasActiveFilters()">
+        <span class="active-filters-label">Filtres actifs:</span>
+        <span class="active-filter-tag" *ngIf="searchTerm">
+          <i class="fas fa-search"></i> "{{ searchTerm }}"
+        </span>
+        <span class="active-filter-tag" *ngIf="selectedCategorie">
+          <i class="fas fa-tags"></i> {{ getCategorieNameById(selectedCategorie) }}
+        </span>
+        <span class="active-filter-tag" *ngIf="selectedStatut === 'true'">
+          <i class="fas fa-check-circle"></i> Actif
+        </span>
+        <span class="active-filter-tag" *ngIf="selectedStatut === 'false'">
+          <i class="fas fa-times-circle"></i> Inactif
+        </span>
+        <span class="active-filter-tag" *ngIf="selectedPaiement === 'paye'">
+          <i class="fas fa-check-circle"></i> Payé
+        </span>
+        <span class="active-filter-tag" *ngIf="selectedPaiement === 'impaye'">
+          <i class="fas fa-exclamation-circle"></i> Impayé
+        </span>
+        <span class="active-filter-tag" *ngIf="noteMin !== null">
+          <i class="fas fa-star"></i> Note ≥ {{ noteMin }}
+        </span>
+        <span class="active-filter-tag" *ngIf="noteMax !== null">
+          <i class="fas fa-star"></i> Note ≤ {{ noteMax }}
+        </span>
+        <span class="active-filter-tag" *ngIf="caMin !== null">
+          <i class="fas fa-euro-sign"></i> CA ≥ {{ caMin }}€
+        </span>
+        <span class="active-filter-tag" *ngIf="caMax !== null">
+          <i class="fas fa-euro-sign"></i> CA ≤ {{ caMax }}€
+        </span>
+        <span class="active-filter-tag" *ngIf="dateDebut">
+          <i class="fas fa-calendar-alt"></i> Du {{ dateDebut | date:'dd/MM/yyyy' }}
+        </span>
+        <span class="active-filter-tag" *ngIf="dateFin">
+          <i class="fas fa-calendar-alt"></i> Au {{ dateFin | date:'dd/MM/yyyy' }}
+        </span>
       </div>
     </div>
   </div>
@@ -271,15 +411,15 @@
       </div>
       <h3>Aucune boutique trouvée</h3>
       <p>
-        {{ searchTerm || selectedCategorie || selectedStatut || selectedPaiement ? 
+        {{ hasActiveFilters() ? 
            'Aucune boutique ne correspond à vos critères de recherche.' : 
            'Commencez par créer votre première boutique.' }}
       </p>
-      <button class="btn btn-primary" routerLink="/admin/boutiques/boutiques/creer" *ngIf="!searchTerm && !selectedCategorie && !selectedStatut && !selectedPaiement">
+      <button class="btn btn-primary" routerLink="/admin/boutiques/boutiques/creer" *ngIf="!hasActiveFilters()">
         <i class="fas fa-plus-circle"></i>
         Créer une boutique
       </button>
-      <button class="btn btn-secondary" (click)="clearFilters()" *ngIf="searchTerm || selectedCategorie || selectedStatut || selectedPaiement">
+      <button class="btn btn-secondary" (click)="clearFilters()" *ngIf="hasActiveFilters()">
         <i class="fas fa-times"></i>
         Effacer les filtres
       </button>

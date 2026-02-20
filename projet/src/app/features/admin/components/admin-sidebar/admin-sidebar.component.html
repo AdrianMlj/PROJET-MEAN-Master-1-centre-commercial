@@ -1,7 +1,6 @@
 <div class="admin-layout">
   <!-- Sidebar - FIXE -->
   <aside class="sidebar" [class.collapsed]="isCollapsed" [class.active]="isMobileMenuOpen">
-    <!-- Header toujours visible -->
     <div class="sidebar-header">
       <div class="logo">
         <i class="fas fa-store-alt"></i>
@@ -12,7 +11,7 @@
       </button>
     </div>
 
-    <!-- Profil administrateur - TOUJOURS VISIBLE EN HAUT -->
+    <!-- Profil administrateur -->
     <div class="admin-profile" *ngIf="!isCollapsed">
       <div class="avatar">
         <i class="fas fa-user-shield"></i>
@@ -23,14 +22,14 @@
       </div>
     </div>
 
-    <!-- Version mobile du profil (quand collapsed) -->
+    <!-- Version mobile du profil -->
     <div class="admin-profile-mobile" *ngIf="isCollapsed" title="{{ getCurrentAdminName() }}">
       <div class="avatar">
         <i class="fas fa-user-shield"></i>
       </div>
     </div>
 
-    <!-- Navigation - SCROLLABLE -->
+    <!-- Navigation -->
     <nav class="sidebar-nav">
       <!-- Dashboard -->
       <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
@@ -93,22 +92,42 @@
                routerLinkActive="active" 
                class="sub-item">
               <i class="fas fa-list"></i>
-              <span *ngIf="!isCollapsed">Listes boutique</span>
+              <span *ngIf="!isCollapsed">Listes boutiques</span>
             </a>
           </div>
         </div>
       </div>
 
-      <!-- Autres sections à venir -->
+      <!-- ✅ NOUVEAU: Gestion Utilisateurs -->
       <div class="nav-section">
-        <div class="nav-header">
+        <div class="nav-header" (click)="toggleMenu('gestionUtilisateurs')" [class.active]="menuOpen['gestionUtilisateurs']">
           <i class="fas fa-users"></i>
           <span *ngIf="!isCollapsed">Gestion Utilisateurs</span>
+          <i *ngIf="!isCollapsed" class="fas" 
+             [class.fa-chevron-down]="menuOpen['gestionUtilisateurs']"
+             [class.fa-chevron-right]="!menuOpen['gestionUtilisateurs']"></i>
+        </div>
+        
+        <!-- Sous-menu Utilisateurs -->
+        <div class="sub-menu" *ngIf="menuOpen['gestionUtilisateurs']">
+          <a routerLink="/admin/utilisateurs/creer-boutique" 
+             routerLinkActive="active" 
+             class="sub-item">
+            <i class="fas fa-user-plus"></i>
+            <span *ngIf="!isCollapsed">Création compte boutique</span>
+          </a>
+          <a routerLink="/admin/utilisateurs/liste" 
+             routerLinkActive="active" 
+             class="sub-item">
+            <i class="fas fa-list"></i>
+            <span *ngIf="!isCollapsed">Listes de tous les utilisateurs</span>
+          </a>
         </div>
       </div>
 
+      <!-- Après Gestion Utilisateurs, avant le footer -->
       <div class="nav-section">
-        <div class="nav-header">
+        <div class="nav-header" routerLink="/admin/statistiques" routerLinkActive="active">
           <i class="fas fa-chart-line"></i>
           <span *ngIf="!isCollapsed">Statistiques</span>
         </div>
@@ -118,7 +137,7 @@
       <div class="nav-footer-space"></div>
     </nav>
 
-    <!-- Footer avec bouton déconnexion - TOUJOURS VISIBLE EN BAS -->
+    <!-- Footer avec bouton déconnexion -->
     <div class="sidebar-footer">
       <button class="nav-item logout-btn" (click)="logout()" [title]="isCollapsed ? 'Déconnexion' : ''">
         <i class="fas fa-sign-out-alt"></i>
@@ -127,7 +146,7 @@
     </div>
   </aside>
 
-  <!-- Main Content - SCROLLABLE -->
+  <!-- Main Content -->
   <main class="main-content" [class.expanded]="isCollapsed">
     <router-outlet></router-outlet>
   </main>

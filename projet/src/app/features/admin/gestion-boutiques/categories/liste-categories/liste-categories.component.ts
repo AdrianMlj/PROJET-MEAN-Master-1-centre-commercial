@@ -20,6 +20,9 @@ export class ListeCategoriesComponent implements OnInit {
   searchTerm = '';
   filterActif: boolean | null = null;
 
+  // ✅ URL de l'image par défaut
+  private readonly DEFAULT_IMAGE_URL = 'https://img.freepik.com/vecteurs-libre/personnes-faisant-achats-carte-credit_53876-66145.jpg';
+
   constructor(
     private categorieService: CategorieBoutiqueService,
     private router: Router
@@ -117,22 +120,24 @@ export class ListeCategoriesComponent implements OnInit {
     });
   }
 
-  // ✅ Gestion d'erreur d'image - Version simple et efficace
-  onImageError(event: any): void {
-    // Cache l'image qui a généré l'erreur
-    event.target.style.display = 'none';
-    // Affiche le placeholder
-    const parent = event.target.parentElement;
-    if (parent) {
-      const noImageDiv = document.createElement('div');
-      noImageDiv.className = 'no-image';
-      noImageDiv.innerHTML = '<i class="fas fa-image"></i><span>Aucune image</span>';
-      parent.appendChild(noImageDiv);
+  // ✅ MODIFIÉ: Nouvelle méthode pour obtenir l'URL de l'image
+  getImageUrl(categorie: CategorieBoutique): string {
+    if (categorie.image_url && categorie.image_url.trim() !== '') {
+      return categorie.image_url;
     }
+    return this.DEFAULT_IMAGE_URL;
   }
 
-  // ✅ Vérifier si l'image est valide
+  // ✅ MODIFIÉ: Gestion d'erreur d'image - remplace par l'image par défaut
+  onImageError(event: any): void {
+    // Remplacer par l'image par défaut
+    event.target.src = this.DEFAULT_IMAGE_URL;
+    // Optionnel: ajouter une classe pour indiquer que c'est une image par défaut
+    event.target.classList.add('default-image');
+  }
+
+  // ✅ Vérifier si l'image est valide (plus nécessaire car on utilise l'URL par défaut)
   hasValidImage(categorie: CategorieBoutique): boolean {
-    return !!categorie.image_url && categorie.image_url.trim() !== '';
+    return true; // Toujours vrai car on a une image par défaut
   }
 }

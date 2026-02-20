@@ -14,7 +14,8 @@ export class AdminSidebarComponent implements OnInit {
   menuOpen: { [key: string]: boolean } = {
     gestionBoutiques: true,
     categories: true,
-    boutiques: true
+    boutiques: true,
+    gestionUtilisateurs: true  // ← NOUVEAU
   };
 
   constructor(

@@ -22,7 +22,6 @@ const boutiqueSchema = new mongoose.Schema({
   },
   logo_url: {
     type: String,
-    default: 'https://via.placeholder.com/150'
   },
   images: [{
     type: String

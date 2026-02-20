@@ -56,14 +56,6 @@
           {{ errorMessage }}
         </div>
 
-        <!-- Logo Preview -->
-        <!-- <div class="logo-preview" *ngIf="boutique?.logo_url">
-          <label>Logo actuel :</label>
-          <div class="preview-container">
-            <img [src]="boutique?.logo_url" alt="Logo" (error)="onLogoError($event)">
-          </div>
-        </div> -->
-
         <!-- Informations de base -->
         <div class="form-section">
           <h3>
@@ -93,36 +85,6 @@
             </div>
           </div>
 
-          <!-- Slogan -->
-          <!-- <div class="form-group">
-            <label for="slogan">
-              <i class="fas fa-quote-right"></i>
-              Slogan
-            </label>
-            <input
-              type="text"
-              id="slogan"
-              formControlName="slogan"
-              class="form-control"
-              placeholder="Le slogan de la boutique (optionnel)"
-            >
-          </div> -->
-
-          <!-- Description -->
-          <!-- <div class="form-group">
-            <label for="description">
-              <i class="fas fa-align-left"></i>
-              Description
-            </label>
-            <textarea
-              id="description"
-              formControlName="description"
-              class="form-control"
-              rows="4"
-              placeholder="Description de la boutique (optionnel)"
-            ></textarea>
-          </div> -->
-
           <!-- Catégorie -->
           <div class="form-group">
             <label for="categorie">
@@ -146,166 +108,96 @@
               La catégorie est requise
             </div>
           </div>
-        </div>
 
-        <!-- Contact -->
-        <!-- <div class="form-section" formGroupName="contact">
-          <h3>
-            <i class="fas fa-address-card"></i>
-            Contact
-          </h3>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="contact-email">
-                <i class="fas fa-envelope"></i>
-                Email
-              </label>
-              <input
-                type="email"
-                id="contact-email"
-                formControlName="email"
-                class="form-control"
-                placeholder="contact@boutique.com"
-              >
-            </div>
-
-            <div class="form-group">
-              <label for="contact-telephone">
-                <i class="fas fa-phone"></i>
-                Téléphone
-              </label>
-              <input
-                type="text"
-                id="contact-telephone"
-                formControlName="telephone"
-                class="form-control"
-                placeholder="+33 1 23 45 67 89"
-              >
-            </div>
-          </div>
-
+          <!-- ✅ NOUVEAU: Gérant avec recherche -->
           <div class="form-group">
-            <label for="contact-horaires">
-              <i class="fas fa-clock"></i>
-              Horaires d'ouverture
+            <label for="gerant">
+              <i class="fas fa-user-tie"></i>
+              Gérant de la boutique *
             </label>
-            <input
-              type="text"
-              id="contact-horaires"
-              formControlName="horaires"
-              class="form-control"
-              placeholder="Lundi - Vendredi: 9h-18h"
-            >
-          </div>
-        </div> -->
+            
+            <div class="gerant-search" [class.has-value]="selectedGerant">
+              <div class="search-input-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Rechercher un gérant par nom, prénom ou email..."
+                  [value]="searchTerm"
+                  (input)="onSearchGerant($event)"
+                  (focus)="showGerantDropdown = true"
+                  [disabled]="!!selectedGerant"
+                >
+                <button 
+                  type="button" 
+                  class="clear-btn" 
+                  *ngIf="selectedGerant"
+                  (click)="clearGerant()"
+                  title="Changer de gérant"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
 
-        <!-- Localisation -->
-        <!-- <div class="form-section" formGroupName="adresse">
-          <h3>
-            <i class="fas fa-map-marker-alt"></i>
-            Localisation dans le centre
-          </h3>
+              <!-- Résultats de recherche -->
+              <div class="gerant-dropdown" *ngIf="showGerantDropdown && !selectedGerant">
+                <div class="dropdown-header">
+                  <span *ngIf="loadingGerants">
+                    <i class="fas fa-spinner fa-spin"></i> Recherche en cours...
+                  </span>
+                  <span *ngIf="!loadingGerants && gerants.length === 0 && searchTerm.length >= 2">
+                    Aucun gérant disponible trouvé
+                  </span>
+                  <span *ngIf="searchTerm.length < 2">
+                    Tapez au moins 2 caractères
+                  </span>
+                </div>
+                
+                <div class="dropdown-list" *ngIf="gerants.length > 0">
+                  <div 
+                    class="dropdown-item" 
+                    *ngFor="let gerant of gerants"
+                    (click)="selectGerant(gerant)"
+                  >
+                    <div class="item-avatar">
+                      <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="item-info">
+                      <div class="item-name">
+                        {{ gerant.prenom }} {{ gerant.nom }}
+                      </div>
+                      <div class="item-email">{{ gerant.email }}</div>
+                      <div class="item-phone" *ngIf="gerant.telephone">
+                        <i class="fas fa-phone"></i> {{ gerant.telephone }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="adresse-etage">
-                <i class="fas fa-layer-group"></i>
-                Étage
-              </label>
-              <input
-                type="text"
-                id="adresse-etage"
-                formControlName="etage"
-                class="form-control"
-                placeholder="Ex: RDC, 1er étage..."
-              >
+              <!-- Gérant sélectionné -->
+              <div class="selected-gerant" *ngIf="selectedGerant">
+                <div class="selected-gerant-info">
+                  <div class="selected-avatar">
+                    <i class="fas fa-user-circle"></i>
+                  </div>
+                  <div class="selected-details">
+                    <strong>{{ selectedGerant.prenom }} {{ selectedGerant.nom }}</strong>
+                    <span>{{ selectedGerant.email }}</span>
+                    <span *ngIf="selectedGerant.telephone" class="selected-phone">
+                      <i class="fas fa-phone"></i> {{ selectedGerant.telephone }}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label for="adresse-numero">
-                <i class="fas fa-hashtag"></i>
-                Numéro
-              </label>
-              <input
-                type="text"
-                id="adresse-numero"
-                formControlName="numero"
-                class="form-control"
-                placeholder="Ex: 42, 12B..."
-              >
-            </div>
-
-            <div class="form-group">
-              <label for="adresse-aile">
-                <i class="fas fa-arrows-alt-h"></i>
-                Aile
-              </label>
-              <input
-                type="text"
-                id="adresse-aile"
-                formControlName="aile"
-                class="form-control"
-                placeholder="Ex: Nord, Sud, Est, Ouest..."
-              >
-            </div>
-          </div>
-        </div> -->
-
-        <!-- Paramètres -->
-        <!-- <div class="form-section" formGroupName="parametres">
-          <h3>
-            <i class="fas fa-cog"></i>
-            Paramètres
-          </h3>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="parametres-frais">
-                <i class="fas fa-truck"></i>
-                Frais de livraison (€)
-              </label>
-              <input
-                type="number"
-                id="parametres-frais"
-                formControlName="frais_livraison"
-                class="form-control"
-                min="0"
-                step="0.01"
-              >
-            </div>
-
-            <div class="form-group">
-              <label for="parametres-delai">
-                <i class="fas fa-clock"></i>
-                Délai préparation (min)
-              </label>
-              <input
-                type="number"
-                id="parametres-delai"
-                formControlName="delai_preparation"
-                class="form-control"
-                min="0"
-                step="5"
-              >
-            </div>
-
-            <div class="form-group">
-              <label for="parametres-gratuit">
-                <i class="fas fa-gift"></i>
-                Livraison gratuite après (€)
-              </label>
-              <input
-                type="number"
-                id="parametres-gratuit"
-                formControlName="livraison_gratuite_apres"
-                class="form-control"
-                min="0"
-                step="5"
-              >
+            <input type="hidden" formControlName="gerant">
+            <div class="error-message" *ngIf="boutiqueForm.get('gerant')?.touched && boutiqueForm.get('gerant')?.invalid">
+              Le gérant est requis
             </div>
           </div>
-        </div> -->
+        </div>
 
         <!-- Statut -->
         <div class="form-section">

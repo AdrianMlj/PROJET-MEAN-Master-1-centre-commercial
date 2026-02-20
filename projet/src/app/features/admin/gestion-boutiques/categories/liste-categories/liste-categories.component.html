@@ -97,25 +97,17 @@
   <!-- Categories Grid -->
   <div class="categories-grid" *ngIf="!loading">
     <div class="category-card" *ngFor="let categorie of filteredCategories">
-      <!-- Image - CORRIGÉ: Affichage des images -->
+      <!-- Image - MODIFIÉ: Utilisation de getImageUrl() -->
       <div class="card-image">
-        <!-- Si image URL valide -->
-        <div class="image-wrapper" *ngIf="hasValidImage(categorie); else noImageBlock">
+        <div class="image-wrapper">
           <img 
-            [src]="categorie.image_url" 
+            [src]="getImageUrl(categorie)" 
             [alt]="categorie.nom_categorie" 
             (error)="onImageError($event)"
             loading="lazy"
+            class="category-image"
           >
         </div>
-        
-        <!-- Si pas d'image -->
-        <ng-template #noImageBlock>
-          <div class="no-image">
-            <i class="fas fa-image"></i>
-            <span>Aucune image</span>
-          </div>
-        </ng-template>
         
         <!-- Status Badge -->
         <div class="status-badge" [ngClass]="categorie.est_active ? 'active' : 'inactive'">
@@ -123,7 +115,7 @@
         </div>
       </div>
 
-      <!-- Content - SANS ICÔNE -->
+      <!-- Content -->
       <div class="card-content">
         <div class="card-header">
           <h3 class="category-name">

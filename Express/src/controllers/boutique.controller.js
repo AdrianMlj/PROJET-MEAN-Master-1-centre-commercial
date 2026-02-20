@@ -355,10 +355,20 @@ exports.creerBoutique = async (req, res) => {
   }
 };
 
-// Admin: Modifier une boutique
+// Admin: Modifier une boutique (AVEC GÉRANT MODIFIABLE)
 exports.modifierBoutique = async (req, res) => {
   try {
-    const { nom, description, categorie, contact, adresse, parametres, est_active, slogan } = req.body;
+    const { 
+      nom, 
+      description, 
+      categorie, 
+      contact, 
+      adresse, 
+      parametres, 
+      est_active, 
+      slogan,
+      gerant  // ← NOUVEAU : on ajoute le champ gerant
+    } = req.body;
 
     const boutique = await Boutique.findById(req.params.id);
     if (!boutique) {
@@ -368,11 +378,15 @@ exports.modifierBoutique = async (req, res) => {
       });
     }
 
-    // Mettre à jour les informations
+    // 1️⃣ Sauvegarder l'ancien gérant pour pouvoir dissocier si nécessaire
+    const ancienGerantId = boutique.gerant;
+
+    // 2️⃣ Mettre à jour les informations de base
     if (nom && nom.length >= 2 && nom.length <= 100) boutique.nom = nom;
     if (description !== undefined) boutique.description = description;
     if (slogan !== undefined) boutique.slogan = slogan;
     
+    // 3️⃣ Mettre à jour la catégorie
     if (categorie) {
       const categorieTrouvee = await CategorieBoutique.findById(categorie);
       if (!categorieTrouvee) {
@@ -384,29 +398,89 @@ exports.modifierBoutique = async (req, res) => {
       boutique.categorie = categorieTrouvee._id;
     }
     
+    // 4️⃣ Mettre à jour le contact
     if (contact) {
       boutique.contact = { ...boutique.contact, ...contact };
     }
     
+    // 5️⃣ Mettre à jour l'adresse
     if (adresse) {
       boutique.adresse = { ...boutique.adresse, ...adresse };
     }
     
+    // 6️⃣ Mettre à jour les paramètres
     if (parametres) {
       boutique.parametres = { ...boutique.parametres, ...parametres };
     }
     
+    // 7️⃣ Mettre à jour le statut actif
     if (est_active !== undefined) {
       boutique.est_active = est_active;
     }
 
+    // 8️⃣ ✅ NOUVEAU : Changer le gérant si fourni
+    if (gerant && gerant !== ancienGerantId?.toString()) {
+      const Utilisateur = require('../models/utilisateur.model');
+      
+      // Vérifier si le nouveau gérant existe et a le rôle boutique
+      const nouveauGerant = await Utilisateur.findById(gerant).populate('role');
+      
+      if (!nouveauGerant) {
+        return res.status(400).json({
+          success: false,
+          message: 'Nouveau gérant non trouvé'
+        });
+      }
+      
+      // Vérifier que le nouvel utilisateur a le rôle boutique
+      if (nouveauGerant.role.nom_role !== 'boutique') {
+        return res.status(400).json({
+          success: false,
+          message: 'L\'utilisateur sélectionné n\'a pas le rôle "boutique"'
+        });
+      }
+      
+      // Vérifier que le nouveau gérant n'est pas déjà associé à une autre boutique
+      const boutiqueExistante = await Boutique.findOne({ 
+        gerant: nouveauGerant._id,
+        _id: { $ne: boutique._id } // Exclure la boutique actuelle
+      });
+      
+      if (boutiqueExistante) {
+        return res.status(400).json({
+          success: false,
+          message: 'Ce gérant est déjà associé à une autre boutique'
+        });
+      }
+      
+      // 9️⃣ Dissocier l'ancien gérant (si existant)
+      if (ancienGerantId) {
+        await Utilisateur.findByIdAndUpdate(
+          ancienGerantId,
+          { $unset: { boutique_associee: "" } }
+        );
+      }
+      
+      // 🔟 Associer le nouveau gérant
+      boutique.gerant = nouveauGerant._id;
+      nouveauGerant.boutique_associee = boutique._id;
+      await nouveauGerant.save();
+    }
+
+    // 1️⃣1️⃣ Sauvegarder la boutique
     await boutique.save();
+
+    // 1️⃣2️⃣ Recharger la boutique avec les populations pour la réponse
+    const boutiqueMAJ = await Boutique.findById(boutique._id)
+      .populate('categorie')
+      .populate('gerant', 'nom prenom email telephone');
 
     res.status(200).json({
       success: true,
       message: 'Boutique mise à jour avec succès',
-      boutique
+      boutique: boutiqueMAJ
     });
+
   } catch (error) {
     console.error('Erreur modification boutique:', error);
     res.status(500).json({
@@ -948,14 +1022,14 @@ exports.payerLocation = async (req, res) => {
 };
 
 // ============================================
-// ADMIN: Supprimer une boutique (VERSION SANS TRANSACTION)
+// ADMIN: Supprimer une boutique (VERSION CORRIGÉE)
 // ============================================
 exports.supprimerBoutique = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // 1. Récupérer la boutique
-    const boutique = await Boutique.findById(id).populate('gerant');
+    // 1. Récupérer la boutique SANS populate
+    const boutique = await Boutique.findById(id);
     
     if (!boutique) {
       return res.status(404).json({
@@ -964,7 +1038,8 @@ exports.supprimerBoutique = async (req, res) => {
       });
     }
 
-    // 2. Récupérer le nom pour le message
+    // 2. Récupérer l'ID du gérant
+    const gerantId = boutique.gerant;
     const nomBoutique = boutique.nom;
 
     // 3. SUPPRIMER LES PRODUITS
@@ -975,12 +1050,12 @@ exports.supprimerBoutique = async (req, res) => {
     const CategorieProduit = require('../models/categorieProduit.model');
     await CategorieProduit.deleteMany({ boutique: boutique._id });
 
-    // 5. DISSOCIER LE GÉRANT
-    if (boutique.gerant) {
+    // 5. ✅ SUPPRIMER COMPLÈTEMENT LE CHAMP boutique_associee
+    if (gerantId) {
       const Utilisateur = require('../models/utilisateur.model');
       await Utilisateur.findByIdAndUpdate(
-        boutique.gerant._id,
-        { boutique_associee: null }
+        gerantId,
+        { $unset: { boutique_associee: "" } }  // ← Le champ disparaît COMPLÈTEMENT
       );
     }
 
@@ -993,7 +1068,8 @@ exports.supprimerBoutique = async (req, res) => {
       details: {
         boutique_supprimee: nomBoutique,
         produits_supprimes: true,
-        gerant_dissocie: true
+        gerant_dissocie: true,
+        champ_supprime: true
       }
     });
 

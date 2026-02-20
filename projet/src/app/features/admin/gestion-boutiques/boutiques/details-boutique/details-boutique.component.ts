@@ -4,7 +4,6 @@ import { BoutiqueService } from '../../../../../core/services/boutique.service';
 import { Boutique } from '../../../../../core/models/boutique.model';
 import { environment } from '../../../../../../environments/environment'; 
 
-
 @Component({
   selector: 'app-details-boutique',
   templateUrl: './details-boutique.component.html',
@@ -15,6 +14,9 @@ export class DetailsBoutiqueComponent implements OnInit {
   boutique: Boutique | null = null;
   loading = true;
   errorMessage = '';
+
+  // ✅ URL de l'image par défaut pour les boutiques
+  private readonly DEFAULT_BOUTIQUE_IMAGE = 'https://www.legrand.es/modules/custom/legrand_ecat/assets/img/no-image.png';
 
   constructor(
     private route: ActivatedRoute,
@@ -74,19 +76,27 @@ export class DetailsBoutiqueComponent implements OnInit {
     }
   }
 
+  // ✅ MODIFIÉ: Nouvelle méthode pour obtenir l'URL du logo
   getLogoUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) return 'https://via.placeholder.com/150';
+    // Si pas de logo, retourner l'image par défaut
+    if (!logoUrl || logoUrl.trim() === '') {
+      return this.DEFAULT_BOUTIQUE_IMAGE;
+    }
     
+    // Si l'URL est déjà complète (commence par http)
     if (logoUrl.startsWith('http')) {
       return logoUrl;
     }
     
+    // Sinon, construire l'URL complète vers le backend
     const baseUrl = environment.apiUrl.replace('/api', '');
     return `${baseUrl}${logoUrl}`;
   }
 
+  // ✅ MODIFIÉ: Gestion d'erreur d'image - remplace par l'image par défaut
   onLogoError(event: any): void {
-    event.target.src = 'https://via.placeholder.com/150';
+    event.target.src = this.DEFAULT_BOUTIQUE_IMAGE;
+    event.target.classList.add('default-image');
   }
 
   formatDate(date: Date): string {
@@ -107,7 +117,6 @@ export class DetailsBoutiqueComponent implements OnInit {
     return new Intl.NumberFormat('fr-FR').format(value);
   }
 
-  // ✅ CORRIGÉ: Méthodes avec vérifications de sécurité
   getGerantName(): string {
     if (!this.boutique || !this.boutique.gerant) return 'Non assigné';
     if (typeof this.boutique.gerant === 'string') return 'Gérant';
@@ -135,7 +144,6 @@ export class DetailsBoutiqueComponent implements OnInit {
     return this.boutique.categorie.icone || '🏷️';
   }
 
-  // ✅ NOUVELLES MÉTHODES POUR LA SÉCURITÉ
   getAdresseEtage(): string {
     return this.boutique?.adresse?.etage || '';
   }

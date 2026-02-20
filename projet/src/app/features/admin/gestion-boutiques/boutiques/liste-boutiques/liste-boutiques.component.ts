@@ -13,6 +13,7 @@ import { environment } from '../../../../../../environments/environment';
   standalone: false
 })
 export class ListeBoutiquesComponent implements OnInit {
+  // Données complètes
   boutiques: Boutique[] = [];
   filteredBoutiques: Boutique[] = [];
   categories: CategorieBoutique[] = [];
@@ -34,23 +35,42 @@ export class ListeBoutiquesComponent implements OnInit {
   hasPrevPage = false;
   hasNextPage = false;
 
-  // Filtres
-  searchTerm = '';
-  selectedCategorie = '';
-  selectedStatut: string | null = null;
-  selectedPaiement: string | null = null;
-  selectedTri = 'date_creation';
+  // Filtres de base
+  searchTerm: string = '';
+  selectedCategorie: string = '';
+  selectedStatut: string = '';
+  selectedPaiement: string = '';
+
+  // ✅ Filtres pour les notes
+  noteMin: number | null = null;
+  noteMax: number | null = null;
+
+  // ✅ Filtres pour le chiffre d'affaires
+  caMin: number | null = null;
+  caMax: number | null = null;
+
+  // ✅ Filtres pour les dates
+  dateDebut: string | null = null;
+  dateFin: string | null = null;
 
   loading = true;
   errorMessage = '';
   successMessage = '';
 
-  // Options de tri
-  triOptions = [
-    { value: 'date_creation', label: 'Date de création' },
-    { value: 'nom', label: 'Nom' },
-    { value: 'statistiques.chiffre_affaires', label: 'Chiffre d\'affaires' },
-    { value: 'statistiques.note_moyenne', label: 'Note moyenne' }
+  // ✅ URL de l'image par défaut pour les boutiques
+  private readonly DEFAULT_BOUTIQUE_IMAGE = 'https://www.legrand.es/modules/custom/legrand_ecat/assets/img/no-image.png';
+
+  // Options pour les filtres
+  statutOptions = [
+    { value: '', label: 'Tous les statuts' },
+    { value: 'true', label: 'Actives' },
+    { value: 'false', label: 'Inactives' }
+  ];
+
+  paiementOptions = [
+    { value: '', label: 'Tous les paiements' },
+    { value: 'paye', label: 'Payées' },
+    { value: 'impaye', label: 'Impayées' }
   ];
 
   constructor(
@@ -81,29 +101,16 @@ export class ListeBoutiquesComponent implements OnInit {
     this.loading = true;
     
     const params: any = {
-      page: this.currentPage,
-      limit: this.limit,
-      tri: this.selectedTri
+      page: 1,
+      limit: 100
     };
-
-    if (this.searchTerm) params.recherche = this.searchTerm;
-    if (this.selectedCategorie) params.categorie = this.selectedCategorie;
-    if (this.selectedStatut) params.statut = this.selectedStatut;
-    if (this.selectedPaiement) params.statut_paiement = this.selectedPaiement;
 
     this.boutiqueService.listerToutesBoutiques(params).subscribe({
       next: (response) => {
         if (response.success) {
           this.boutiques = response.docs;
-          this.filteredBoutiques = response.docs;
           this.stats = response.stats;
-          
-          // Pagination
-          this.totalDocs = response.totalDocs;
-          this.totalPages = response.totalPages;
-          this.currentPage = response.page;
-          this.hasPrevPage = response.hasPrevPage;
-          this.hasNextPage = response.hasNextPage;
+          this.applyFrontFilters();
         }
         this.loading = false;
       },
@@ -115,35 +122,106 @@ export class ListeBoutiquesComponent implements OnInit {
     });
   }
 
-  applyFilters(): void {
-    this.currentPage = 1;
-    this.loadBoutiques();
+  applyFrontFilters(): void {
+    let filtered = [...this.boutiques];
+
+    // 1. Filtre par recherche textuelle
+    if (this.searchTerm && this.searchTerm.trim() !== '') {
+      const term = this.searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(b => 
+        b.nom.toLowerCase().includes(term) ||
+        (b.description && b.description.toLowerCase().includes(term)) ||
+        (b.slogan && b.slogan.toLowerCase().includes(term))
+      );
+    }
+
+    // 2. Filtre par catégorie
+    if (this.selectedCategorie && this.selectedCategorie !== '') {
+      filtered = filtered.filter(b => {
+        const categorieId = typeof b.categorie === 'string' ? b.categorie : b.categorie._id;
+        return categorieId === this.selectedCategorie;
+      });
+    }
+
+    // 3. Filtre par statut
+    if (this.selectedStatut !== '') {
+      const statutValue = this.selectedStatut === 'true';
+      filtered = filtered.filter(b => b.est_active === statutValue);
+    }
+
+    // 4. Filtre par paiement
+    if (this.selectedPaiement !== '') {
+      filtered = filtered.filter(b => b.statut_paiement === this.selectedPaiement);
+    }
+
+    // 5. Filtre par note (min/max)
+    if (this.noteMin !== null) {
+      filtered = filtered.filter(b => b.statistiques.note_moyenne >= (this.noteMin || 0));
+    }
+    if (this.noteMax !== null) {
+      filtered = filtered.filter(b => b.statistiques.note_moyenne <= (this.noteMax || 5));
+    }
+
+    // 6. Filtre par chiffre d'affaires (min/max)
+    if (this.caMin !== null) {
+      filtered = filtered.filter(b => b.statistiques.chiffre_affaires >= (this.caMin || 0));
+    }
+    if (this.caMax !== null) {
+      filtered = filtered.filter(b => b.statistiques.chiffre_affaires <= (this.caMax || Infinity));
+    }
+
+    // 7. Filtre par date de création
+    if (this.dateDebut) {
+      const debut = new Date(this.dateDebut);
+      debut.setHours(0, 0, 0, 0);
+      filtered = filtered.filter(b => new Date(b.date_creation) >= debut);
+    }
+    if (this.dateFin) {
+      const fin = new Date(this.dateFin);
+      fin.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(b => new Date(b.date_creation) <= fin);
+    }
+
+    // Pagination
+    this.totalDocs = filtered.length;
+    this.totalPages = Math.ceil(this.totalDocs / this.limit);
+    
+    const start = (this.currentPage - 1) * this.limit;
+    const end = start + this.limit;
+    this.filteredBoutiques = filtered.slice(start, end);
+    
+    this.hasPrevPage = this.currentPage > 1;
+    this.hasNextPage = this.currentPage < this.totalPages;
   }
 
   onSearch(): void {
-    this.applyFilters();
+    this.currentPage = 1;
+    this.applyFrontFilters();
   }
 
   onFilterChange(): void {
-    this.applyFilters();
-  }
-
-  onTriChange(): void {
-    this.applyFilters();
+    this.currentPage = 1;
+    this.applyFrontFilters();
   }
 
   clearFilters(): void {
     this.searchTerm = '';
     this.selectedCategorie = '';
-    this.selectedStatut = null;
-    this.selectedPaiement = null;
-    this.selectedTri = 'date_creation';
-    this.applyFilters();
+    this.selectedStatut = '';
+    this.selectedPaiement = '';
+    this.noteMin = null;
+    this.noteMax = null;
+    this.caMin = null;
+    this.caMax = null;
+    this.dateDebut = null;
+    this.dateFin = null;
+    this.currentPage = 1;
+    this.applyFrontFilters();
   }
 
   onPageChange(page: number): void {
     this.currentPage = page;
-    this.loadBoutiques();
+    this.applyFrontFilters();
   }
 
   onViewDetails(id: string): void {
@@ -163,7 +241,6 @@ export class ListeBoutiquesComponent implements OnInit {
             boutique.est_active = !boutique.est_active;
             this.successMessage = `Boutique ${boutique.est_active ? 'activée' : 'désactivée'} avec succès`;
             
-            // Mettre à jour les stats
             if (boutique.est_active) {
               this.stats.actives++;
               this.stats.inactives--;
@@ -172,6 +249,7 @@ export class ListeBoutiquesComponent implements OnInit {
               this.stats.inactives++;
             }
             
+            this.applyFrontFilters();
             setTimeout(() => this.successMessage = '', 3000);
           }
         },
@@ -201,28 +279,33 @@ export class ListeBoutiquesComponent implements OnInit {
     }
   }
 
-  // ✅ CORRIGÉ: Construire l'URL complète du logo
   getLogoUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) return 'https://via.placeholder.com/150';
+    if (!logoUrl || logoUrl.trim() === '') {
+      return this.DEFAULT_BOUTIQUE_IMAGE;
+    }
     
-    // Si l'URL commence déjà par http, la garder telle quelle
     if (logoUrl.startsWith('http')) {
       return logoUrl;
     }
     
-    // Sinon, ajouter l'URL de base du backend
-    // Enlever le /api de l'apiUrl pour avoir la racine
     const baseUrl = environment.apiUrl.replace('/api', '');
     return `${baseUrl}${logoUrl}`;
   }
 
   onLogoError(event: any): void {
-    event.target.src = 'https://via.placeholder.com/150';
+    event.target.src = this.DEFAULT_BOUTIQUE_IMAGE;
+    event.target.classList.add('default-image');
   }
 
   getCategorieName(categorie: any): string {
     if (!categorie) return 'Non catégorisé';
-    return typeof categorie === 'string' ? 'Catégorie' : (categorie.nom_categorie || 'Catégorie');
+    if (typeof categorie === 'string') return 'Catégorie';
+    return categorie.nom_categorie || 'Catégorie';
+  }
+
+  getCategorieNameById(categorieId: string): string {
+    const cat = this.categories.find(c => c._id === categorieId);
+    return cat ? cat.nom_categorie : 'Inconnue';
   }
 
   getGerantName(gerant: any): string {
@@ -262,5 +345,18 @@ export class ListeBoutiquesComponent implements OnInit {
 
   formatCurrency(value: number): string {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value);
+  }
+
+  hasActiveFilters(): boolean {
+    return !!(this.searchTerm || 
+              this.selectedCategorie || 
+              this.selectedStatut || 
+              this.selectedPaiement ||
+              this.noteMin !== null ||
+              this.noteMax !== null ||
+              this.caMin !== null ||
+              this.caMax !== null ||
+              this.dateDebut ||
+              this.dateFin);
   }
 }

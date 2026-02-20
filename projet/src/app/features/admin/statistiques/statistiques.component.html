@@ -1,0 +1,146 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-chart-line"></i>
+        Statistiques & Analyses
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/admin/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Statistiques</span>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary" (click)="loadStatistiques()" [disabled]="loading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des statistiques...</p>
+  </div>
+
+  <!-- Statistiques Content -->
+  <div class="statistiques-content" *ngIf="!loading && statistiques">
+
+    <!-- Introduction - brève description -->
+    <div class="intro-message">
+      <i class="fas fa-info-circle"></i>
+      <span>Visualisation des données du centre commercial (indicateurs principaux disponibles dans le Dashboard)</span>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="charts-grid">
+      <!-- Évolution du CA -->
+      <div class="chart-card">
+        <h3>
+          <i class="fas fa-chart-line"></i>
+          Évolution du chiffre d'affaires
+        </h3>
+        <div class="chart-container">
+          <canvas #caChart></canvas>
+        </div>
+        <div class="chart-footer" *ngIf="statistiques.evolutionCA.length === 0">
+          <i class="fas fa-info-circle"></i> Aucune donnée d'évolution disponible
+        </div>
+      </div>
+
+      <!-- Répartition des commandes -->
+      <div class="chart-card">
+        <h3>
+          <i class="fas fa-chart-pie"></i>
+          Répartition des commandes
+        </h3>
+        <div class="chart-container small">
+          <canvas #commandesChart></canvas>
+        </div>
+        <div class="stats-mini">
+          <div class="stat-mini-item" *ngIf="statistiques.totalCommandes > 0">
+            <span class="label">Total</span>
+            <span class="value">{{ statistiques.totalCommandes }}</span>
+          </div>
+          <div class="stat-mini-item" *ngIf="statistiques.commandesCeMois > 0">
+            <span class="label">Ce mois</span>
+            <span class="value">{{ statistiques.commandesCeMois }}</span>
+          </div>
+          <div class="stat-mini-item" *ngIf="statistiques.commandesCetteSemaine > 0">
+            <span class="label">Cette semaine</span>
+            <span class="value">{{ statistiques.commandesCetteSemaine }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statuts de paiement -->
+      <div class="chart-card">
+        <h3>
+          <i class="fas fa-credit-card"></i>
+          Statuts de paiement des boutiques
+        </h3>
+        <div class="chart-container small">
+          <canvas #paiementsChart></canvas>
+        </div>
+        <div class="stats-mini">
+          <div class="stat-mini-item" *ngFor="let p of statistiques.statistiquesPaiements">
+            <span class="label">{{ p._id === 'paye' ? 'Payé' : 'Impayé' }}</span>
+            <span class="value">{{ p.count }} boutique(s)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Répartition actives/inactives -->
+      <div class="chart-card">
+        <h3>
+          <i class="fas fa-store"></i>
+          Boutiques actives vs inactives
+        </h3>
+        <div class="chart-container small">
+          <canvas #boutiquesChart></canvas>
+        </div>
+        <div class="stats-mini">
+          <div class="stat-mini-item">
+            <span class="label">Actives</span>
+            <span class="value success">{{ statistiques.boutiquesActives }}</span>
+          </div>
+          <div class="stat-mini-item">
+            <span class="label">Inactives</span>
+            <span class="value danger">{{ statistiques.totalBoutiques - statistiques.boutiquesActives }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top produits (si disponibles) -->
+    <div class="top-products" *ngIf="statistiques.produitsPlusVendus && statistiques.produitsPlusVendus.length > 0">
+      <h3>
+        <i class="fas fa-crown"></i>
+        Produits les plus vendus
+      </h3>
+      <div class="products-list">
+        <div class="product-item" *ngFor="let produit of statistiques.produitsPlusVendus; let i = index">
+          <span class="product-rank">{{ i + 1 }}</span>
+          <span class="product-name">{{ produit.nom }}</span>
+          <span class="product-count">{{ produit.totalVendu }} vendus</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message si aucun produit -->
+    <div class="empty-products" *ngIf="!statistiques.produitsPlusVendus || statistiques.produitsPlusVendus.length === 0">
+      <i class="fas fa-box-open"></i>
+      <p>Aucun produit vendu pour le moment</p>
+    </div>
+
+  </div>
+</div>
