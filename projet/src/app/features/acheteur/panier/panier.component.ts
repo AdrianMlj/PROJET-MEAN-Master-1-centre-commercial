@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { PanierService } from '../../../core/services/panier.service';
 import { Panier, PanierElement, PanierTotalResponse } from '../../../core/models/panier.model';
@@ -9,13 +9,16 @@ import { Panier, PanierElement, PanierTotalResponse } from '../../../core/models
   styleUrls: ['./panier.component.css'],
   standalone: false
 })
-export class PanierComponent implements OnInit {
+export class PanierComponent implements OnInit, OnDestroy {
   panier: Panier | null = null;
   panierTotal: PanierTotalResponse | null = null;
   loading = true;
   loadingTotal = false;
   updating: { [key: string]: boolean } = {};
   errorMessage = '';
+  actionMessage = '';
+  actionError = false;
+  private messageTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private panierService: PanierService,
@@ -24,6 +27,12 @@ export class PanierComponent implements OnInit {
 
   ngOnInit(): void {
     this.chargerPanier();
+  }
+
+  ngOnDestroy(): void {
+    if (this.messageTimeout) {
+      clearTimeout(this.messageTimeout);
+    }
   }
 
   chargerPanier(): void {
@@ -60,32 +69,52 @@ export class PanierComponent implements OnInit {
     });
   }
 
-  modifierQuantite(element: PanierElement, nouvelleQuantite: number): void {
-    if (nouvelleQuantite < 1) return;
+  modifierQuantite(element: PanierElement, nouvelleQuantite: number | string): void {
+    if (this.updating[element._id]) return;
+
+    const raw = typeof nouvelleQuantite === 'string' ? nouvelleQuantite.trim() : nouvelleQuantite;
+    if (raw === '' || raw === null || raw === undefined) return;
+
+    const quantite = Math.floor(Number(raw));
+    if (!Number.isFinite(quantite)) return;
+
+    const quantiteMax = this.getQuantiteMax(element);
+    const quantiteFinale = Math.min(Math.max(quantite, 1), quantiteMax);
+    if (quantiteFinale === element.quantite) return;
     
     this.updating[element._id] = true;
-    this.panierService.modifierQuantite(element._id, { quantite: nouvelleQuantite }).subscribe({
+    this.panierService.modifierQuantite(element._id, { quantite: quantiteFinale }).subscribe({
       next: (response) => {
         if (response.success) {
+          this.errorMessage = '';
           this.panier = response.panier;
           this.chargerTotal();
+          this.afficherMessage('Quantite mise a jour.');
         }
         this.updating[element._id] = false;
       },
       error: (error) => {
         this.errorMessage = error.error?.message || 'Erreur lors de la modification';
+        this.afficherMessage(this.errorMessage, true);
         this.updating[element._id] = false;
       }
     });
   }
 
+  onQuantiteInputBlur(element: PanierElement, valeur: string): void {
+    this.modifierQuantite(element, valeur);
+  }
+
   incrementerQuantite(element: PanierElement): void {
-    this.modifierQuantite(element, element.quantite + 1);
+    const current = this.panier?.elements.find((el) => el._id === element._id) || element;
+    if (current.quantite >= this.getQuantiteMax(current)) return;
+    this.modifierQuantite(current, current.quantite + 1);
   }
 
   decrementerQuantite(element: PanierElement): void {
-    if (element.quantite > 1) {
-      this.modifierQuantite(element, element.quantite - 1);
+    const current = this.panier?.elements.find((el) => el._id === element._id) || element;
+    if (current.quantite > 1) {
+      this.modifierQuantite(current, current.quantite - 1);
     }
   }
 
@@ -96,17 +125,20 @@ export class PanierComponent implements OnInit {
     this.panierService.retirerDuPanier(element._id).subscribe({
       next: (response) => {
         if (response.success) {
+          this.errorMessage = '';
           this.panier = response.panier;
           if (this.panier && this.panier.elements.length > 0) {
             this.chargerTotal();
           } else {
             this.panierTotal = null;
           }
+          this.afficherMessage('Produit retire du panier.');
         }
         this.updating[element._id] = false;
       },
       error: (error) => {
         this.errorMessage = error.error?.message || 'Erreur lors de la suppression';
+        this.afficherMessage(this.errorMessage, true);
         this.updating[element._id] = false;
       }
     });
@@ -119,13 +151,16 @@ export class PanierComponent implements OnInit {
     this.panierService.viderPanier().subscribe({
       next: (response) => {
         if (response.success) {
+          this.errorMessage = '';
           this.panier = response.panier;
           this.panierTotal = null;
+          this.afficherMessage('Panier vide.');
         }
         this.loading = false;
       },
       error: (error) => {
         this.errorMessage = error.error?.message || 'Erreur lors du vidage du panier';
+        this.afficherMessage(this.errorMessage, true);
         this.loading = false;
       }
     });
@@ -156,5 +191,26 @@ export class PanierComponent implements OnInit {
   get sousTotal(): number {
     if (!this.panier || !this.panier.elements) return 0;
     return this.panier.elements.reduce((sum, el) => sum + (this.getPrixAffiche(el) * el.quantite), 0);
+  }
+
+  getQuantiteMax(element: PanierElement): number {
+    const stock = Number(element?.produit?.quantite_stock);
+    if (Number.isFinite(stock) && stock > 0) return Math.floor(stock);
+    return 9999;
+  }
+
+  private afficherMessage(message: string, error: boolean = false): void {
+    this.actionMessage = message;
+    this.actionError = error;
+
+    if (this.messageTimeout) {
+      clearTimeout(this.messageTimeout);
+    }
+
+    this.messageTimeout = setTimeout(() => {
+      this.actionMessage = '';
+      this.actionError = false;
+      this.messageTimeout = null;
+    }, 2500);
   }
 }

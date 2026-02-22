@@ -17,6 +17,11 @@
       {{ errorMessage }}
     </div>
 
+    <div class="action-message" *ngIf="actionMessage" [class.error]="actionError">
+      <i class="fas" [ngClass]="actionError ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+      {{ actionMessage }}
+    </div>
+
     <!-- Empty Cart -->
     <div class="empty-cart" *ngIf="!loading && (!panier || panier.elements.length === 0)">
       <i class="fas fa-shopping-cart"></i>
@@ -36,7 +41,7 @@
           <span class="col-price">Prix unitaire</span>
           <span class="col-quantity">Quantité</span>
           <span class="col-total">Total</span>
-          <span class="col-actions"></span>
+          <span class="col-actions">Actions</span>
         </div>
 
         <div class="cart-item" *ngFor="let element of panier.elements" [class.updating]="updating[element._id]">
@@ -77,14 +82,14 @@
                 type="number" 
                 [value]="element.quantite" 
                 min="1"
-                [max]="element.produit.quantite_stock"
-                (change)="modifierQuantite(element, $any($event.target).value)"
+                [max]="getQuantiteMax(element)"
+                (keyup.enter)="onQuantiteInputBlur(element, $any($event.target).value)"
                 [disabled]="updating[element._id]"
               >
               <button 
                 class="btn-quantity" 
                 (click)="incrementerQuantite(element)"
-                [disabled]="element.quantite >= element.produit.quantite_stock || updating[element._id]"
+                [disabled]="element.quantite >= getQuantiteMax(element) || updating[element._id]"
               >
                 <i class="fas fa-plus"></i>
               </button>
@@ -96,6 +101,14 @@
           </div>
 
           <div class="col-actions">
+            <button
+              class="btn-view"
+              (click)="voirProduit(element.produit._id)"
+              [disabled]="updating[element._id]"
+              title="Voir le produit"
+            >
+              <i class="fas fa-eye"></i>
+            </button>
             <button 
               class="btn-remove" 
               (click)="retirerProduit(element)"

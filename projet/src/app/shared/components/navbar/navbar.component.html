@@ -12,47 +12,6 @@
 
       <div class="nav-links" [class.active]="isMenuOpen">
         <ng-container *ngIf="currentUser; else notLoggedIn">
-          <a [routerLink]="getDashboardLink()" class="nav-link">
-            <i class="fas fa-tachometer-alt"></i>
-            {{ getDashboardTitle() }}
-          </a>
-          
-          <!-- Links specifically for acheteur -->
-          <ng-container *ngIf="currentUser.role === 'acheteur'">
-            <a routerLink="/acheteur/home" class="nav-link">
-              <i class="fas fa-home"></i>
-              Accueil
-            </a>
-            <a routerLink="/acheteur/commandes" class="nav-link">
-              <i class="fas fa-shopping-bag"></i>
-              Mes commandes
-            </a>
-            <a routerLink="/acheteur/profil" class="nav-link">
-              <i class="fas fa-user-cog"></i>
-              Mon profil
-            </a>
-            <a routerLink="/acheteur/panier" class="nav-link cart-link">
-              <i class="fas fa-shopping-cart"></i>
-              Panier
-              <span class="cart-count" *ngIf="cartCount > 0">{{ cartCount }}</span>
-            </a>
-          </ng-container>
-          
-          <div class="user-info">
-            <span class="welcome">
-              <i class="fas fa-user"></i>
-              Bonjour, {{ currentUser.prenom || currentUser.nom }}
-            </span>
-            <span class="role-badge" [ngClass]="currentUser.role">
-              <i class="fas" 
-                 [class.fa-user-shield]="currentUser.role === 'admin_centre'"
-                 [class.fa-store]="currentUser.role === 'boutique'"
-                 [class.fa-shopping-cart]="currentUser.role === 'acheteur'">
-              </i>
-              {{ currentUser.role === 'admin_centre' ? 'Admin' : 
-                 currentUser.role === 'boutique' ? 'Boutique' : 'Acheteur' }}
-            </span>
-          </div>
           <button class="nav-link btn-logout" (click)="logout()">
             <i class="fas fa-sign-out-alt"></i>
             Déconnexion

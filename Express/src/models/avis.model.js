@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const avisSchema = new mongoose.Schema({
   produit: {
@@ -53,6 +54,8 @@ const avisSchema = new mongoose.Schema({
 }, {
   timestamps: { createdAt: 'date_creation', updatedAt: 'date_modification' }
 });
+
+avisSchema.plugin(mongoosePaginate);
 
 // Indexes
 avisSchema.index({ produit: 1 });

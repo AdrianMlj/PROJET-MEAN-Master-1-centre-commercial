@@ -11,6 +11,8 @@ import { CheckoutComponent } from './checkout/checkout.component';
 import { CommandesComponent } from './commandes/commandes.component';
 import { CommandeDetailComponent } from './commande-detail/commande-detail.component';
 import { ProfilComponent } from './profil/profil.component';
+import { ProduitDetailComponent } from './produit-detail/produit-detail.component';
+import { FavorisComponent } from './favoris/favoris.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +23,9 @@ import { ProfilComponent } from './profil/profil.component';
     CheckoutComponent,
     CommandesComponent,
     CommandeDetailComponent,
-    ProfilComponent
+    ProfilComponent,
+    ProduitDetailComponent,
+    FavorisComponent
   ],
   imports: [
     CommonModule,

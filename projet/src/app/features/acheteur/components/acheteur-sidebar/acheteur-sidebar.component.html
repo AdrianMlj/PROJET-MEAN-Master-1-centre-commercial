@@ -109,6 +109,14 @@
             <i class="fas fa-user-edit"></i>
             <span *ngIf="!isCollapsed">Mon profil</span>
           </a>
+          <a routerLink="/acheteur/favoris" 
+             routerLinkActive="active" 
+             class="sub-item"
+             [class.collapsed]="isCollapsed"
+             [title]="isCollapsed ? 'Mes favoris' : ''">
+            <i class="fas fa-heart"></i>
+            <span *ngIf="!isCollapsed">Mes favoris</span>
+          </a>
         </div>
       </div>
 

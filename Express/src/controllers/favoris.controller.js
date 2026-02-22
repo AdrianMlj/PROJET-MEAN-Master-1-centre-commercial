@@ -50,6 +50,12 @@ exports.ajouterProduitFavori = async (req, res) => {
       favori: nouveauFavori
     });
   } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ce produit est deja dans vos favoris'
+      });
+    }
     console.error('Erreur ajout favori:', error);
     res.status(500).json({
       success: false,
@@ -107,6 +113,12 @@ exports.ajouterBoutiqueFavori = async (req, res) => {
       favori: nouveauFavori
     });
   } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cette boutique est deja dans vos favoris'
+      });
+    }
     console.error('Erreur ajout favori boutique:', error);
     res.status(500).json({
       success: false,
@@ -122,7 +134,7 @@ exports.obtenirFavoris = async (req, res) => {
     const favoris = await Favoris.find({ client: req.user.id })
       .populate({
         path: 'produit',
-        select: 'nom prix prix_promotion en_promotion images boutique',
+        select: 'nom prix prix_promotion en_promotion images boutique est_actif quantite_stock',
         populate: {
           path: 'boutique',
           select: 'nom logo_url est_active'

@@ -10,6 +10,8 @@ import { CheckoutComponent } from './checkout/checkout.component';
 import { CommandesComponent } from './commandes/commandes.component';
 import { CommandeDetailComponent } from './commande-detail/commande-detail.component';
 import { ProfilComponent } from './profil/profil.component';
+import { ProduitDetailComponent } from './produit-detail/produit-detail.component';
+import { FavorisComponent } from './favoris/favoris.component';
 
 const routes: Routes = [
   {
@@ -25,7 +27,10 @@ const routes: Routes = [
       { path: 'checkout', component: CheckoutComponent },
       { path: 'commandes', component: CommandesComponent },
       { path: 'commande/:id', component: CommandeDetailComponent },
+      { path: 'produit/:id', component: ProduitDetailComponent },
       { path: 'profil', component: ProfilComponent },
+      { path: 'favoris', component: FavorisComponent },
+      { path: 'boutique/:id', component: HomeComponent },
       { path: 'produits', component: HomeComponent },
       { path: 'boutiques', component: HomeComponent },
       { path: 'recherche', component: HomeComponent },

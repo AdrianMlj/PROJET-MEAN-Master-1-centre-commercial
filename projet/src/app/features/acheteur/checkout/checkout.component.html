@@ -1,4 +1,4 @@
-<div class="checkout-container">
+﻿<div class="checkout-container">
   <div class="container">
     <div class="page-header">
       <button class="btn-back" (click)="retourPanier()">
@@ -43,16 +43,16 @@
                     id="nom_complet" 
                     formControlName="nom_complet"
                     class="form-control"
-                    placeholder="Prénom Nom"
+                    placeholder="Prenom Nom"
                     [ngClass]="{'is-invalid': adresseForm.get('nom_complet')?.touched && adresseForm.get('nom_complet')?.invalid}"
                   >
                   <div class="error-text" *ngIf="adresseForm.get('nom_complet')?.touched && adresseForm.get('nom_complet')?.invalid">
-                    Le nom complet est requis (min. 3 caractères)
+                    Le nom complet est requis (min. 3 caractÃ¨res)
                   </div>
                 </div>
 
                 <div class="form-group">
-                  <label for="telephone">Téléphone *</label>
+                  <label for="telephone">Telephone *</label>
                   <input 
                     type="tel" 
                     id="telephone" 
@@ -62,7 +62,7 @@
                     [ngClass]="{'is-invalid': adresseForm.get('telephone')?.touched && adresseForm.get('telephone')?.invalid}"
                   >
                   <div class="error-text" *ngIf="adresseForm.get('telephone')?.touched && adresseForm.get('telephone')?.invalid">
-                    Le téléphone est requis
+                    Le telephone est requis
                   </div>
                 </div>
               </div>
@@ -74,7 +74,7 @@
                   id="rue" 
                   formControlName="rue"
                   class="form-control"
-                  placeholder="Numéro et nom de rue"
+                  placeholder="Numero et nom de rue"
                   [ngClass]="{'is-invalid': adresseForm.get('rue')?.touched && adresseForm.get('rue')?.invalid}"
                 >
                 <div class="error-text" *ngIf="adresseForm.get('rue')?.touched && adresseForm.get('rue')?.invalid">
@@ -83,13 +83,13 @@
               </div>
 
               <div class="form-group">
-                <label for="complement">Complément d'adresse</label>
+                <label for="complement">Complement d'adresse</label>
                 <input 
                   type="text" 
                   id="complement" 
                   formControlName="complement"
                   class="form-control"
-                  placeholder="Appartement, étage, bâtiment..."
+                  placeholder="Appartement, etage, batiment..."
                 >
               </div>
 
@@ -173,9 +173,9 @@
             </div>
           </div>
 
-          <!-- Méthode de paiement -->
+          <!-- Methode de paiement -->
           <div class="form-section">
-            <h2><i class="fas fa-wallet"></i> Méthode de paiement</h2>
+            <h2><i class="fas fa-wallet"></i> Methode de paiement</h2>
             
             <div class="options-grid payment-options">
               <label 
@@ -211,7 +211,7 @@
 
         <!-- Order Summary -->
         <div class="order-summary">
-          <h2>Récapitulatif</h2>
+          <h2>Recapitulatif</h2>
           
           <div class="summary-boutiques">
             <div class="boutique-detail" *ngFor="let detail of panierTotal.detail_par_boutique">
@@ -219,17 +219,17 @@
               <div class="boutique-articles">
                 <div class="article" *ngFor="let article of detail.articles">
                   <span class="article-name">{{ article.produit.nom }} x{{ article.quantite }}</span>
-                  <span class="article-price">{{ article.prix_total | number:'1.2-2' }} €</span>
+                  <span class="article-price">{{ article.prix_total | number:'1.2-2' }} EUR</span>
                 </div>
               </div>
               <div class="boutique-subtotal">
                 <span>Sous-total</span>
-                <span>{{ detail.total | number:'1.2-2' }} €</span>
+                <span>{{ detail.total | number:'1.2-2' }} EUR</span>
               </div>
               <div class="boutique-shipping">
                 <span>Livraison</span>
                 <span [class.free]="detail.frais_livraison === 0">
-                  {{ detail.frais_livraison === 0 ? 'Gratuit' : (detail.frais_livraison | number:'1.2-2') + ' €' }}
+                  {{ detail.frais_livraison === 0 ? 'Gratuit' : (detail.frais_livraison | number:'1.2-2') + ' EUR' }}
                 </span>
               </div>
             </div>
@@ -238,22 +238,22 @@
           <div class="summary-totals">
             <div class="total-line">
               <span>Total produits</span>
-              <span>{{ panierTotal.total_produits | number:'1.2-2' }} €</span>
+              <span>{{ panierTotal.total_produits | number:'1.2-2' }} EUR</span>
             </div>
             <div class="total-line">
               <span>Frais de livraison</span>
-              <span>{{ panierTotal.frais_livraison_total | number:'1.2-2' }} €</span>
+              <span>{{ panierTotal.frais_livraison_total | number:'1.2-2' }} EUR</span>
             </div>
             <div class="total-line grand-total">
-              <span>Total à payer</span>
-              <span>{{ panierTotal.total_general | number:'1.2-2' }} €</span>
+              <span>Total a payer</span>
+              <span>{{ panierTotal.total_general | number:'1.2-2' }} EUR</span>
             </div>
           </div>
 
           <button 
             type="submit" 
             class="btn btn-primary btn-block btn-lg"
-            [disabled]="checkoutForm.invalid || submitting"
+            [disabled]="submitting"
           >
             <i class="fas fa-lock" *ngIf="!submitting"></i>
             <i class="fas fa-spinner fa-spin" *ngIf="submitting"></i>
@@ -262,10 +262,11 @@
 
           <p class="secure-notice">
             <i class="fas fa-shield-alt"></i>
-            Paiement sécurisé
+            Paiement securise
           </p>
         </div>
       </div>
     </form>
   </div>
 </div>
+

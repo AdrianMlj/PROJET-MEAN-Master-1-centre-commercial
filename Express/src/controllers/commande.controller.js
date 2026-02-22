@@ -1,4 +1,4 @@
-const Commande = require('../models/commande.model');
+﻿const Commande = require('../models/commande.model');
 const CommandeDetail = require('../models/commandeDetail.model');
 const CommandeStatutHistorique = require('../models/commandeStatutHistorique.model');
 const Panier = require('../models/panier.model');
@@ -9,81 +9,78 @@ const mongoose = require('mongoose');
 
 // Passer une commande
 exports.passerCommande = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  
+  let etape = 'initialisation';
   try {
-    const { 
-      adresse_livraison, 
-      mode_livraison, 
-      notes, 
-      methode_paiement 
+    const {
+      adresse_livraison,
+      mode_livraison,
+      notes,
+      methode_paiement
     } = req.body;
 
     // Validation
-    if (!adresse_livraison || !adresse_livraison.nom_complet || !adresse_livraison.telephone || 
+    if (!adresse_livraison || !adresse_livraison.nom_complet || !adresse_livraison.telephone ||
         !adresse_livraison.rue || !adresse_livraison.ville || !adresse_livraison.code_postal) {
-      await session.abortTransaction();
       return res.status(400).json({
         success: false,
-        message: 'Adresse de livraison incomplète'
+        message: 'Adresse de livraison incomplete'
       });
     }
 
     if (!methode_paiement || !['carte_credit', 'especes', 'virement', 'mobile', 'carte_bancaire'].includes(methode_paiement)) {
-      await session.abortTransaction();
       return res.status(400).json({
         success: false,
-        message: 'Méthode de paiement invalide'
+        message: 'Methode de paiement invalide'
       });
     }
 
-    // Récupérer le panier de l'utilisateur
+    // Recuperer le panier de l'utilisateur
+    etape = 'chargement_panier';
     const panier = await Panier.findOne({ client: req.user.id })
       .populate({
         path: 'elements.produit',
         populate: { path: 'boutique' }
-      })
-      .session(session);
+      });
 
     if (!panier || panier.elements.length === 0) {
-      await session.abortTransaction();
       return res.status(400).json({
         success: false,
         message: 'Votre panier est vide'
       });
     }
 
-    // Grouper les éléments par boutique
+    // Grouper les elements par boutique
     const elementsParBoutique = {};
     const erreurs = [];
-    
+
+    etape = 'validation_panier';
     for (const element of panier.elements) {
-      if (!element.produit || !element.produit.est_actif || !element.produit.boutique.est_active) {
+      const boutiqueProduit = element.produit?.boutique;
+      if (!element.produit || !boutiqueProduit || !element.produit.est_actif || !boutiqueProduit.est_active) {
         erreurs.push(`Le produit "${element.produit?.nom || 'Inconnu'}" n'est plus disponible`);
         continue;
       }
 
-      // Vérifier le stock
+      // Verifier le stock
       if (element.produit.quantite_stock < element.quantite) {
-        erreurs.push(`Stock insuffisant pour "${element.produit.nom}". Disponible: ${element.produit.quantite_stock}, Demandé: ${element.quantite}`);
+        erreurs.push(`Stock insuffisant pour "${element.produit.nom}". Disponible: ${element.produit.quantite_stock}, Demande: ${element.quantite}`);
         continue;
       }
 
-      const boutiqueId = element.produit.boutique._id.toString();
-      
+      const boutiqueId = boutiqueProduit._id.toString();
+
       if (!elementsParBoutique[boutiqueId]) {
         elementsParBoutique[boutiqueId] = {
-          boutique: element.produit.boutique,
+          boutique: boutiqueProduit,
           elements: [],
           total: 0
         };
       }
-      
-      const prixProduit = element.produit.en_promotion && element.produit.prix_promotion 
-        ? element.produit.prix_promotion 
+
+      const prixProduit = element.produit.en_promotion && element.produit.prix_promotion
+        ? element.produit.prix_promotion
         : element.produit.prix;
-      
+
       elementsParBoutique[boutiqueId].elements.push({
         produit: element.produit._id,
         quantite: element.quantite,
@@ -93,13 +90,11 @@ exports.passerCommande = async (req, res) => {
         image_produit: element.produit.images?.[0]?.url || null,
         caracteristiques: element.produit.caracteristiques || []
       });
-      
+
       elementsParBoutique[boutiqueId].total += prixProduit * element.quantite;
     }
 
-    // Si des erreurs, annuler
     if (erreurs.length > 0) {
-      await session.abortTransaction();
       return res.status(400).json({
         success: false,
         message: 'Impossible de passer la commande',
@@ -107,36 +102,32 @@ exports.passerCommande = async (req, res) => {
       });
     }
 
-    // Si aucun élément valide
     if (Object.keys(elementsParBoutique).length === 0) {
-      await session.abortTransaction();
       return res.status(400).json({
         success: false,
         message: 'Aucun produit valide dans votre panier'
       });
     }
 
-    // Créer une commande par boutique
     const commandesCreees = [];
-    
+
+    etape = 'creation_commandes';
     for (const boutiqueId in elementsParBoutique) {
       const { boutique, elements, total } = elementsParBoutique[boutiqueId];
-      
-      // Calculer les frais de livraison
+
       const seuilLivraisonGratuite = boutique.parametres?.livraison_gratuite_apres || 50;
-      const fraisLivraison = total >= seuilLivraisonGratuite 
-        ? 0 
+      const fraisLivraison = total >= seuilLivraisonGratuite
+        ? 0
         : (boutique.parametres?.frais_livraison || 5);
-      
+
       const totalGeneral = total + fraisLivraison;
 
-      // Créer la commande
       const nouvelleCommande = new Commande({
         client: req.user.id,
         boutique: boutique._id,
         total_commande: total,
-        frais_livraison,
-        total_general,
+        frais_livraison: fraisLivraison,
+        total_general: totalGeneral,
         adresse_livraison,
         mode_livraison: mode_livraison || 'livraison_standard',
         notes,
@@ -146,9 +137,9 @@ exports.passerCommande = async (req, res) => {
         }
       });
 
-      const commandeSauvee = await nouvelleCommande.save({ session });
+      etape = 'sauvegarde_commande';
+      const commandeSauvee = await nouvelleCommande.save();
 
-      // Créer les détails de commande
       const detailsCommande = elements.map(element => ({
         commande: commandeSauvee._id,
         produit: element.produit,
@@ -160,82 +151,88 @@ exports.passerCommande = async (req, res) => {
         caracteristiques: element.caracteristiques
       }));
 
-      await CommandeDetail.insertMany(detailsCommande, { session });
+      etape = 'sauvegarde_details';
+      await CommandeDetail.insertMany(detailsCommande);
 
-      // Créer l'historique de statut
       const historique = new CommandeStatutHistorique({
         commande: commandeSauvee._id,
         nouveau_statut: 'en_attente',
         utilisateur_modif: req.user.id
       });
+      etape = 'sauvegarde_historique';
+      await historique.save();
 
-      await historique.save({ session });
-
-      // Créer l'enregistrement de paiement
       const paiement = new Paiement({
         commande: commandeSauvee._id,
         montant: totalGeneral,
         methode_paiement: methode_paiement,
         statut_paiement: 'en_attente'
       });
+      etape = 'sauvegarde_paiement';
+      await paiement.save();
 
-      await paiement.save({ session });
-
-      // Mettre à jour le stock des produits
+      etape = 'mise_a_jour_stock';
       for (const element of elements) {
         await Produit.findByIdAndUpdate(
           element.produit,
-          { 
-            $inc: { 
+          {
+            $inc: {
               'quantite_stock': -element.quantite,
               'statistiques.nombre_ventes': element.quantite
-            } 
-          },
-          { session }
+            }
+          }
         );
       }
 
-      // Mettre à jour les statistiques de la boutique
+      etape = 'mise_a_jour_boutique';
       await Boutique.findByIdAndUpdate(
         boutique._id,
-        { 
-          $inc: { 
+        {
+          $inc: {
             'statistiques.commandes_traitees': 1,
             'statistiques.produits_vendus': elements.reduce((sum, el) => sum + el.quantite, 0)
-          } 
-        },
-        { session }
+          }
+        }
       );
 
       commandesCreees.push(commandeSauvee);
     }
 
-    // Vider le panier
     panier.elements = [];
-    await panier.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
+    etape = 'vidage_panier';
+    await panier.save();
 
     res.status(201).json({
       success: true,
-      message: 'Commande(s) passée(s) avec succès',
+      message: 'Commande(s) passee(s) avec succes',
       commandes: commandesCreees,
       nombre_commandes: commandesCreees.length
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    
-    console.error('Erreur passage commande:', error);
-    res.status(500).json({
+    console.error('Erreur passage commande:', { etape, message: error?.message, code: error?.code, stack: error?.stack });
+
+    if (error?.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: Object.values(error.errors || {})[0]?.message || 'Donnees de commande invalides'
+      });
+    }
+
+    if (error?.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: 'Conflit de donnees (doublon). Veuillez reessayer.'
+      });
+    }
+
+    return res.status(500).json({
       success: false,
       message: 'Erreur lors du passage de commande',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      etape,
+      error: process.env.NODE_ENV !== 'production' ? error.message : undefined
     });
   }
 };
-
 // Client: Obtenir ses commandes
 exports.obtenirCommandesClient = async (req, res) => {
   try {
@@ -278,21 +275,21 @@ exports.obtenirCommandesClient = async (req, res) => {
     console.error('Erreur commandes client:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur lors de la récupération des commandes',
+      message: 'Erreur lors de la rÃ©cupÃ©ration des commandes',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Gérant: Obtenir les commandes de sa boutique
+// GÃ©rant: Obtenir les commandes de sa boutique
 exports.obtenirCommandesBoutique = async (req, res) => {
   try {
-    // Vérifier que l'utilisateur est un gérant de boutique
+    // VÃ©rifier que l'utilisateur est un gÃ©rant de boutique
     const boutique = await Boutique.findOne({ gerant: req.user.id });
     if (!boutique) {
       return res.status(403).json({
         success: false,
-        message: 'Vous devez être gérant d\'une boutique pour voir ses commandes'
+        message: 'Vous devez Ãªtre gÃ©rant d\'une boutique pour voir ses commandes'
       });
     }
 
@@ -316,9 +313,9 @@ exports.obtenirCommandesBoutique = async (req, res) => {
       }
     }
     
-    // Recherche par numéro de commande ou nom client
+    // Recherche par numÃ©ro de commande ou nom client
     if (recherche) {
-      // Recherche par numéro de commande
+      // Recherche par numÃ©ro de commande
       if (recherche.startsWith('CMD-')) {
         query.numero_commande = { $regex: recherche, $options: 'i' };
       } else {
@@ -354,13 +351,13 @@ exports.obtenirCommandesBoutique = async (req, res) => {
     console.error('Erreur commandes boutique:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur lors de la récupération des commandes de la boutique',
+      message: 'Erreur lors de la rÃ©cupÃ©ration des commandes de la boutique',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Obtenir les détails d'une commande
+// Obtenir les dÃ©tails d'une commande
 exports.obtenirDetailCommande = async (req, res) => {
   try {
     const commande = await Commande.findById(req.params.id)
@@ -377,17 +374,17 @@ exports.obtenirDetailCommande = async (req, res) => {
     if (!commande) {
       return res.status(404).json({
         success: false,
-        message: 'Commande non trouvée'
+        message: 'Commande non trouvÃ©e'
       });
     }
 
-    // Vérifier les permissions
+    // VÃ©rifier les permissions
     const boutique = await Boutique.findOne({ gerant: req.user.id });
     
     if (req.user.role === 'acheteur' && !commande.client._id.equals(req.user.id)) {
       return res.status(403).json({
         success: false,
-        message: 'Vous n\'êtes pas autorisé à voir cette commande'
+        message: 'Vous n\'Ãªtes pas autorisÃ© Ã  voir cette commande'
       });
     }
 
@@ -403,16 +400,16 @@ exports.obtenirDetailCommande = async (req, res) => {
       commande
     });
   } catch (error) {
-    console.error('Erreur détail commande:', error);
+    console.error('Erreur dÃ©tail commande:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur lors de la récupération des détails de la commande',
+      message: 'Erreur lors de la rÃ©cupÃ©ration des dÃ©tails de la commande',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Gérant: Mettre à jour le statut d'une commande
+// GÃ©rant: Mettre Ã  jour le statut d'une commande
 exports.mettreAJourStatutCommande = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -436,17 +433,17 @@ exports.mettreAJourStatutCommande = async (req, res) => {
       await session.abortTransaction();
       return res.status(404).json({
         success: false,
-        message: 'Commande non trouvée'
+        message: 'Commande non trouvÃ©e'
       });
     }
 
-    // Vérifier que l'utilisateur est le gérant de la boutique
+    // VÃ©rifier que l'utilisateur est le gÃ©rant de la boutique
     const boutique = await Boutique.findOne({ gerant: req.user.id });
     if (!boutique || !commande.boutique._id.equals(boutique._id)) {
       await session.abortTransaction();
       return res.status(403).json({
         success: false,
-        message: 'Vous n\'êtes pas autorisé à modifier cette commande'
+        message: 'Vous n\'Ãªtes pas autorisÃ© Ã  modifier cette commande'
       });
     }
 
@@ -470,23 +467,23 @@ exports.mettreAJourStatutCommande = async (req, res) => {
       });
     }
 
-    // Mettre à jour le statut
+    // Mettre Ã  jour le statut
     commande.statut = nouveau_statut;
     commande.date_modification_statut = new Date();
     await commande.save({ session });
 
-    // Créer l'historique
+    // CrÃ©er l'historique
     const historique = new CommandeStatutHistorique({
       commande: commande._id,
       ancien_statut: ancienStatut,
       nouveau_statut,
       utilisateur_modif: req.user.id,
-      raison: raison || `Statut changé par ${req.user.nom}`
+      raison: raison || `Statut changÃ© par ${req.user.nom}`
     });
 
     await historique.save({ session });
 
-    // Si la commande est annulée ou refusée, remettre les produits en stock
+    // Si la commande est annulÃ©e ou refusÃ©e, remettre les produits en stock
     if (nouveau_statut === 'annule' || nouveau_statut === 'refuse') {
       const details = await CommandeDetail.find({ commande: commande._id }).session(session);
       
@@ -498,7 +495,7 @@ exports.mettreAJourStatutCommande = async (req, res) => {
         );
       }
       
-      // Mettre à jour le paiement
+      // Mettre Ã  jour le paiement
       await Paiement.findOneAndUpdate(
         { commande: commande._id },
         { statut_paiement: 'rembourse' },
@@ -511,17 +508,17 @@ exports.mettreAJourStatutCommande = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Statut de la commande mis à jour: ${nouveau_statut}`,
+      message: `Statut de la commande mis Ã  jour: ${nouveau_statut}`,
       commande
     });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     
-    console.error('Erreur mise à jour statut:', error);
+    console.error('Erreur mise Ã  jour statut:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur lors de la mise à jour du statut de la commande',
+      message: 'Erreur lors de la mise Ã  jour du statut de la commande',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -530,12 +527,12 @@ exports.mettreAJourStatutCommande = async (req, res) => {
 // Obtenir l'historique des statuts d'une commande
 exports.obtenirHistoriqueStatuts = async (req, res) => {
   try {
-    // Vérifier que l'utilisateur a accès à cette commande
+    // VÃ©rifier que l'utilisateur a accÃ¨s Ã  cette commande
     const commande = await Commande.findById(req.params.id);
     if (!commande) {
       return res.status(404).json({
         success: false,
-        message: 'Commande non trouvée'
+        message: 'Commande non trouvÃ©e'
       });
     }
 
@@ -544,7 +541,7 @@ exports.obtenirHistoriqueStatuts = async (req, res) => {
     if (req.user.role === 'acheteur' && !commande.client.equals(req.user.id)) {
       return res.status(403).json({
         success: false,
-        message: 'Vous n\'êtes pas autorisé à voir cette commande'
+        message: 'Vous n\'Ãªtes pas autorisÃ© Ã  voir cette commande'
       });
     }
 
@@ -569,7 +566,7 @@ exports.obtenirHistoriqueStatuts = async (req, res) => {
     console.error('Erreur historique commande:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur lors de la récupération de l\'historique',
+      message: 'Erreur lors de la rÃ©cupÃ©ration de l\'historique',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -587,25 +584,25 @@ exports.annulerCommande = async (req, res) => {
       await session.abortTransaction();
       return res.status(404).json({
         success: false,
-        message: 'Commande non trouvée'
+        message: 'Commande non trouvÃ©e'
       });
     }
 
-    // Vérifier que l'utilisateur est le client de la commande
+    // VÃ©rifier que l'utilisateur est le client de la commande
     if (!commande.client.equals(req.user.id)) {
       await session.abortTransaction();
       return res.status(403).json({
         success: false,
-        message: 'Vous n\'êtes pas autorisé à annuler cette commande'
+        message: 'Vous n\'Ãªtes pas autorisÃ© Ã  annuler cette commande'
       });
     }
 
-    // Vérifier que la commande peut être annulée
+    // VÃ©rifier que la commande peut Ãªtre annulÃ©e
     if (!['en_attente', 'en_preparation'].includes(commande.statut)) {
       await session.abortTransaction();
       return res.status(400).json({
         success: false,
-        message: `La commande ne peut pas être annulée dans son état actuel: ${commande.statut}`
+        message: `La commande ne peut pas Ãªtre annulÃ©e dans son Ã©tat actuel: ${commande.statut}`
       });
     }
 
@@ -615,13 +612,13 @@ exports.annulerCommande = async (req, res) => {
     commande.date_modification_statut = new Date();
     await commande.save({ session });
 
-    // Créer l'historique
+    // CrÃ©er l'historique
     const historique = new CommandeStatutHistorique({
       commande: commande._id,
       ancien_statut: ancienStatut,
       nouveau_statut: 'annule',
       utilisateur_modif: req.user.id,
-      raison: 'Annulée par le client'
+      raison: 'AnnulÃ©e par le client'
     });
 
     await historique.save({ session });
@@ -637,7 +634,7 @@ exports.annulerCommande = async (req, res) => {
       );
     }
 
-    // Mettre à jour le statut du paiement
+    // Mettre Ã  jour le statut du paiement
     await Paiement.findOneAndUpdate(
       { commande: commande._id },
       { statut_paiement: 'rembourse' },
@@ -649,7 +646,7 @@ exports.annulerCommande = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Commande annulée avec succès',
+      message: 'Commande annulÃ©e avec succÃ¨s',
       commande
     });
   } catch (error) {
@@ -716,7 +713,7 @@ exports.obtenirToutesCommandes = async (req, res) => {
     console.error('Erreur toutes commandes:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur lors de la récupération des commandes',
+      message: 'Erreur lors de la rÃ©cupÃ©ration des commandes',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

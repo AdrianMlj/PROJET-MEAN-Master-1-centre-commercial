@@ -37,6 +37,24 @@
   font-size: 0.9rem;
 }
 
+.action-message {
+  background: #eafaf1;
+  color: #1f7a4a;
+  border: 1px solid #b8e7cf;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.action-message.error {
+  background: #fff1f1;
+  color: #c0392b;
+  border-color: #f3c6c2;
+}
+
 /* Filters */
 .filters-bar {
   background: white;
@@ -44,6 +62,10 @@
   border-radius: 10px;
   margin-bottom: 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .filter-group {
@@ -65,6 +87,14 @@
   cursor: pointer;
 }
 
+.filter-group input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  min-width: 220px;
+}
+
 /* Loading & Empty States */
 .loading-state,
 .empty-state {
@@ -75,11 +105,15 @@
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
 }
 
-.loading-state i,
-.empty-state i {
+.loading-state > i,
+.empty-state > i {
   font-size: 4rem;
   color: #ddd;
   margin-bottom: 20px;
+}
+
+.empty-state .btn {
+  text-decoration: none;
 }
 
 .empty-state h2 {
@@ -236,6 +270,15 @@
   color: #333;
 }
 
+.boutique-info.clickable {
+  cursor: pointer;
+}
+
+.boutique-info.clickable:hover span {
+  color: #667eea;
+  text-decoration: underline;
+}
+
 .articles-preview {
   display: flex;
   gap: 5px;
@@ -333,6 +376,20 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+
+  .filter-group input,
+  .filter-group select {
+    width: 100%;
+  }
+
   .page-header {
     flex-direction: column;
     gap: 10px;

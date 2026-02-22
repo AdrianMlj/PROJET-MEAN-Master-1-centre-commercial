@@ -7,6 +7,7 @@ const commandeSchema = new mongoose.Schema({
   numero_commande: {
     type: String,
     required: true,
+    default: genererNumeroCommande,
     unique: true
   },
   client: {

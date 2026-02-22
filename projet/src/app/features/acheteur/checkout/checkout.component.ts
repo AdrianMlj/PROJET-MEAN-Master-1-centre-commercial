@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PanierService } from '../../../core/services/panier.service';
@@ -22,17 +22,17 @@ export class CheckoutComponent implements OnInit {
   successMessage = '';
 
   modesLivraison: { value: ModeLivraison; label: string; description: string }[] = [
-    { value: 'livraison_standard', label: 'Livraison standard', description: '3-5 jours ouvrés' },
+    { value: 'livraison_standard', label: 'Livraison standard', description: '3-5 jours ouvres' },
     { value: 'livraison_express', label: 'Livraison express', description: '24-48h' },
     { value: 'retrait_boutique', label: 'Retrait en boutique', description: 'Gratuit' }
   ];
 
   methodesPaiement: { value: MethodePaiement; label: string; icon: string }[] = [
     { value: 'carte_bancaire', label: 'Carte bancaire', icon: 'fa-credit-card' },
-    { value: 'carte_credit', label: 'Carte de crédit', icon: 'fa-credit-card' },
+    { value: 'carte_credit', label: 'Carte de credit', icon: 'fa-credit-card' },
     { value: 'mobile', label: 'Paiement mobile', icon: 'fa-mobile-alt' },
     { value: 'virement', label: 'Virement bancaire', icon: 'fa-university' },
-    { value: 'especes', label: 'Espèces à la livraison', icon: 'fa-money-bill-wave' }
+    { value: 'especes', label: 'Especes a la livraison', icon: 'fa-money-bill-wave' }
   ];
 
   constructor(
@@ -125,7 +125,9 @@ export class CheckoutComponent implements OnInit {
         }
       },
       error: (error) => {
-        this.errorMessage = error.error?.message || 'Erreur lors de la commande';
+        const etape = error?.error?.etape ? ` (etape: ${error.error.etape})` : '';
+        const detail = error?.error?.error ? ` - ${error.error.error}` : '';
+        this.errorMessage = (error.error?.message || 'Erreur lors de la commande') + etape + detail;
         this.submitting = false;
       }
     });
@@ -148,3 +150,4 @@ export class CheckoutComponent implements OnInit {
     return this.checkoutForm.get('adresse_livraison') as FormGroup;
   }
 }
+
