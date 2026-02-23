@@ -10,27 +10,11 @@ import { User } from '../../../core/models/auth.model';
 })
 export class BoutiqueDashboardComponent implements OnInit {
   currentUser: User | null = null;
-  stats = {
-    produits: 0,
-    commandes: 0,
-    revenus: 0,
-    avis: 0
-  };
+  currentDate: Date = new Date();
 
   constructor(private authService: AuthService) {}
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
-    this.loadStats();
-  }
-
-  loadStats(): void {
-    // Simulation de données
-    this.stats = {
-      produits: 45,
-      commandes: 128,
-      revenus: 12500,
-      avis: 23
-    };
   }
 }

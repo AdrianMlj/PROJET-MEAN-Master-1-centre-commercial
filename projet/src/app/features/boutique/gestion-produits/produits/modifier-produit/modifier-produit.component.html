@@ -1,0 +1,154 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-edit"></i>
+        Modifier le produit
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/boutique/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Gestion Produits</span>
+        <i class="fas fa-chevron-right"></i>
+        <a routerLink="/boutique/produits/liste">Produits</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">{{ produit?.nom || 'Modification' }}</span>
+      </nav>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="loadingProduit">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <div class="content-wrapper" *ngIf="!loadingProduit && produit">
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-icon"><i class="fas fa-box"></i></div>
+        <div class="form-title">
+          <h2>{{ produit.nom }}</h2>
+          <p>Modifiez les informations du produit</p>
+        </div>
+      </div>
+
+      <form [formGroup]="produitForm" (ngSubmit)="onSubmit()" class="modern-form">
+        <div class="alert alert-success" *ngIf="successMessage">
+          <i class="fas fa-check-circle"></i> {{ successMessage }}
+        </div>
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+        </div>
+
+        <!-- Nom -->
+        <div class="form-group">
+          <label for="nom"><i class="fas fa-tag"></i> Nom *</label>
+          <input type="text" id="nom" formControlName="nom" class="form-control"
+                 [ngClass]="{'is-invalid': produitForm.get('nom')?.touched && produitForm.get('nom')?.invalid}">
+          <div class="error-message" *ngIf="produitForm.get('nom')?.touched && produitForm.get('nom')?.invalid">
+            Le nom est requis (min 2 caractères)
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="description"><i class="fas fa-align-left"></i> Description</label>
+          <textarea id="description" formControlName="description" class="form-control" rows="3"></textarea>
+        </div>
+
+        <!-- Prix et quantité -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="prix"><i class="fas fa-euro-sign"></i> Prix *</label>
+            <input type="number" id="prix" formControlName="prix" class="form-control" step="0.01" min="0"
+                   [ngClass]="{'is-invalid': produitForm.get('prix')?.touched && produitForm.get('prix')?.invalid}">
+          </div>
+          <div class="form-group">
+            <label for="quantite_stock"><i class="fas fa-cubes"></i> Quantité *</label>
+            <input type="number" id="quantite_stock" formControlName="quantite_stock" class="form-control" min="0">
+          </div>
+        </div>
+
+        <!-- Catégorie -->
+        <div class="form-group">
+          <label for="categorie_produit"><i class="fas fa-tags"></i> Catégorie</label>
+          <select id="categorie_produit" formControlName="categorie_produit" class="form-control">
+            <option value="">Aucune catégorie</option>
+            <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.nom_categorie }}</option>
+          </select>
+        </div>
+
+        <!-- Promotion -->
+        <div class="form-group">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" formControlName="en_promotion"> En promotion
+            </label>
+          </div>
+        </div>
+        <div class="form-group" *ngIf="produitForm.get('en_promotion')?.value">
+          <label for="prix_promotion">Prix promotionnel</label>
+          <input type="number" id="prix_promotion" formControlName="prix_promotion" class="form-control" step="0.01" min="0">
+        </div>
+
+        <!-- Images existantes -->
+        <div class="form-group" *ngIf="existingImages.length > 0">
+          <label>Images actuelles</label>
+          <div class="image-list">
+            <div class="image-item" *ngFor="let img of existingImages">
+              <img [src]="getImageUrl(img)" alt="Image produit">
+              <div class="image-actions">
+                <button type="button" class="btn-set-principale" (click)="setImagePrincipale(img._id!)"
+                        [class.principale]="img.is_principale" [disabled]="img.is_principale">
+                  ★
+                </button>
+                <button type="button" class="btn-remove" (click)="removeExistingImage(img._id!)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ajout de nouvelles images -->
+        <div class="form-group">
+          <label>Ajouter des images</label>
+          <div class="upload-area" (click)="fileInput.click()">
+            <input type="file" #fileInput style="display: none" multiple accept="image/*" (change)="onFileSelected($event)">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Cliquez pour sélectionner des images</p>
+          </div>
+          <div class="image-previews" *ngIf="newPreviews.length > 0">
+            <div class="preview-item" *ngFor="let preview of newPreviews; let i = index">
+              <img [src]="preview" alt="Aperçu">
+              <button type="button" class="remove-image" (click)="removeNewImage(i)"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statut actif -->
+        <div class="form-group">
+        <div class="toggle-switch">
+            <label class="switch">
+            <input type="checkbox" formControlName="est_actif">
+            <span class="slider round"></span>
+            </label>
+            <span class="toggle-label" [ngClass]="produitForm.get('est_actif')?.value ? 'text-success' : 'text-danger'">
+            {{ produitForm.get('est_actif')?.value ? 'Actif' : 'Inactif' }}
+            </span>
+        </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="annuler()">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="produitForm.invalid || loading">
+            <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+            <i class="fas fa-save" *ngIf="!loading"></i>
+            {{ loading ? 'Modification...' : 'Enregistrer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

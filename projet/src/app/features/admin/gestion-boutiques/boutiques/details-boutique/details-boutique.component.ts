@@ -76,24 +76,19 @@ export class DetailsBoutiqueComponent implements OnInit {
     }
   }
 
-  // ✅ MODIFIÉ: Nouvelle méthode pour obtenir l'URL du logo
   getLogoUrl(logoUrl: string | undefined): string {
-    // Si pas de logo, retourner l'image par défaut
     if (!logoUrl || logoUrl.trim() === '') {
       return this.DEFAULT_BOUTIQUE_IMAGE;
     }
     
-    // Si l'URL est déjà complète (commence par http)
     if (logoUrl.startsWith('http')) {
       return logoUrl;
     }
     
-    // Sinon, construire l'URL complète vers le backend
     const baseUrl = environment.apiUrl.replace('/api', '');
     return `${baseUrl}${logoUrl}`;
   }
 
-  // ✅ MODIFIÉ: Gestion d'erreur d'image - remplace par l'image par défaut
   onLogoError(event: any): void {
     event.target.src = this.DEFAULT_BOUTIQUE_IMAGE;
     event.target.classList.add('default-image');
@@ -109,12 +104,13 @@ export class DetailsBoutiqueComponent implements OnInit {
     });
   }
 
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value);
-  }
-
   formatNumber(value: number): string {
     return new Intl.NumberFormat('fr-FR').format(value);
+  }
+
+  // ✅ GARDÉ: formatCurrency pour les paramètres (non sensibles)
+  formatCurrency(value: number): string {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value);
   }
 
   getGerantName(): string {
@@ -204,17 +200,7 @@ export class DetailsBoutiqueComponent implements OnInit {
     return this.boutique?.statistiques?.nombre_avis || 0;
   }
 
-  getStatistiquesCommandesTraitees(): number {
-    return this.boutique?.statistiques?.commandes_traitees || 0;
-  }
-
-  getStatistiquesProduitsVendus(): number {
-    return this.boutique?.statistiques?.produits_vendus || 0;
-  }
-
-  getStatistiquesChiffreAffaires(): number {
-    return this.boutique?.statistiques?.chiffre_affaires || 0;
-  }
+  // ❌ SUPPRIMÉ: getStatistiquesCommandesTraitees, getStatistiquesProduitsVendus, getStatistiquesChiffreAffaires
 
   hasInformationsBancaires(): boolean {
     return !!(this.boutique?.informations_bancaires?.iban || this.boutique?.informations_bancaires?.bic);

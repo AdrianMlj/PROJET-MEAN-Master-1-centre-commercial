@@ -19,6 +19,10 @@ const routes: Routes = [
     loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule) 
   },
   { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
+  {
+    path: 'boutique',
+    loadChildren: () => import('./features/boutique/boutique.module').then(m => m.BoutiqueModule)
+  },
   { path: '**', redirectTo: '/auth/login' }
 ];
 

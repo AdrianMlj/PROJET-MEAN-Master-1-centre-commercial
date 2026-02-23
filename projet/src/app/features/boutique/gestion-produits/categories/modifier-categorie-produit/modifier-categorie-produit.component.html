@@ -1,0 +1,121 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-edit"></i>
+        Modifier la catégorie
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/boutique/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Gestion Produits</span>
+        <i class="fas fa-chevron-right"></i>
+        <a routerLink="/boutique/produits/categories/liste">Catégories</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">{{ categorie?.nom_categorie || 'Modification' }}</span>
+      </nav>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="loadingCategorie">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <div class="content-wrapper" *ngIf="!loadingCategorie">
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-icon">
+          <i class="fas fa-tags"></i>
+        </div>
+        <div class="form-title">
+          <h2>{{ categorie?.nom_categorie }}</h2>
+          <p>Modifiez les informations de la catégorie</p>
+        </div>
+        <div class="status-indicator" [ngClass]="categorie?.est_active ? 'active' : 'inactive'">
+          <i class="fas" [class.fa-check-circle]="categorie?.est_active" [class.fa-times-circle]="!categorie?.est_active"></i>
+          {{ categorie?.est_active ? 'Actif' : 'Inactif' }}
+        </div>
+      </div>
+
+      <form [formGroup]="categorieForm" (ngSubmit)="onSubmit()" class="modern-form">
+        <!-- Messages -->
+        <div class="alert alert-success" *ngIf="successMessage">
+          <i class="fas fa-check-circle"></i> {{ successMessage }}
+        </div>
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+        </div>
+
+        <!-- Nom -->
+        <div class="form-group">
+          <label for="nom_categorie"><i class="fas fa-tag"></i> Nom de la catégorie *</label>
+          <div class="input-wrapper">
+            <input type="text" id="nom_categorie" formControlName="nom_categorie" class="form-control"
+              [ngClass]="{'is-invalid': categorieForm.get('nom_categorie')?.touched && categorieForm.get('nom_categorie')?.invalid, 'is-pending': isCheckingNom}">
+            <span class="input-icon">
+              <i class="fas" [class.fa-spinner]="isCheckingNom" [class.fa-spin]="isCheckingNom"
+                [class.fa-exclamation-circle]="categorieForm.get('nom_categorie')?.invalid && !isCheckingNom"
+                [class.text-danger]="categorieForm.get('nom_categorie')?.invalid && !isCheckingNom"
+                [class.text-warning]="isCheckingNom"></i>
+            </span>
+          </div>
+          <div class="error-message" *ngIf="getNomCategorieError()">{{ getNomCategorieError() }}</div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="description"><i class="fas fa-align-left"></i> Description</label>
+          <textarea id="description" formControlName="description" class="form-control" rows="4"></textarea>
+        </div>
+
+        <!-- Image URL -->
+        <div class="form-group">
+          <label for="image_url"><i class="fas fa-image"></i> URL de l'image</label>
+          <input type="url" id="image_url" formControlName="image_url" class="form-control">
+        </div>
+
+        <!-- Prévisualisation -->
+        <div class="image-preview" *ngIf="categorieForm.get('image_url')?.value">
+          <label>Aperçu :</label>
+          <div class="preview-container">
+            <img [src]="categorieForm.get('image_url')?.value" alt="Aperçu" (error)="onImageError($event)">
+            <button type="button" class="remove-image" (click)="categorieForm.patchValue({image_url: ''})">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Ordre et statut -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ordre_affichage"><i class="fas fa-sort-numeric-up"></i> Ordre d'affichage</label>
+            <input type="number" id="ordre_affichage" formControlName="ordre_affichage" class="form-control" min="0">
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-toggle-on"></i> Statut</label>
+            <div class="toggle-switch">
+              <label class="switch">
+                <input type="checkbox" formControlName="est_active">
+                <span class="slider round"></span>
+              </label>
+              <span class="toggle-label" [ngClass]="categorieForm.get('est_active')?.value ? 'text-success' : 'text-danger'">
+                {{ categorieForm.get('est_active')?.value ? 'Actif' : 'Inactif' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="annuler()" [disabled]="loading">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="categorieForm.invalid || loading">
+            <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+            <i class="fas fa-save" *ngIf="!loading"></i>
+            {{ loading ? 'Modification...' : 'Enregistrer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

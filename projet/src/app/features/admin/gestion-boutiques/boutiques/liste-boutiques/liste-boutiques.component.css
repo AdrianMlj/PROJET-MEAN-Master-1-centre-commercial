@@ -411,32 +411,37 @@
   color: #667eea;
 }
 
-/* Stats */
+/* Note styling (version sobre) */
 .stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  padding: 15px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 20px;
   background: #f8f9fa;
   border-bottom: 1px solid #f0f0f0;
 }
 
-.stat-item {
+.note-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  color: #495057;
+  font-size: 14px;
 }
 
-.stat-item i {
+.note-item i {
+  color: #ffc107;
   font-size: 16px;
-  color: #667eea;
 }
 
-.stat-item span {
-  font-size: 13px;
+.note-valeur {
   font-weight: 600;
   color: #333;
+}
+
+.note-sur {
+  color: #999;
+  font-size: 13px;
 }
 
 /* Date Info */
@@ -605,6 +610,10 @@
 }
 
 @media (max-width: 768px) {
+  .page-container {
+    padding: 15px;
+  }
+  
   .page-header {
     flex-direction: column;
     align-items: flex-start;
@@ -641,10 +650,6 @@
   .card-actions {
     grid-template-columns: 1fr;
   }
-  
-  .stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /* Style pour l'image par défaut */
@@ -667,12 +672,6 @@
   object-fit: cover;
 }
 
-/* Pour les logos dans les détails */
-.logo-container .default-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
 /* ===== STYLES POUR LES FILTRES ===== */
 
 /* Recherche en pleine largeur */
@@ -788,20 +787,6 @@
 
 .filters-card .filter-row {
   animation: fadeIn 0.3s ease;
-}
-
-/* Style pour l'image par défaut */
-.default-image {
-  opacity: 0.8;
-  filter: brightness(0.95);
-  transition: all 0.3s;
-  object-fit: cover;
-}
-
-.default-image:hover {
-  opacity: 1;
-  filter: brightness(1);
-  transform: scale(1.02);
 }
 
 /* Responsive pour les filtres */

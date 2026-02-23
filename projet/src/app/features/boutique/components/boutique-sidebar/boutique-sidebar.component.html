@@ -1,0 +1,141 @@
+<div class="boutique-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isCollapsed" [class.active]="isMobileMenuOpen">
+    <!-- En‑tête avec logo et bouton toggle -->
+    <div class="sidebar-header">
+      <div class="logo">
+        <i class="fas fa-store-alt"></i>
+        <span *ngIf="!isCollapsed">ONLINE SHOP</span>
+      </div>
+      <button class="toggle-btn" (click)="toggleSidebar()" [attr.aria-label]="isCollapsed ? 'Étendre' : 'Réduire'">
+        <i class="fas" [class.fa-chevron-left]="!isCollapsed" [class.fa-chevron-right]="isCollapsed"></i>
+      </button>
+    </div>
+
+    <!-- Profil du gérant -->
+    <div class="gerant-profile" *ngIf="!isCollapsed">
+      <div class="avatar">
+        <img [src]="getAvatarUrl()"
+             [alt]="getCurrentUserName()"
+             (error)="onAvatarError($event)"
+             class="avatar-img">
+      </div>
+      <div class="info">
+        <h4>{{ getCurrentUserName() }}</h4>
+        <span class="badge">Gérant de boutique</span>
+      </div>
+    </div>
+    <!-- Version mobile du profil -->
+    <div class="gerant-profile-mobile" *ngIf="isCollapsed" title="{{ getCurrentUserName() }}">
+      <div class="avatar">
+        <img [src]="getAvatarUrl()"
+             [alt]="getCurrentUserName()"
+             (error)="onAvatarError($event)"
+             class="avatar-img">
+      </div>
+    </div>
+
+    <!-- Informations de la boutique (avec catégorie) -->
+    <div class="boutique-profile" *ngIf="maBoutique && !isCollapsed">
+      <div class="boutique-logo-wrapper">
+        <img [src]="getBoutiqueLogoUrl()"
+             [alt]="maBoutique.nom"
+             (error)="onLogoError($event)"
+             class="boutique-logo">
+      </div>
+      <div class="boutique-info">
+        <h4>{{ maBoutique.nom }}</h4>
+        <div class="categorie-badge">
+          <span class="categorie-icone">{{ getCategorieIcone() }}</span>
+          <span class="categorie-nom">{{ getCategorieName() }}</span>
+        </div>
+        <span class="badge" [ngClass]="maBoutique.est_active ? 'active' : 'inactive'">
+          {{ maBoutique.est_active ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+    </div>
+    <!-- Version mobile de la boutique (avec catégorie en tooltip) -->
+    <div class="boutique-profile-mobile" *ngIf="maBoutique && isCollapsed" title="{{ maBoutique.nom }} - {{ getCategorieName() }}">
+      <div class="boutique-logo-wrapper">
+        <img [src]="getBoutiqueLogoUrl()"
+             [alt]="maBoutique.nom"
+             (error)="onLogoError($event)"
+             class="boutique-logo">
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <a routerLink="/boutique/dashboard" routerLinkActive="active" class="nav-item">
+        <i class="fas fa-tachometer-alt"></i>
+        <span *ngIf="!isCollapsed">Dashboard</span>
+      </a>
+
+      <!-- Gestion Produits -->
+      <div class="nav-section">
+        <div class="nav-header" (click)="toggleMenu('gestionProduits')" [class.active]="menuOpen['gestionProduits']">
+          <i class="fas fa-box"></i>
+          <span *ngIf="!isCollapsed">Gestion Produits</span>
+          <i *ngIf="!isCollapsed" class="fas"
+            [class.fa-chevron-down]="menuOpen['gestionProduits']"
+            [class.fa-chevron-right]="!menuOpen['gestionProduits']"></i>
+        </div>
+        <div class="sub-menu" *ngIf="menuOpen['gestionProduits']">
+          <!-- Catégories (déjà existant) -->
+          <div class="sub-header" (click)="toggleMenu('categories')" [class.active]="menuOpen['categories']">
+            <i class="fas fa-tags"></i>
+            <span *ngIf="!isCollapsed">Catégories</span>
+            <i *ngIf="!isCollapsed" class="fas"
+              [class.fa-chevron-down]="menuOpen['categories']"
+              [class.fa-chevron-right]="!menuOpen['categories']"></i>
+          </div>
+          <div class="sub-sub-menu" *ngIf="menuOpen['categories']">
+            <a routerLink="/boutique/produits/categories/creer" routerLinkActive="active" class="sub-item">
+              <i class="fas fa-plus-circle"></i>
+              <span *ngIf="!isCollapsed">Créer catégorie</span>
+            </a>
+            <a routerLink="/boutique/produits/categories/liste" routerLinkActive="active" class="sub-item">
+              <i class="fas fa-list"></i>
+              <span *ngIf="!isCollapsed">Liste catégories</span>
+            </a>
+          </div>
+
+          <!-- Produits (nouveau) -->
+          <div class="sub-header" (click)="toggleMenu('produits')" [class.active]="menuOpen['produits']">
+            <i class="fas fa-box-open"></i>
+            <span *ngIf="!isCollapsed">Produits</span>
+            <i *ngIf="!isCollapsed" class="fas"
+              [class.fa-chevron-down]="menuOpen['produits']"
+              [class.fa-chevron-right]="!menuOpen['produits']"></i>
+          </div>
+          <div class="sub-sub-menu" *ngIf="menuOpen['produits']">
+            <a routerLink="/boutique/produits/creer" routerLinkActive="active" class="sub-item">
+              <i class="fas fa-plus-circle"></i>
+              <span *ngIf="!isCollapsed">Créer produit</span>
+            </a>
+            <a routerLink="/boutique/produits/liste" routerLinkActive="active" class="sub-item">
+              <i class="fas fa-list"></i>
+              <span *ngIf="!isCollapsed">Liste produits</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Pied de page avec déconnexion -->
+    <div class="sidebar-footer">
+      <button class="nav-item logout-btn" (click)="logout()" [title]="isCollapsed ? 'Déconnexion' : ''">
+        <i class="fas fa-sign-out-alt"></i>
+        <span *ngIf="!isCollapsed">Déconnexion</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Contenu principal -->
+  <main class="main-content" [class.expanded]="isCollapsed">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Overlay mobile -->
+  <div class="mobile-overlay" *ngIf="isMobileMenuOpen" (click)="toggleMobileMenu()"></div>
+</div>

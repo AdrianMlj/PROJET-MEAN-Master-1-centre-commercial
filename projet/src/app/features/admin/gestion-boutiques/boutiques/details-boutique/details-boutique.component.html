@@ -221,11 +221,11 @@
         </div>
       </div>
 
-      <!-- Statistiques détaillées -->
+      <!-- Aperçu (version admin) -->
       <div class="info-section">
         <h3>
           <i class="fas fa-chart-line"></i>
-          Statistiques
+          Aperçu
         </h3>
         <div class="stats-grid">
           <div class="stat-card">
@@ -236,33 +236,7 @@
             <div class="stat-value">{{ getStatistiquesNoteMoyenne().toFixed(1) }} / 5</div>
             <div class="stat-detail">{{ formatNumber(getStatistiquesNombreAvis()) }} avis</div>
           </div>
-
-          <div class="stat-card">
-            <div class="stat-header">
-              <i class="fas fa-shopping-bag"></i>
-              <span>Commandes</span>
-            </div>
-            <div class="stat-value">{{ formatNumber(getStatistiquesCommandesTraitees()) }}</div>
-            <div class="stat-detail">commandes traitées</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-header">
-              <i class="fas fa-box"></i>
-              <span>Produits vendus</span>
-            </div>
-            <div class="stat-value">{{ formatNumber(getStatistiquesProduitsVendus()) }}</div>
-            <div class="stat-detail">unités</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-header">
-              <i class="fas fa-euro-sign"></i>
-              <span>Chiffre d'affaires</span>
-            </div>
-            <div class="stat-value">{{ formatCurrency(getStatistiquesChiffreAffaires()) }}</div>
-            <div class="stat-detail">total</div>
-          </div>
+          <!-- ❌ Autres stats supprimées -->
         </div>
       </div>
 

@@ -1,0 +1,193 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-boxes"></i>
+        Gestion des produits
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/boutique/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Gestion Produits</span>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Produits</span>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary" routerLink="/boutique/produits/creer">
+        <i class="fas fa-plus-circle"></i>
+        Nouveau produit
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Filters Card -->
+  <div class="filters-card">
+    <div class="filters-header">
+      <h3><i class="fas fa-filter"></i> Filtres</h3>
+      <button class="btn-clear" (click)="clearFilters()" *ngIf="hasActiveFilters()">
+        <i class="fas fa-times"></i> Effacer les filtres
+      </button>
+    </div>
+    <div class="filters-body">
+      <div class="filter-row">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" [(ngModel)]="searchTerm" (input)="onSearch()"
+                 placeholder="Rechercher un produit..." class="form-control">
+        </div>
+      </div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Catégorie</label>
+          <select [(ngModel)]="selectedCategorie" (change)="onFilterChange()" class="form-control">
+            <option value="">Toutes les catégories</option>
+            <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.nom_categorie }}</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Statut</label>
+          <select [(ngModel)]="filterActif" (change)="onFilterChange()" class="form-control">
+            <option [ngValue]="null">Tous</option>
+            <option [ngValue]="true">Actifs</option>
+            <option [ngValue]="false">Inactifs</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Promotion</label>
+          <select [(ngModel)]="filterPromo" (change)="onFilterChange()" class="form-control">
+            <option [ngValue]="null">Tous</option>
+            <option [ngValue]="true">En promotion</option>
+            <option [ngValue]="false">Sans promo</option>
+          </select>
+        </div>
+      </div>
+      <!-- Ligne : filtres prix et date -->
+      <div class="filter-row">
+        <div class="filter-group range-filter">
+          <label>Prix min (€)</label>
+          <input type="number" [(ngModel)]="prixMin" (input)="onFilterChange()" class="form-control" placeholder="Min" min="0" step="0.01">
+        </div>
+        <div class="filter-group range-filter">
+          <label>Prix max (€)</label>
+          <input type="number" [(ngModel)]="prixMax" (input)="onFilterChange()" class="form-control" placeholder="Max" min="0" step="0.01">
+        </div>
+        <div class="filter-group date-filter">
+          <label>Date début</label>
+          <input type="date" [(ngModel)]="dateDebut" (change)="onFilterChange()" class="form-control">
+        </div>
+        <div class="filter-group date-filter">
+          <label>Date fin</label>
+          <input type="date" [(ngModel)]="dateFin" (change)="onFilterChange()" class="form-control">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des produits...</p>
+  </div>
+
+  <!-- Produits Grid -->
+  <div class="produits-grid" *ngIf="!loading">
+    <div class="produit-card" *ngFor="let produit of filteredProduits">
+      <!-- Image avec carrousel -->
+      <div class="card-image">
+        <div class="image-carousel">
+          <img [src]="getCurrentImage(produit)" [alt]="produit.nom" class="produit-image">
+          <button class="carousel-btn prev" (click)="prevImage(produit)" *ngIf="produit.images && produit.images.length > 1">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button class="carousel-btn next" (click)="nextImage(produit)" *ngIf="produit.images && produit.images.length > 1">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          <div class="image-indicator" *ngIf="produit.images && produit.images.length > 1">
+            {{ (currentImageIndex[produit._id] || 0) + 1 }}/{{ produit.images.length }}
+          </div>
+        </div>
+        <div class="badge stock" [ngClass]="{'faible': produit.quantite_stock <= produit.seuil_alerte, 'rupture': produit.quantite_stock === 0}">
+          {{ produit.quantite_stock }} en stock
+        </div>
+        <div class="badge promo" *ngIf="produit.en_promotion">-{{ produit.pourcentage_reduction }}%</div>
+      </div>
+
+      <!-- Contenu -->
+      <div class="card-content">
+        <div class="card-header">
+          <h3 class="produit-nom">{{ produit.nom }}</h3>
+          <span class="produit-code">{{ produit.code_produit }}</span>
+        </div>
+
+        <p class="description">{{ (produit.description || '').slice(0,100) }}{{ (produit.description && produit.description.length > 100) ? '...' : '' }}</p>
+        <div class="prix">
+          <span class="prix-actuel" [ngClass]="{'barre': produit.en_promotion}">{{ formatCurrency(produit.prix) }}</span>
+          <span class="prix-promo" *ngIf="produit.en_promotion">{{ formatCurrency(produit.prix_final!) }}</span>
+        </div>
+
+        <div class="meta-info">
+          <div class="categorie">
+            <i class="fas fa-tag"></i> {{ getCategorieName(produit) }}
+          </div>
+          <div class="date-creation" title="Date de création">
+            <i class="fas fa-calendar-alt"></i> {{ formatDate(produit.date_creation) }}
+          </div>
+          <div class="statut" [ngClass]="produit.est_actif ? 'actif' : 'inactif'">
+            <i class="fas" [class.fa-check-circle]="produit.est_actif" [class.fa-times-circle]="!produit.est_actif"></i>
+            {{ produit.est_actif ? 'Actif' : 'Inactif' }}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card-actions">
+          <button class="btn-edit" (click)="onEdit(produit._id)" title="Modifier">
+            <i class="fas fa-edit"></i> Modifier
+          </button>
+          <button class="btn-toggle" [ngClass]="produit.est_actif ? 'active' : 'inactive'"
+                  (click)="onToggleStatus(produit)" [title]="produit.est_actif ? 'Désactiver' : 'Activer'">
+            <i class="fas" [class.fa-toggle-on]="produit.est_actif" [class.fa-toggle-off]="!produit.est_actif"></i>
+            {{ produit.est_actif ? 'Désactiver' : 'Activer' }}
+          </button>
+          <button class="btn-delete" (click)="onDelete(produit._id)" title="Supprimer">
+            <i class="fas fa-trash"></i> Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredProduits.length === 0">
+      <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+      <h3>Aucun produit trouvé</h3>
+      <p>{{ hasActiveFilters() ? 'Aucun produit ne correspond aux filtres.' : 'Commencez par créer votre premier produit.' }}</p>
+      <button class="btn btn-primary" routerLink="/boutique/produits/creer" *ngIf="!hasActiveFilters()">
+        <i class="fas fa-plus-circle"></i> Créer un produit
+      </button>
+      <button class="btn btn-secondary" (click)="clearFilters()" *ngIf="hasActiveFilters()">
+        <i class="fas fa-times"></i> Effacer les filtres
+      </button>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <app-pagination
+    *ngIf="!loading && totalPages > 1"
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    [totalItems]="totalDocs"
+    [limit]="limit"
+    [hasPrevPage]="hasPrevPage"
+    [hasNextPage]="hasNextPage"
+    (pageChange)="onPageChange($event)">
+  </app-pagination>
+</div>

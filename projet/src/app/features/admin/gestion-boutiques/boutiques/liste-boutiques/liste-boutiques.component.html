@@ -100,7 +100,7 @@
     </div>
 
     <div class="filters-body">
-      <!-- Recherche textuelle (pleine largeur) -->
+      <!-- Recherche textuelle -->
       <div class="filter-row">
         <div class="search-box full-width">
           <i class="fas fa-search"></i>
@@ -114,7 +114,7 @@
         </div>
       </div>
 
-      <!-- Filtres de base (catégorie, statut, paiement) -->
+      <!-- Filtres de base -->
       <div class="filter-row">
         <div class="filter-group">
           <label>
@@ -191,41 +191,6 @@
         </div>
       </div>
 
-      <!-- Filtre par chiffre d'affaires (min/max) -->
-      <div class="filter-row">
-        <div class="filter-group range-filter">
-          <label>
-            <i class="fas fa-euro-sign" style="color: #28a745;"></i>
-            CA minimum (€)
-          </label>
-          <input
-            type="number"
-            [(ngModel)]="caMin"
-            (input)="onFilterChange()"
-            placeholder="Min en €"
-            min="0"
-            step="100"
-            class="form-control"
-          >
-        </div>
-
-        <div class="filter-group range-filter">
-          <label>
-            <i class="fas fa-euro-sign" style="color: #28a745;"></i>
-            CA maximum (€)
-          </label>
-          <input
-            type="number"
-            [(ngModel)]="caMax"
-            (input)="onFilterChange()"
-            placeholder="Max en €"
-            min="0"
-            step="100"
-            class="form-control"
-          >
-        </div>
-      </div>
-
       <!-- Filtre par date de création -->
       <div class="filter-row">
         <div class="filter-group date-filter">
@@ -282,12 +247,6 @@
         <span class="active-filter-tag" *ngIf="noteMax !== null">
           <i class="fas fa-star"></i> Note ≤ {{ noteMax }}
         </span>
-        <span class="active-filter-tag" *ngIf="caMin !== null">
-          <i class="fas fa-euro-sign"></i> CA ≥ {{ caMin }}€
-        </span>
-        <span class="active-filter-tag" *ngIf="caMax !== null">
-          <i class="fas fa-euro-sign"></i> CA ≤ {{ caMax }}€
-        </span>
         <span class="active-filter-tag" *ngIf="dateDebut">
           <i class="fas fa-calendar-alt"></i> Du {{ dateDebut | date:'dd/MM/yyyy' }}
         </span>
@@ -335,10 +294,10 @@
       <div class="gerant-info">
         <i class="fas fa-user-tie"></i>
         <div class="gerant-details">
-            <span class="gerant-nom">{{ getGerantName(boutique.gerant) }}</span>
-            <span class="gerant-email" *ngIf="getGerantEmail(boutique.gerant)">
+          <span class="gerant-nom">{{ getGerantName(boutique.gerant) }}</span>
+          <span class="gerant-email" *ngIf="getGerantEmail(boutique.gerant)">
             {{ getGerantEmail(boutique.gerant) }}
-            </span>
+          </span>
         </div>
       </div>
 
@@ -354,23 +313,12 @@
         </div>
       </div>
 
-      <!-- Statistiques -->
+      <!-- Note moyenne (seule) -->
       <div class="stats">
-        <div class="stat-item" title="Note moyenne">
+        <div class="note-item">
           <i class="fas fa-star"></i>
-          <span>{{ boutique.statistiques.note_moyenne.toFixed(1) }}</span>
-        </div>
-        <div class="stat-item" title="Nombre d'avis">
-          <i class="fas fa-comments"></i>
-          <span>{{ formatNumber(boutique.statistiques.nombre_avis) }}</span>
-        </div>
-        <div class="stat-item" title="Commandes traitées">
-          <i class="fas fa-shopping-bag"></i>
-          <span>{{ formatNumber(boutique.statistiques.commandes_traitees) }}</span>
-        </div>
-        <div class="stat-item" title="Chiffre d'affaires">
-          <i class="fas fa-euro-sign"></i>
-          <span>{{ formatCurrency(boutique.statistiques.chiffre_affaires) }}</span>
+          <span class="note-valeur">{{ boutique.statistiques.note_moyenne.toFixed(1) }}</span>
+          <span class="note-sur">/5</span>
         </div>
       </div>
 

@@ -3,7 +3,7 @@ const router = express.Router();
 const produitController = require('../controllers/produit.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
 const roleMiddleware = require('../middlewares/role.middleware');
-const { uploadProduitImage, handleUploadError } = require('../middlewares/upload.middleware');
+const { uploadMultipleImages, handleUploadError } = require('../middlewares/upload.middleware');
 
 /**
  * @swagger
@@ -511,9 +511,9 @@ router.put('/:id/stock',
  * @swagger
  * /produits/{id}/images:
  *   post:
- *     summary: Uploader une image pour un produit
- *     description: Ajoute une nouvelle image à un produit existant
  *     tags: [Produits]
+ *     summary: Uploader plusieurs images pour un produit
+ *     description: Permet au gérant d'ajouter plusieurs photos à un produit (max 5)
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -530,54 +530,31 @@ router.put('/:id/stock',
  *           schema:
  *             type: object
  *             properties:
- *               image:
- *                 type: string
- *                 format: binary
- *                 description: Image à uploader (jpg, jpeg, png, gif, webp - max 5MB)
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
  *     responses:
  *       200:
- *         description: Image uploadée avec succès
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Image uploadée avec succès"
- *                 image:
- *                   type: object
- *                   properties:
- *                     url:
- *                       type: string
- *                     ordre:
- *                       type: integer
- *                     is_principale:
- *                       type: boolean
- *                 images:
- *                   type: array
- *                   items:
- *                     type: object
+ *         description: Images uploadées avec succès
  *       400:
- *         description: Aucun fichier uploadé ou format invalide
+ *         description: Erreur
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       403:
- *         description: Vous n'êtes pas autorisé à modifier ce produit
+ *         $ref: '#/components/responses/ForbiddenError'
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  *       500:
- *         description: Erreur serveur
+ *         $ref: '#/components/responses/Error'
  */
 router.post('/:id/images',
   authMiddleware,
   roleMiddleware('boutique'),
-  uploadProduitImage,
+  uploadMultipleImages, // Middleware pour plusieurs fichiers (champ "images")
   handleUploadError,
-  produitController.uploadImageProduit
+  produitController.uploadImagesProduit
 );
 
 /**
@@ -636,3 +613,55 @@ router.delete('/:produitId/images/:imageId',
 );
 
 module.exports = router;
+
+/**
+ * @swagger
+ * /produits/{id}/toggle-activation:
+ *   patch:
+ *     tags: [Produits]
+ *     summary: Activer/désactiver un produit
+ *     description: Permet au gérant de la boutique d'activer ou désactiver un produit
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du produit
+ *     responses:
+ *       200:
+ *         description: Statut modifié avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 produit:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     nom:
+ *                       type: string
+ *                     est_actif:
+ *                       type: boolean
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/Error'
+ */
+router.patch('/:id/toggle-activation',
+  authMiddleware,
+  roleMiddleware('boutique'), // Seulement le gérant de la boutique (ou admin si vous voulez)
+  produitController.toggleActivationProduit
+);

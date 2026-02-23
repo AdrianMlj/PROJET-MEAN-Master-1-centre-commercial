@@ -67,4 +67,9 @@ export class BoutiqueService {
   supprimerBoutique(id: string): Observable<BoutiqueResponse> {
     return this.http.delete<BoutiqueResponse>(`${this.apiUrl}/admin/${id}`);
   }
+
+  // Admin: Obtenir la boutique du gérant connecté
+  getMaBoutique(): Observable<BoutiqueResponse> {
+    return this.http.get<BoutiqueResponse>(`${this.apiUrl}/gerant/mon-boutique`);
+  }
 }

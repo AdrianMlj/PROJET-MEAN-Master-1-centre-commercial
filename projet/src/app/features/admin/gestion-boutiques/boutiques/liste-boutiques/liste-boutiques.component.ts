@@ -41,15 +41,11 @@ export class ListeBoutiquesComponent implements OnInit {
   selectedStatut: string = '';
   selectedPaiement: string = '';
 
-  // ✅ Filtres pour les notes
+  // Filtres pour les notes
   noteMin: number | null = null;
   noteMax: number | null = null;
 
-  // ✅ Filtres pour le chiffre d'affaires
-  caMin: number | null = null;
-  caMax: number | null = null;
-
-  // ✅ Filtres pour les dates
+  // Filtres pour les dates
   dateDebut: string | null = null;
   dateFin: string | null = null;
 
@@ -57,7 +53,7 @@ export class ListeBoutiquesComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  // ✅ URL de l'image par défaut pour les boutiques
+  // URL de l'image par défaut pour les boutiques
   private readonly DEFAULT_BOUTIQUE_IMAGE = 'https://www.legrand.es/modules/custom/legrand_ecat/assets/img/no-image.png';
 
   // Options pour les filtres
@@ -162,15 +158,7 @@ export class ListeBoutiquesComponent implements OnInit {
       filtered = filtered.filter(b => b.statistiques.note_moyenne <= (this.noteMax || 5));
     }
 
-    // 6. Filtre par chiffre d'affaires (min/max)
-    if (this.caMin !== null) {
-      filtered = filtered.filter(b => b.statistiques.chiffre_affaires >= (this.caMin || 0));
-    }
-    if (this.caMax !== null) {
-      filtered = filtered.filter(b => b.statistiques.chiffre_affaires <= (this.caMax || Infinity));
-    }
-
-    // 7. Filtre par date de création
+    // 6. Filtre par date de création
     if (this.dateDebut) {
       const debut = new Date(this.dateDebut);
       debut.setHours(0, 0, 0, 0);
@@ -211,8 +199,6 @@ export class ListeBoutiquesComponent implements OnInit {
     this.selectedPaiement = '';
     this.noteMin = null;
     this.noteMax = null;
-    this.caMin = null;
-    this.caMax = null;
     this.dateDebut = null;
     this.dateFin = null;
     this.currentPage = 1;
@@ -343,10 +329,6 @@ export class ListeBoutiquesComponent implements OnInit {
     return new Intl.NumberFormat('fr-FR').format(value);
   }
 
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value);
-  }
-
   hasActiveFilters(): boolean {
     return !!(this.searchTerm || 
               this.selectedCategorie || 
@@ -354,8 +336,6 @@ export class ListeBoutiquesComponent implements OnInit {
               this.selectedPaiement ||
               this.noteMin !== null ||
               this.noteMax !== null ||
-              this.caMin !== null ||
-              this.caMax !== null ||
               this.dateDebut ||
               this.dateFin);
   }

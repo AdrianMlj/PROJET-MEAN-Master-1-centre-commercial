@@ -1,0 +1,118 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-plus-circle"></i>
+        Créer un produit
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/boutique/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Gestion Produits</span>
+        <i class="fas fa-chevron-right"></i>
+        <a routerLink="/boutique/produits/liste">Produits</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Créer</span>
+      </nav>
+    </div>
+  </div>
+
+  <div class="content-wrapper">
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-icon">
+          <i class="fas fa-box"></i>
+        </div>
+        <div class="form-title">
+          <h2>Nouveau produit</h2>
+          <p>Ajoutez un produit à votre catalogue</p>
+        </div>
+      </div>
+
+      <form [formGroup]="produitForm" (ngSubmit)="onSubmit()" class="modern-form" novalidate>
+
+        <div class="alert alert-success" *ngIf="successMessage">
+          <i class="fas fa-check-circle"></i> {{ successMessage }}
+        </div>
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+        </div>
+
+        <!-- Nom -->
+        <div class="form-group">
+          <label for="nom"><i class="fas fa-tag"></i> Nom du produit *</label>
+          <input type="text" id="nom" formControlName="nom" class="form-control"
+                 [ngClass]="{'is-invalid': produitForm.get('nom')?.touched && produitForm.get('nom')?.invalid}">
+          <div class="error-message" *ngIf="produitForm.get('nom')?.touched && produitForm.get('nom')?.invalid">
+            <span *ngIf="produitForm.get('nom')?.errors?.['required']">Le nom est requis</span>
+            <span *ngIf="produitForm.get('nom')?.errors?.['minlength']">Minimum 2 caractères</span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="description"><i class="fas fa-align-left"></i> Description</label>
+          <textarea id="description" formControlName="description" class="form-control" rows="3"></textarea>
+        </div>
+
+        <!-- Prix et quantité -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="prix"><i class="fas fa-euro-sign"></i> Prix *</label>
+            <input type="number" id="prix" formControlName="prix" class="form-control" step="0.01" min="0"
+                   [ngClass]="{'is-invalid': produitForm.get('prix')?.touched && produitForm.get('prix')?.invalid}">
+            <div class="error-message" *ngIf="produitForm.get('prix')?.touched && produitForm.get('prix')?.invalid">
+              <span *ngIf="produitForm.get('prix')?.errors?.['required']">Le prix est requis</span>
+              <span *ngIf="produitForm.get('prix')?.errors?.['min']">Le prix doit être positif</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="quantite_stock"><i class="fas fa-cubes"></i> Quantité en stock *</label>
+            <input type="number" id="quantite_stock" formControlName="quantite_stock" class="form-control" min="0"
+                   [ngClass]="{'is-invalid': produitForm.get('quantite_stock')?.touched && produitForm.get('quantite_stock')?.invalid}">
+            <div class="error-message" *ngIf="produitForm.get('quantite_stock')?.touched && produitForm.get('quantite_stock')?.invalid">
+              <span *ngIf="produitForm.get('quantite_stock')?.errors?.['required']">La quantité est requise</span>
+              <span *ngIf="produitForm.get('quantite_stock')?.errors?.['min']">La quantité doit être positive</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Catégorie -->
+        <div class="form-group">
+          <label for="categorie_produit"><i class="fas fa-tags"></i> Catégorie</label>
+          <select id="categorie_produit" formControlName="categorie_produit" class="form-control">
+            <option value="">Aucune catégorie</option>
+            <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.nom_categorie }}</option>
+          </select>
+        </div>
+
+        <!-- Upload d'images -->
+        <div class="form-group">
+          <label><i class="fas fa-images"></i> Images du produit</label>
+          <div class="upload-area" (click)="fileInput.click()">
+            <input type="file" #fileInput style="display: none" multiple accept="image/*" (change)="onFileSelected($event)">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Cliquez pour sélectionner des images</p>
+          </div>
+          <div class="image-previews" *ngIf="imagePreviews.length > 0">
+            <div class="preview-item" *ngFor="let preview of imagePreviews; let i = index">
+              <img [src]="preview" alt="Aperçu">
+              <button type="button" class="remove-image" (click)="removeImage(i)"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="annuler()">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="produitForm.invalid || loading">
+            <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+            <i class="fas fa-save" *ngIf="!loading"></i>
+            {{ loading ? 'Création...' : 'Créer le produit' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

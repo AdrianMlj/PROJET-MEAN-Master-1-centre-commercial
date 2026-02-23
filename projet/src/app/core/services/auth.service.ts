@@ -67,6 +67,22 @@ export class AuthService {
     return this.http.get<any>(`${this.apiUrl}/auth/profil`);
   }
 
+  // ✅ Nouvelle méthode pour rafraîchir le profil utilisateur
+  refreshUserProfile(): void {
+    if (this.isLoggedIn()) {
+      this.getProfile().subscribe({
+        next: (response) => {
+          if (response.success && response.utilisateur) {
+            this.currentUserSubject.next(response.utilisateur);
+          }
+        },
+        error: (error) => {
+          console.error('Erreur lors du rafraîchissement du profil:', error);
+        }
+      });
+    }
+  }
+
   private loadCurrentUser(): void {
     const token = this.tokenService.getToken();
     if (token) {
@@ -82,6 +98,9 @@ export class AuthService {
           est_actif: true
         };
         this.currentUserSubject.next(user);
+        
+        // Rafraîchir le profil pour obtenir l'avatar_url
+        this.refreshUserProfile();
       }
     }
   }

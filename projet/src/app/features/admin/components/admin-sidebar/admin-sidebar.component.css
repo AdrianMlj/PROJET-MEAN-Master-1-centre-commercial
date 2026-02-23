@@ -458,3 +458,59 @@
     transform: translateY(0);
   }
 }
+/* Styles pour l'avatar */
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar i {
+  font-size: 24px;
+  color: white;
+}
+
+/* Style pour l'avatar par défaut en cas d'erreur */
+.avatar-img.default-avatar {
+  opacity: 0.9;
+  filter: brightness(0.95);
+}
+
+/* Animation au survol */
+.avatar:hover .avatar-img {
+  transform: scale(1.05);
+  transition: transform 0.3s;
+}
+
+/* Version mobile */
+.admin-profile-mobile .avatar {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+}
+
+/* Pour le mode collapsed */
+.sidebar.collapsed .admin-profile-mobile {
+  padding: 15px 0;
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.sidebar.collapsed .admin-profile-mobile .avatar {
+  width: 45px;
+  height: 45px;
+}
