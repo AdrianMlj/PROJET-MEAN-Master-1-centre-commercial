@@ -1,0 +1,66 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-credit-card"></i>
+        Paiement de la location
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/boutique/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Paiement</span>
+      </nav>
+    </div>
+  </div>
+
+  <div class="content-wrapper">
+    <div class="form-card">
+      <div class="form-header" [ngClass]="{'warning': boutique && !boutique.est_active}">
+        <div class="form-icon">
+          <i class="fas fa-store-alt"></i>
+        </div>
+        <div class="form-title">
+          <h2 *ngIf="boutique">{{ boutique.nom }}</h2>
+          <p *ngIf="boutique && boutique.est_active">Votre boutique est active. Vous pouvez payer la prochaine mensualité.</p>
+          <p *ngIf="boutique && !boutique.est_active" class="text-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            Votre boutique est désactivée car vous n'avez pas payé la location.
+          </p>
+        </div>
+        <div class="status-badge" *ngIf="boutique" [ngClass]="boutique.statut_paiement">
+          {{ boutique.statut_paiement === 'paye' ? 'Payé' : 'Impayé' }}
+        </div>
+      </div>
+
+      <form [formGroup]="paiementForm" (ngSubmit)="onSubmit()" class="modern-form">
+        <div class="alert alert-success" *ngIf="successMessage">
+          <i class="fas fa-check-circle"></i> {{ successMessage }}
+        </div>
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+        </div>
+
+        <div class="form-group">
+          <label for="methode_paiement">Mode de paiement</label>
+          <select id="methode_paiement" formControlName="methode_paiement" class="form-control">
+            <option value="carte">Carte bancaire</option>
+          </select>
+        </div>
+
+        <div class="payment-details">
+          <p>Montant : <strong>50 €</strong> (location mensuelle)</p>
+          <p class="text-muted">Le paiement est sécurisé.</p>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="annuler()">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+            <i class="fas fa-credit-card" *ngIf="!loading"></i>
+            {{ loading ? 'Paiement en cours...' : 'Payer maintenant' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

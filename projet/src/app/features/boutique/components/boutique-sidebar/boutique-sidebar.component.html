@@ -35,7 +35,18 @@
       </div>
     </div>
 
-    <!-- Informations de la boutique (avec catégorie) -->
+    <!-- Message si boutique inactive -->
+    <div class="boutique-status" *ngIf="maBoutique && !maBoutique.est_active">
+      <div class="status-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Votre boutique est désactivée (paiement en attente).</span>
+      </div>
+      <a routerLink="/boutique/paiement" class="btn-payer">
+        <i class="fas fa-credit-card"></i> Payer maintenant
+      </a>
+    </div>
+
+    <!-- Informations de la boutique (sans catégorie) -->
     <div class="boutique-profile" *ngIf="maBoutique && !isCollapsed">
       <div class="boutique-logo-wrapper">
         <img [src]="getBoutiqueLogoUrl()"
@@ -45,17 +56,13 @@
       </div>
       <div class="boutique-info">
         <h4>{{ maBoutique.nom }}</h4>
-        <div class="categorie-badge">
-          <span class="categorie-icone">{{ getCategorieIcone() }}</span>
-          <span class="categorie-nom">{{ getCategorieName() }}</span>
-        </div>
         <span class="badge" [ngClass]="maBoutique.est_active ? 'active' : 'inactive'">
           {{ maBoutique.est_active ? 'Active' : 'Inactive' }}
         </span>
       </div>
     </div>
-    <!-- Version mobile de la boutique (avec catégorie en tooltip) -->
-    <div class="boutique-profile-mobile" *ngIf="maBoutique && isCollapsed" title="{{ maBoutique.nom }} - {{ getCategorieName() }}">
+    <!-- Version mobile de la boutique -->
+    <div class="boutique-profile-mobile" *ngIf="maBoutique && isCollapsed" title="{{ maBoutique.nom }}">
       <div class="boutique-logo-wrapper">
         <img [src]="getBoutiqueLogoUrl()"
              [alt]="maBoutique.nom"
@@ -65,7 +72,8 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" [class.disabled]="maBoutique && !maBoutique.est_active">
+      <!-- Dashboard -->
       <a routerLink="/boutique/dashboard" routerLinkActive="active" class="nav-item">
         <i class="fas fa-tachometer-alt"></i>
         <span *ngIf="!isCollapsed">Dashboard</span>
@@ -77,17 +85,17 @@
           <i class="fas fa-box"></i>
           <span *ngIf="!isCollapsed">Gestion Produits</span>
           <i *ngIf="!isCollapsed" class="fas"
-            [class.fa-chevron-down]="menuOpen['gestionProduits']"
-            [class.fa-chevron-right]="!menuOpen['gestionProduits']"></i>
+             [class.fa-chevron-down]="menuOpen['gestionProduits']"
+             [class.fa-chevron-right]="!menuOpen['gestionProduits']"></i>
         </div>
         <div class="sub-menu" *ngIf="menuOpen['gestionProduits']">
-          <!-- Catégories (déjà existant) -->
+          <!-- Catégories -->
           <div class="sub-header" (click)="toggleMenu('categories')" [class.active]="menuOpen['categories']">
             <i class="fas fa-tags"></i>
             <span *ngIf="!isCollapsed">Catégories</span>
             <i *ngIf="!isCollapsed" class="fas"
-              [class.fa-chevron-down]="menuOpen['categories']"
-              [class.fa-chevron-right]="!menuOpen['categories']"></i>
+               [class.fa-chevron-down]="menuOpen['categories']"
+               [class.fa-chevron-right]="!menuOpen['categories']"></i>
           </div>
           <div class="sub-sub-menu" *ngIf="menuOpen['categories']">
             <a routerLink="/boutique/produits/categories/creer" routerLinkActive="active" class="sub-item">
@@ -100,13 +108,13 @@
             </a>
           </div>
 
-          <!-- Produits (nouveau) -->
+          <!-- Produits -->
           <div class="sub-header" (click)="toggleMenu('produits')" [class.active]="menuOpen['produits']">
             <i class="fas fa-box-open"></i>
             <span *ngIf="!isCollapsed">Produits</span>
             <i *ngIf="!isCollapsed" class="fas"
-              [class.fa-chevron-down]="menuOpen['produits']"
-              [class.fa-chevron-right]="!menuOpen['produits']"></i>
+               [class.fa-chevron-down]="menuOpen['produits']"
+               [class.fa-chevron-right]="!menuOpen['produits']"></i>
           </div>
           <div class="sub-sub-menu" *ngIf="menuOpen['produits']">
             <a routerLink="/boutique/produits/creer" routerLinkActive="active" class="sub-item">
@@ -122,7 +130,7 @@
       </div>
     </nav>
 
-    <!-- Pied de page avec déconnexion -->
+    <!-- Footer avec bouton déconnexion -->
     <div class="sidebar-footer">
       <button class="nav-item logout-btn" (click)="logout()" [title]="isCollapsed ? 'Déconnexion' : ''">
         <i class="fas fa-sign-out-alt"></i>
@@ -131,7 +139,7 @@
     </div>
   </aside>
 
-  <!-- Contenu principal -->
+  <!-- Main Content -->
   <main class="main-content" [class.expanded]="isCollapsed">
     <router-outlet></router-outlet>
   </main>

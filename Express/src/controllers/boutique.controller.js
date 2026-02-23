@@ -4,6 +4,8 @@ const CategorieBoutique = require('../models/categorieBoutique.model');
 const Utilisateur = require('../models/utilisateur.model');
 const Produit = require('../models/produit.model');
 const Commande = require('../models/commande.model');
+const Notification = require('../models/notification.model');
+const Role = require('../models/role.model');
 
 // Lister toutes les boutiques (publique)
 exports.listerBoutiques = async (req, res) => {
@@ -968,7 +970,7 @@ exports.setImagePrincipale = async (req, res) => {
 };
 
 // ============================================
-// ✅ API POUR PAYER LA LOCATION (NOUVEAU)
+// Payer la location (avec notifications pour les admins)
 // ============================================
 exports.payerLocation = async (req, res) => {
   try {
@@ -982,7 +984,7 @@ exports.payerLocation = async (req, res) => {
       });
     }
 
-    // 2. Vérifier si la boutique a déjà payé
+    // 2. Vérifier si déjà payé (optionnel)
     if (boutique.statut_paiement === 'paye') {
       return res.status(400).json({
         success: false,
@@ -990,16 +992,46 @@ exports.payerLocation = async (req, res) => {
       });
     }
 
-    // 3. SIMULATION DE PAIEMENT (ici vous intégrerez Stripe plus tard)
-    // Pour l'instant, on suppose que le paiement réussit toujours
-    
-    // 4. ✅ METTRE À JOUR LE STATUT DE PAIEMENT
+    // 3. Simulation de paiement (à remplacer par un vrai service plus tard)
+    // Ici on suppose que le paiement réussit toujours
+
+    // 4. Mettre à jour le statut
     boutique.statut_paiement = 'paye';
-    
-    // 5. Sauvegarder
     await boutique.save();
 
-    // 6. Réponse
+    // 5. ✅ CRÉER DES NOTIFICATIONS POUR TOUS LES ADMINISTRATEURS
+    try {
+      const Role = require('../models/role.model');
+      const Utilisateur = require('../models/utilisateur.model');
+      const Notification = require('../models/notification.model');
+
+      const roleAdmin = await Role.findOne({ nom_role: 'admin_centre' });
+      if (roleAdmin) {
+        const admins = await Utilisateur.find({ role: roleAdmin._id });
+
+        const notifications = admins.map(admin => ({
+          destinataire: admin._id,
+          type: 'paiement_location',
+          titre: 'Paiement de location',
+          message: `La boutique "${boutique.nom}" a effectué son paiement de location.`,
+          donnees: {
+            boutiqueId: boutique._id,
+            boutiqueNom: boutique.nom,
+            gerantId: req.user.id,
+            methode: req.body.methode_paiement || 'carte'
+          }
+        }));
+
+        if (notifications.length > 0) {
+          await Notification.insertMany(notifications);
+        }
+      }
+    } catch (notifError) {
+      // On log l'erreur sans bloquer la réponse
+      console.error('Erreur lors de la création des notifications:', notifError);
+    }
+
+    // 6. Réponse succès
     res.status(200).json({
       success: true,
       message: '✅ Paiement de la location effectué avec succès',
@@ -1020,7 +1052,6 @@ exports.payerLocation = async (req, res) => {
     });
   }
 };
-
 // ============================================
 // ADMIN: Supprimer une boutique (VERSION CORRIGÉE)
 // ============================================

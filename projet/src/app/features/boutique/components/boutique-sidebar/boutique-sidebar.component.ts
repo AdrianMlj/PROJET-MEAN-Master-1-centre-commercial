@@ -18,6 +18,7 @@ export class BoutiqueSidebarComponent implements OnInit {
   currentUser: User | null = null;
   maBoutique: Boutique | null = null;
   loading = true;
+  boutiqueEstActive = true;
 
   menuOpen: { [key: string]: boolean } = {
     gestionProduits: true,
@@ -44,6 +45,7 @@ export class BoutiqueSidebarComponent implements OnInit {
       next: (response) => {
         if (response.success && response.boutique) {
           this.maBoutique = response.boutique;
+          this.boutiqueEstActive = response.boutique.est_active;
         }
         this.loading = false;
       },
@@ -114,17 +116,6 @@ export class BoutiqueSidebarComponent implements OnInit {
     }
     const baseUrl = environment.apiUrl.replace('/api', '');
     return `${baseUrl}${this.maBoutique.logo_url}`;
-  }
-
-  getCategorieName(): string {
-    if (!this.maBoutique || !this.maBoutique.categorie) return 'Non catégorisé';
-    if (typeof this.maBoutique.categorie === 'string') return 'Catégorie';
-    return this.maBoutique.categorie.nom_categorie || 'Catégorie';
-  }
-
-  getCategorieIcone(): string {
-    if (!this.maBoutique || !this.maBoutique.categorie || typeof this.maBoutique.categorie === 'string') return '🏷️';
-    return this.maBoutique.categorie.icone || '🏷️';
   }
 
   onAvatarError(event: any): void {

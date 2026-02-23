@@ -124,6 +124,31 @@
   overflow: hidden;
 }
 
+/* Message boutique inactive */
+.boutique-status {
+  padding: 20px;
+  background: #ffebee;
+  border-bottom: 1px solid #ffcdd2;
+  text-align: center;
+}
+.boutique-status .status-message {
+  color: #c62828;
+  margin-bottom: 10px;
+}
+.boutique-status .btn-payer {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #4caf50;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+.boutique-status .btn-payer:hover {
+  background: #388e3c;
+}
+
 /* Informations boutique */
 .boutique-profile {
   padding: 20px;
@@ -162,27 +187,6 @@
   white-space: nowrap;
 }
 
-/* Style pour la catégorie */
-.categorie-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #e8eaf6;
-  padding: 2px 8px;
-  border-radius: 20px;
-  margin-bottom: 5px;
-  font-size: 11px;
-  color: #667eea;
-}
-
-.categorie-icone {
-  font-size: 12px;
-}
-
-.categorie-nom {
-  font-weight: 500;
-}
-
 .boutique-info .badge {
   display: inline-block;
   padding: 4px 8px;
@@ -219,6 +223,13 @@
   padding: 20px 0;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.sidebar-nav.disabled .nav-item,
+.sidebar-nav.disabled .nav-header,
+.sidebar-nav.disabled .sub-item {
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 .sidebar-nav::-webkit-scrollbar {

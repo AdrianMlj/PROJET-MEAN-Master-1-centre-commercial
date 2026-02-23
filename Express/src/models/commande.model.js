@@ -61,7 +61,6 @@ const commandeSchema = new mongoose.Schema({
     methode: {
       type: String,
       enum: ['carte_credit', 'especes', 'virement', 'mobile', 'carte_bancaire'],
-      required: true
     },
     statut: {
       type: String,
@@ -79,11 +78,19 @@ const commandeSchema = new mongoose.Schema({
     url_suivi: String
   }
 }, {
-  timestamps: { createdAt: 'date_commande', updatedAt: 'date_modification_statut' }
+  timestamps: { createdAt: 'date_commande', updatedAt: 'date_modification_statut' },
+  // ✅ Permet d'inclure les virtuals dans les réponses JSON
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-commandeSchema.plugin(mongoosePaginate);
-
+// ✅ VIRTUAL pour lier les détails de commande
+commandeSchema.virtual('details', {
+  ref: 'CommandeDetail',
+  localField: '_id',
+  foreignField: 'commande',
+  justOne: false
+});
 
 // Indexes
 commandeSchema.index({ client: 1 });
@@ -94,12 +101,11 @@ commandeSchema.index({ numero_commande: 1 });
 commandeSchema.index({ 'adresse_livraison.ville': 1 });
 commandeSchema.index({ 'informations_paiement.statut': 1 });
 
-// Virtual pour le statut de livraison
+// Virtuals supplémentaires
 commandeSchema.virtual('est_livre').get(function() {
   return this.statut === 'livre';
 });
 
-// Virtual pour le statut de paiement
 commandeSchema.virtual('est_paye').get(function() {
   return this.informations_paiement.statut === 'paye';
 });
@@ -136,5 +142,8 @@ commandeSchema.post('save', async function(doc) {
     });
   }
 });
+
+// Plugin de pagination
+commandeSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model('Commande', commandeSchema);
