@@ -32,18 +32,10 @@ const roleMiddleware = require('../middlewares/role.middleware');
  *               adresse_livraison:
  *                 type: object
  *                 required:
- *                   - nom_complet
- *                   - telephone
  *                   - rue
  *                   - ville
  *                   - code_postal
  *                 properties:
- *                   nom_complet:
- *                     type: string
- *                     example: "Jean Dupont"
- *                   telephone:
- *                     type: string
- *                     example: "+33612345678"
  *                   rue:
  *                     type: string
  *                     example: "123 Avenue du Commerce"
@@ -567,7 +559,7 @@ router.post('/:id/payer',
  *   get:
  *     tags: [Commandes]
  *     summary: Télécharger la facture PDF de la commande
- *     description: Génère et télécharge un PDF récapitulatif de la commande (accessible par le client ou l'admin)
+ *     description: Génère et télécharge un PDF récapitulatif de la commande (accessible par le client , le gerant, l'admin)
  *     security:
  *       - bearerAuth: []
  *     parameters:

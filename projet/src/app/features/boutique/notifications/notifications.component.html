@@ -1,0 +1,61 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-bell"></i>
+        Notifications
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/boutique/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Notifications</span>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-secondary" (click)="marquerToutesLues()" *ngIf="notifications.length > 0">
+        <i class="fas fa-check-double"></i> Tout marquer comme lu
+      </button>
+    </div>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des notifications...</p>
+  </div>
+
+  <div class="notifications-list" *ngIf="!loading">
+    <div class="notification-item" *ngFor="let notif of notifications" [class.non-lue]="!notif.lu" (click)="marquerCommeLue(notif)">
+      <div class="notification-icon">
+        <i class="fas" [ngClass]="getIcone(notif.type)"></i>
+      </div>
+      <div class="notification-content">
+        <div class="notification-header">
+          <h4>{{ notif.titre }}</h4>
+          <span class="notification-date">{{ formaterDate(notif.date_creation) }}</span>
+        </div>
+        <p class="notification-message">{{ notif.message }}</p>
+        <div class="notification-details" *ngIf="notif.donnees">
+          <span *ngIf="notif.type === 'commande' && notif.donnees.numeroCommande">
+            Commande: {{ notif.donnees.numeroCommande }}
+          </span>
+          <span *ngIf="notif.donnees.montant">
+            Montant: {{ notif.donnees.montant | currency:'EUR' }}
+          </span>
+        </div>
+      </div>
+      <div class="notification-status" *ngIf="!notif.lu">
+        <span class="badge-non-lue"></span>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="notifications.length === 0">
+      <div class="empty-icon"><i class="fas fa-bell-slash"></i></div>
+      <h3>Aucune notification</h3>
+      <p>Vous n'avez pas encore de notifications.</p>
+    </div>
+  </div>
+</div>

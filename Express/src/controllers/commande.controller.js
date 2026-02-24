@@ -9,6 +9,7 @@ const mongoose = require('mongoose');
 const { genererNumeroCommande } = require('../utils/generateur');
 const Notification = require('../models/notification.model');
 const PDFDocument = require('pdfkit');
+const { genererReferencePaiement } = require('../utils/generateur');
 
 // ============================================
 // Passer une commande (sans création de paiement)
@@ -22,8 +23,7 @@ exports.passerCommande = async (req, res) => {
     } = req.body;
 
     // Validation
-    if (!adresse_livraison || !adresse_livraison.nom_complet || !adresse_livraison.telephone || 
-        !adresse_livraison.rue || !adresse_livraison.ville || !adresse_livraison.code_postal) {
+    if (!adresse_livraison ||  !adresse_livraison.rue || !adresse_livraison.ville || !adresse_livraison.code_postal) {
       return res.status(400).json({
         success: false,
         message: 'Adresse de livraison incomplète'
@@ -750,7 +750,7 @@ exports.payerCommande = async (req, res) => {
       methode_paiement: methode_paiement || 'carte_credit',
       statut_paiement: 'paye',
       date_paiement: new Date(),
-      reference: `PAY-${Date.now()}`
+      reference_paiement: genererReferencePaiement()
     });
     await nouveauPaiement.save();
 
@@ -758,7 +758,7 @@ exports.payerCommande = async (req, res) => {
     commande.informations_paiement = {
       methode: methode_paiement,
       statut: 'paye',
-      reference: nouveauPaiement.reference,
+      reference: nouveauPaiement.reference_paiement,
       date_paiement: new Date()
     };
     // Optionnel : changer le statut de la commande (ex: 'payee' ou garder 'pret')
@@ -809,16 +809,19 @@ exports.payerCommande = async (req, res) => {
 };
 
 // ============================================
-// Générer la facture PDF d'une commande
+// Générer la facture PDF d'une commande (design moderne et clair)
 // ============================================
 exports.genererFacturePDF = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Récupérer la commande avec toutes les informations nécessaires
+    // Récupérer la commande avec les informations nécessaires
     const commande = await Commande.findById(id)
-      .populate('client', 'nom prenom email adresse')
-      .populate('boutique', 'nom adresse contact')
+      .populate('client', 'nom prenom email telephone adresse') // ✅ ajout du téléphone
+      .populate({
+        path: 'boutique',
+        select: 'nom adresse contact gerant'
+      })
       .populate({
         path: 'details',
         populate: {
@@ -834,112 +837,157 @@ exports.genererFacturePDF = async (req, res) => {
       });
     }
 
-    // Vérifier que l'utilisateur est le client ou un admin
-    if (req.user.role !== 'admin_centre' && !commande.client._id.equals(req.user.id)) {
+    // Vérifier les droits : client, admin ou gérant de la boutique
+    const estClient = commande.client._id.equals(req.user.id);
+    const estAdmin = req.user.role === 'admin_centre';
+    const estGerant = commande.boutique.gerant && commande.boutique.gerant.equals(req.user.id);
+
+    if (!estClient && !estAdmin && !estGerant) {
       return res.status(403).json({
         success: false,
         message: 'Vous n\'êtes pas autorisé à voir cette facture'
       });
     }
 
-    // Optionnel : vérifier que la commande a été payée
-    if (!commande.informations_paiement || commande.informations_paiement.statut !== 'paye') {
-      return res.status(400).json({
-        success: false,
-        message: 'La commande n\'a pas encore été payée'
-      });
-    }
+    const paiement = await Paiement.findOne({ commande: commande._id });
 
-    // Créer un document PDF
-    const doc = new PDFDocument({ margin: 50 });
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument({ 
+      margin: 50,
+      size: 'A4',
+      layout: 'portrait'
+    });
 
-    // Définir les en-têtes de réponse pour le téléchargement
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=facture-${commande.numero_commande}.pdf`);
-
-    // Pipe le PDF directement dans la réponse
     doc.pipe(res);
 
-    // ---------- Contenu du PDF ----------
+    // Couleurs
+    const primaryColor = '#2c3e50';
+    const secondaryColor = '#7f8c8d';
+    const accentColor = '#3498db';
+    const lightGray = '#ecf0f1';
+    const borderColor = '#bdc3c7';
+    const lineHeight = 18;
+
     // En-tête
-    doc.fontSize(20).text('FACTURE', { align: 'center' });
-    doc.moveDown();
+    doc.fontSize(24).fillColor(primaryColor).text('FACTURE', 50, 50);
+    doc.moveDown(0.5);
+    doc.strokeColor(accentColor).lineWidth(2).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown(1);
 
-    // Informations de la commande
-    doc.fontSize(12).text(`Numéro de commande : ${commande.numero_commande}`);
-    doc.text(`Date de commande : ${new Date(commande.date_commande).toLocaleDateString('fr-FR')}`);
-    doc.text(`Statut : ${commande.statut}`);
-    doc.text(`Mode de livraison : ${commande.mode_livraison}`);
-    doc.moveDown();
+    // Bloc informations commande (deux colonnes)
+    const startY = doc.y;
+    const col1X = 50;
+    const col2X = 300;
 
-    // Informations client
-    doc.fontSize(14).text('Client :', { underline: true });
-    doc.fontSize(12).text(`${commande.client.nom} ${commande.client.prenom}`);
-    doc.text(`Email : ${commande.client.email}`);
+    doc.fontSize(10).fillColor(secondaryColor);
+    doc.text('Numéro de commande :', col1X, startY);
+    doc.text('Date de commande :', col1X, startY + lineHeight);
+    doc.text('Statut :', col1X, startY + 2 * lineHeight);
+
+    doc.fillColor(primaryColor);
+    doc.text(commande.numero_commande, col1X + 120, startY);
+    doc.text(new Date(commande.date_commande).toLocaleDateString('fr-FR'), col1X + 120, startY + lineHeight);
+    doc.text(commande.statut, col1X + 120, startY + 2 * lineHeight);
+
+    doc.fillColor(secondaryColor);
+    doc.text('Mode de livraison :', col2X, startY);
+    doc.text('Adresse de livraison :', col2X, startY + lineHeight);
+
+    doc.fillColor(primaryColor);
+    doc.text(commande.mode_livraison, col2X + 120, startY);
+    const adresseLivraison = `${commande.adresse_livraison.rue} ${commande.adresse_livraison.complement || ''}, ${commande.adresse_livraison.code_postal} ${commande.adresse_livraison.ville}`;
+    doc.text(adresseLivraison, col2X + 120, startY + lineHeight, { width: 200 });
+
+    doc.moveDown(4);
+
+    // Bloc client (avec téléphone)
+    const clientY = doc.y;
+    doc.fontSize(12).fillColor(primaryColor).text('Client', 50, clientY);
+    doc.moveDown(0.5);
+    const clientInfoY = doc.y;
+    doc.fontSize(10).fillColor(secondaryColor).text('Nom :', 50, clientInfoY);
+    doc.fillColor(primaryColor).text(`${commande.client.nom} ${commande.client.prenom}`, 150, clientInfoY);
+    doc.fillColor(secondaryColor).text('Email :', 50, clientInfoY + lineHeight);
+    doc.fillColor(primaryColor).text(commande.client.email, 150, clientInfoY + lineHeight);
+
+    let ligneCourante = 2; // on a déjà 2 lignes (nom, email)
+
     if (commande.client.adresse) {
-      doc.text(`Adresse : ${commande.client.adresse.rue}, ${commande.client.adresse.code_postal} ${commande.client.adresse.ville}, ${commande.client.adresse.pays}`);
+      const adresseClient = `${commande.client.adresse.rue}, ${commande.client.adresse.code_postal} ${commande.client.adresse.ville}, ${commande.client.adresse.pays}`;
+      doc.fillColor(secondaryColor).text('Adresse :', 50, clientInfoY + ligneCourante * lineHeight);
+      doc.fillColor(primaryColor).text(adresseClient, 150, clientInfoY + ligneCourante * lineHeight);
+      ligneCourante++;
     }
-    doc.moveDown();
 
-    // Adresse de livraison
-    doc.fontSize(14).text('Adresse de livraison :', { underline: true });
-    doc.fontSize(12).text(`${commande.adresse_livraison.nom_complet}`);
-    doc.text(`${commande.adresse_livraison.rue} ${commande.adresse_livraison.complement || ''}`);
-    doc.text(`${commande.adresse_livraison.code_postal} ${commande.adresse_livraison.ville}, ${commande.adresse_livraison.pays}`);
-    doc.text(`Tél : ${commande.adresse_livraison.telephone}`);
-    if (commande.adresse_livraison.instructions) {
-      doc.text(`Instructions : ${commande.adresse_livraison.instructions}`);
+    if (commande.client.telephone) {
+      doc.fillColor(secondaryColor).text('Téléphone :', 50, clientInfoY + ligneCourante * lineHeight);
+      doc.fillColor(primaryColor).text(commande.client.telephone, 150, clientInfoY + ligneCourante * lineHeight);
+      ligneCourante++;
     }
-    doc.moveDown();
+
+    doc.moveDown(3);
 
     // Tableau des articles
-    doc.fontSize(14).text('Détail des articles :', { underline: true });
-    doc.moveDown();
+    doc.fontSize(12).fillColor(primaryColor).text('Détail des articles', 50, doc.y);
+    doc.moveDown(1);
 
-    // En-tête du tableau
     const tableTop = doc.y;
-    doc.fontSize(10).font('Helvetica-Bold');
-    doc.text('Produit', 50, tableTop);
-    doc.text('Qté', 300, tableTop);
-    doc.text('Prix unitaire', 350, tableTop);
-    doc.text('Sous-total', 450, tableTop);
+    const colProduit = 60;
+    const colQte = 250;
+    const colPrix = 320;
+    const colTotal = 450;
+
+    // En-tête tableau
+    doc.rect(50, tableTop - 5, 500, 20).fill(lightGray).stroke();
+    doc.fillColor(primaryColor).font('Helvetica-Bold').fontSize(10);
+    doc.text('Produit', colProduit, tableTop);
+    doc.text('Qté', colQte, tableTop);
+    doc.text('Prix unitaire', colPrix, tableTop);
+    doc.text('Sous-total', colTotal, tableTop);
     doc.font('Helvetica');
 
     let y = tableTop + 20;
     for (const detail of commande.details) {
-      doc.text(detail.nom_produit, 50, y, { width: 240 });
-      doc.text(detail.quantite.toString(), 300, y);
-      doc.text(`${detail.prix_unitaire.toFixed(2)} €`, 350, y);
-      doc.text(`${detail.sous_total.toFixed(2)} €`, 450, y);
+      doc.fillColor(primaryColor).text(detail.nom_produit, colProduit, y, { width: 180 });
+      doc.fillColor(primaryColor).text(detail.quantite.toString(), colQte, y);
+      doc.fillColor(primaryColor).text(`${detail.prix_unitaire.toFixed(2)} €`, colPrix, y);
+      doc.fillColor(primaryColor).text(`${detail.sous_total.toFixed(2)} €`, colTotal, y);
       y += 20;
     }
 
-    // Ligne de séparation
-    doc.moveTo(50, y).lineTo(550, y).stroke();
+    // Ligne après les articles
+    doc.strokeColor(borderColor).lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
     y += 10;
 
-    // Totaux
-    doc.font('Helvetica-Bold');
-    doc.text(`Sous-total : ${commande.total_commande.toFixed(2)} €`, 350, y);
+    // Totaux alignés à droite
+    doc.fontSize(10).fillColor(secondaryColor).text('Sous-total :', 350, y);
+    doc.fillColor(primaryColor).text(`${commande.total_commande.toFixed(2)} €`, 480, y);
     y += 20;
-    doc.text(`Frais de livraison : ${commande.frais_livraison.toFixed(2)} €`, 350, y);
+    doc.fillColor(secondaryColor).text('Frais de livraison :', 350, y);
+    doc.fillColor(primaryColor).text(`${commande.frais_livraison.toFixed(2)} €`, 480, y);
     y += 20;
-    doc.fontSize(12).text(`TOTAL : ${commande.total_general.toFixed(2)} €`, 350, y);
-    doc.font('Helvetica');
+    doc.fontSize(12).fillColor(primaryColor).text('TOTAL :', 350, y);
+    doc.fillColor(primaryColor).text(`${commande.total_general.toFixed(2)} €`, 480, y);
+    y += 30;
 
-    // Informations de paiement
-    if (commande.informations_paiement && commande.informations_paiement.statut === 'paye') {
-      y += 30;
-      doc.fontSize(14).text('Paiement :', { underline: true });
-      doc.fontSize(12).text(`Méthode : ${commande.informations_paiement.methode}`);
-      doc.text(`Référence : ${commande.informations_paiement.reference}`);
-      doc.text(`Date de paiement : ${new Date(commande.informations_paiement.date_paiement).toLocaleDateString('fr-FR')}`);
+    // Bloc paiement
+    if (paiement && paiement.statut_paiement === 'paye') {
+      doc.fontSize(12).fillColor(primaryColor).text('Paiement', 50, y);
+      doc.moveDown(0.5);
+      const paiementY = doc.y;
+      doc.fontSize(10).fillColor(secondaryColor).text('Méthode :', 50, paiementY);
+      doc.fillColor(primaryColor).text(paiement.methode_paiement, 150, paiementY);
+      doc.fillColor(secondaryColor).text('Référence :', 50, paiementY + lineHeight);
+      doc.fillColor(primaryColor).text(paiement.reference_paiement || 'Non disponible', 150, paiementY + lineHeight);
+      doc.fillColor(secondaryColor).text('Date :', 50, paiementY + 2 * lineHeight);
+      doc.fillColor(primaryColor).text(new Date(paiement.date_paiement).toLocaleDateString('fr-FR'), 150, paiementY + 2 * lineHeight);
     }
 
     // Pied de page
-    doc.fontSize(10).text('Merci de votre achat !', 50, 700, { align: 'center' });
+    doc.fontSize(9).fillColor(secondaryColor).text('Merci de votre achat !', 50, 750, { align: 'center', width: 500 });
 
-    // Finaliser le PDF
     doc.end();
 
   } catch (error) {

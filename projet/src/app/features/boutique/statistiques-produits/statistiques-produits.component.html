@@ -1,0 +1,144 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-chart-pie"></i>
+        Statistiques des produits
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/boutique/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Statistiques produits</span>
+      </nav>
+    </div>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des statistiques...</p>
+  </div>
+
+  <div class="statistiques-content" *ngIf="!loading && !errorMessage">
+    <!-- Filtre de tri -->
+    <div class="filters-card">
+      <div class="filter-group">
+        <label>Trier par</label>
+        <select [(ngModel)]="triSelectionne" (change)="onTriChange()" class="form-control">
+          <option value="ventes">Ventes</option>
+          <option value="vues">Vues</option>
+          <option value="stock">Stock</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- KPI globaux -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-box"></i></div>
+        <div class="kpi-content">
+          <h3>{{ statistiques.totalProduits }}</h3>
+          <p>Produits total</p>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="kpi-content">
+          <h3>{{ statistiques.produitsActifs }}</h3>
+          <p>Produits actifs</p>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-tag"></i></div>
+        <div class="kpi-content">
+          <h3>{{ statistiques.produitsEnPromotion }}</h3>
+          <p>En promotion</p>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-cubes"></i></div>
+        <div class="kpi-content">
+          <h3>{{ formatNumber(statistiques.stockTotal) }}</h3>
+          <p>Stock total</p>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-euro-sign"></i></div>
+        <div class="kpi-content">
+          <h3>{{ formatCurrency(statistiques.valeurStockTotal) }}</h3>
+          <p>Valeur stock</p>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-shopping-cart"></i></div>
+        <div class="kpi-content">
+          <h3>{{ statistiques.totalVentes }}</h3>
+          <p>Total ventes</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3><i class="fas fa-chart-bar"></i> Top 5 des ventes</h3>
+        <div class="chart-container">
+          <canvas #ventesChart></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3><i class="fas fa-chart-pie"></i> Répartition des stocks</h3>
+        <div class="chart-container">
+          <canvas #stockChart></canvas>
+        </div>
+      </div>
+      <div class="chart-card" *ngIf="repartitionCategories.length > 0">
+        <h3><i class="fas fa-chart-pie"></i> Ventes par catégorie</h3>
+        <div class="chart-container">
+          <canvas #categoriesChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des produits -->
+    <div class="produits-table-card">
+      <h3><i class="fas fa-list"></i> Détail des produits</h3>
+      <div class="table-responsive">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Catégorie</th>
+              <th>Prix</th>
+              <th>Stock</th>
+              <th>Vues</th>
+              <th>Ventes</th>
+              <th>CA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of produits">
+              <td><strong>{{ p.nom }}</strong></td>
+              <td>{{ p.categorie_produit?.nom_categorie || '-' }}</td>
+              <td>{{ formatCurrency(p.prix_final) }}</td>
+              <td>
+                <span class="stock-badge" [ngClass]="{
+                  'faible': p.quantite_stock <= 5 && p.quantite_stock > 0,
+                  'rupture': p.quantite_stock === 0
+                }">
+                  {{ p.quantite_stock }}
+                </span>
+              </td>
+              <td>{{ p.statistiques.nombre_vues || 0 }}</td>
+              <td>{{ p.statistiques.nombre_ventes || 0 }}</td>
+              <td>{{ formatCurrency(p.statistiques.nombre_ventes * p.prix_final) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

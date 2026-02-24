@@ -1,0 +1,165 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-file-invoice"></i>
+        Détails de la commande
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/boutique/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <a routerLink="/boutique/commandes/liste">Commandes</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">{{ commande?.numero_commande }}</span>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-secondary" (click)="retourListe()">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+    </div>
+  </div>
+
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <div class="details-card" *ngIf="!loading && commande">
+    <!-- En-tête -->
+    <div class="details-header">
+      <div class="header-content">
+        <div class="commande-numero">
+          <h2>{{ commande.numero_commande }}</h2>
+          <span class="date-commande">Passée le {{ formatDate(commande.date_commande) }}</span>
+        </div>
+        <div class="statut-actuel">
+          <span class="statut-badge" [ngClass]="getStatutClass(commande.statut)">
+            {{ getStatutLabel(commande.statut) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-content">
+      <div class="info-grid">
+        <!-- Client -->
+        <div class="info-card">
+          <h3><i class="fas fa-user"></i> Client</h3>
+          <div class="info-content">
+            <p><strong>{{ clientNomComplet }}</strong></p>
+            <p><i class="fas fa-envelope"></i> {{ clientEmail }}</p>
+            <p><i class="fas fa-phone"></i> {{ clientTelephone }}</p>
+          </div>
+        </div>
+
+        <!-- Adresse de livraison -->
+        <div class="info-card">
+          <h3><i class="fas fa-map-marker-alt"></i> Adresse de livraison</h3>
+          <div class="info-content">
+            <p>{{ commande.adresse_livraison.rue }}</p>
+            <p *ngIf="commande.adresse_livraison.complement">{{ commande.adresse_livraison.complement }}</p>
+            <p>{{ commande.adresse_livraison.code_postal }} {{ commande.adresse_livraison.ville }}</p>
+            <p>{{ commande.adresse_livraison.pays }}</p>
+            <p *ngIf="commande.adresse_livraison.instructions"><i>Instruction: {{ commande.adresse_livraison.instructions }}</i></p>
+          </div>
+        </div>
+
+        <!-- Paiement -->
+        <div class="info-card">
+          <h3><i class="fas fa-credit-card"></i> Paiement</h3>
+          <div class="info-content">
+            <p>
+              <span class="badge" [ngClass]="commande.est_paye ? 'paye' : 'impaye'">
+                {{ commande.est_paye ? 'Payé' : 'Impayé' }}
+              </span>
+            </p>
+            <p *ngIf="commande.informations_paiement.methode">Méthode: {{ commande.informations_paiement.methode }}</p>
+            <p *ngIf="commande.informations_paiement.reference">Réf: {{ commande.informations_paiement.reference }}</p>
+            <p *ngIf="commande.informations_paiement.date_paiement">Date: {{ formatDate(commande.informations_paiement.date_paiement) }}</p>
+          </div>
+        </div>
+
+        <!-- Livraison -->
+        <div class="info-card">
+          <h3><i class="fas fa-truck"></i> Livraison</h3>
+          <div class="info-content">
+            <p>Mode: {{ commande.mode_livraison }}</p>
+            <p>Frais: {{ formatCurrency(commande.frais_livraison) }}</p>
+            <p *ngIf="commande.date_livraison_estimee">Estimée le: {{ formatDate(commande.date_livraison_estimee) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mise à jour du statut -->
+      <div class="update-statut-section">
+        <h3><i class="fas fa-sync-alt"></i> Mettre à jour le statut</h3>
+        <div class="statut-form">
+          <div class="form-group">
+            <label>Nouveau statut</label>
+            <select [(ngModel)]="nouveauStatut" class="form-control">
+              <option *ngFor="let opt of statutOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Raison (optionnel)</label>
+            <input type="text" [(ngModel)]="raison" class="form-control" placeholder="Ex: Préparation terminée">
+          </div>
+          <button class="btn btn-primary" (click)="onStatutChange()" [disabled]="nouveauStatut === commande.statut">
+            <i class="fas fa-save"></i> Mettre à jour
+          </button>
+        </div>
+      </div>
+
+      <!-- Détails des articles -->
+      <div class="articles-section">
+        <h3><i class="fas fa-boxes"></i> Articles ({{ commande.details?.length || 0 }})</h3>
+        <div class="articles-list">
+          <div class="article-item" *ngFor="let detail of commande.details">
+            <div class="article-image">
+              <img [src]="getImageUrl(detail.image_produit || '')" [alt]="detail.nom_produit">
+            </div>
+            <div class="article-info">
+              <h4>{{ detail.nom_produit }}</h4>
+              <p class="article-prix">{{ formatCurrency(detail.prix_unitaire) }} x {{ detail.quantite }}</p>
+              <p class="article-sous-total">Sous-total: {{ formatCurrency(detail.sous_total) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Résumé total -->
+      <div class="total-section">
+        <div class="total-line">
+          <span>Total produits:</span>
+          <span>{{ formatCurrency(commande.total_commande) }}</span>
+        </div>
+        <div class="total-line">
+          <span>Frais de livraison:</span>
+          <span>{{ formatCurrency(commande.frais_livraison) }}</span>
+        </div>
+        <div class="total-line total">
+          <span><strong>TOTAL GÉNÉRAL:</strong></span>
+          <span><strong>{{ formatCurrency(commande.total_general) }}</strong></span>
+        </div>
+      </div>
+
+      <!-- Boutons facture (si payé) -->
+      <div class="facture-section" *ngIf="commande.est_paye">
+        <button class="btn btn-secondary" (click)="visualiserFacture()">
+          <i class="fas fa-eye"></i> Visualiser la facture
+        </button>
+        <button class="btn btn-primary" (click)="telechargerFacture()">
+          <i class="fas fa-download"></i> Télécharger la facture
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

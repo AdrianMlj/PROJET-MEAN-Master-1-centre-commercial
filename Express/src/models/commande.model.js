@@ -39,8 +39,6 @@ const commandeSchema = new mongoose.Schema({
     min: 0
   },
   adresse_livraison: {
-    nom_complet: { type: String, required: true },
-    telephone: { type: String, required: true },
     rue: { type: String, required: true },
     complement: { type: String },
     ville: { type: String, required: true },

@@ -401,4 +401,77 @@ router.post('/avatar',
   authController.uploadAvatar
 );
 
+/**
+ * @swagger
+ * /auth/avatar:
+ *   put:
+ *     tags: [Auth]
+ *     summary: Mettre à jour l'avatar de l'utilisateur connecté
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Avatar mis à jour
+ *       400:
+ *         description: Aucun fichier
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: Utilisateur non trouvé
+ *       500:
+ *         $ref: '#/components/responses/Error'
+ */
+router.put('/avatar',
+  authMiddleware,
+  uploadAvatar,          // Middleware d'upload (avatar)
+  handleUploadError,
+  authController.updateAvatar
+);
+
+/**
+ * @swagger
+ * /auth/avatar:
+ *   put:
+ *     tags: [Auth]
+ *     summary: Mettre à jour l'avatar de l'utilisateur connecté
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Avatar mis à jour
+ *       400:
+ *         description: Aucun fichier
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: Utilisateur non trouvé
+ *       500:
+ *         $ref: '#/components/responses/Error'
+ */
+router.put('/avatar',
+  authMiddleware,
+  uploadAvatar,          // Middleware d'upload (avatar)
+  handleUploadError,
+  authController.updateAvatar
+);
 module.exports = router;

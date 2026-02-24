@@ -1,0 +1,101 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-shopping-cart"></i>
+        Gestion des commandes
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/boutique/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Commandes</span>
+      </nav>
+    </div>
+  </div>
+
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Filtre par statut -->
+  <div class="filters-card">
+    <div class="filters-header">
+      <h3><i class="fas fa-filter"></i> Filtres</h3>
+    </div>
+    <div class="filters-body">
+      <div class="filter-group">
+        <label>Statut</label>
+        <select [(ngModel)]="selectedStatut" (change)="onFilterChange()" class="form-control">
+          <option *ngFor="let opt of statutOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des commandes...</p>
+  </div>
+
+  <div class="table-responsive" *ngIf="!loading">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>N° commande</th>
+          <th>Client</th>
+          <th>Date</th>
+          <th>Total</th>
+          <th>Statut</th>
+          <th>Paiement</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cmd of commandes">
+          <td><strong>{{ cmd.numero_commande }}</strong></td>
+          <td>
+            <ng-container *ngIf="getClientInfo(cmd.client) as info">
+              {{ info.prenom }} {{ info.nom }}<br>
+              <small>{{ info.email }}</small>
+            </ng-container>
+          </td>
+          <td>{{ formatDate(cmd.date_commande) }}</td>
+          <td>{{ formatCurrency(cmd.total_general) }}</td>
+          <td>
+            <span class="statut-badge" [ngClass]="getStatutClass(cmd.statut)">
+              {{ getStatutLabel(cmd.statut) }}
+            </span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="cmd.est_paye ? 'paye' : 'impaye'">
+              {{ cmd.est_paye ? 'Payé' : 'Impayé' }}
+            </span>
+          </td>
+          <td>
+            <button class="btn-view-details" (click)="voirDetails(cmd._id)" title="Voir les détails de la commande">
+              <i class="fas fa-eye"></i> Voir détails
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="commandes.length === 0">
+          <td colspan="7" class="empty-row">Aucune commande trouvée</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <app-pagination
+    *ngIf="!loading && totalPages > 1"
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    [totalItems]="totalDocs"
+    [limit]="limit"
+    [hasPrevPage]="hasPrevPage"
+    [hasNextPage]="hasNextPage"
+    (pageChange)="onPageChange($event)">
+  </app-pagination>
+</div>

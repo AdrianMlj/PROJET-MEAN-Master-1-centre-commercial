@@ -67,4 +67,14 @@ export class ProduitService {
   supprimerImage(produitId: string, imageId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${produitId}/images/${imageId}`);
   }
+
+  // core/services/produit.service.ts
+  getStatistiquesProduits(params?: { tri?: string; limite?: number }): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      if (params.tri) httpParams = httpParams.set('tri', params.tri);
+      if (params.limite) httpParams = httpParams.set('limite', params.limite);
+    }
+    return this.http.get<any>(`${environment.apiUrl}/statistiques/boutique/produits`, { params: httpParams });
+  }
 }

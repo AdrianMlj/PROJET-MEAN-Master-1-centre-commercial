@@ -11,6 +11,13 @@ import { CreerProduitComponent } from './gestion-produits/produits/creer-produit
 import { ListeProduitsComponent } from './gestion-produits/produits/liste-produits/liste-produits.component';
 import { ModifierProduitComponent } from './gestion-produits/produits/modifier-produit/modifier-produit.component';
 import { PaiementComponent } from './paiement/paiement.component';
+import { ListeCommandesComponent } from './commandes/liste-commandes/liste-commandes.component';
+import { DetailsCommandeComponent } from './commandes/details-commande/details-commande.component';
+import { NotificationsComponent } from './notifications/notifications.component';
+import { StatistiquesProduitsComponent } from './statistiques-produits/statistiques-produits.component';
+import { ProfilGerantComponent } from './profil-gerant/profil-gerant.component';
+import { BoutiqueGerantComponent } from './boutique-gerant/boutique-gerant.component';
+
 
 @NgModule({
   declarations: [
@@ -22,7 +29,13 @@ import { PaiementComponent } from './paiement/paiement.component';
     CreerProduitComponent,
     ListeProduitsComponent,
     ModifierProduitComponent,
-    PaiementComponent
+    PaiementComponent,
+    ListeCommandesComponent,
+    DetailsCommandeComponent,
+    NotificationsComponent,
+    StatistiquesProduitsComponent,
+    ProfilGerantComponent,
+    BoutiqueGerantComponent
   ],
   imports: [
     CommonModule,

@@ -62,4 +62,8 @@ export class CategorieBoutiqueService {
       })
     );
   }
+
+  listerCategories(): Observable<CategorieResponse> {
+    return this.http.get<CategorieResponse>(this.apiUrl); 
+  }
 }

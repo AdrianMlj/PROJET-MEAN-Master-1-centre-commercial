@@ -72,4 +72,35 @@ export class BoutiqueService {
   getMaBoutique(): Observable<BoutiqueResponse> {
     return this.http.get<BoutiqueResponse>(`${this.apiUrl}/gerant/mon-boutique`);
   }
+
+  getStatistiques(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/statistiques/boutique`);
+  }
+
+  // ✅ NOUVELLE MÉTHODE – Modifier le profil de la boutique (gérant)
+  modifierProfilBoutique(data: any): Observable<BoutiqueResponse> {
+    return this.http.put<BoutiqueResponse>(`${this.apiUrl}/gerant/mon-profil`, data);
+  }
+
+  // ✅ NOUVELLE MÉTHODE – Uploader le logo
+  uploadLogo(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('logo', file);
+    return this.http.put<any>(`${this.apiUrl}/gerant/logo`, formData);
+  }
+
+  // ✅ NOUVELLE MÉTHODE – Uploader plusieurs images
+  uploadImages(formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/gerant/images`, formData);
+  }
+
+  // ✅ NOUVELLE MÉTHODE – Récupérer les images de la galerie
+  getImages(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/gerant/images`);
+  }
+
+  // ✅ NOUVELLE MÉTHODE – Supprimer une image de la galerie
+  supprimerImage(index: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/gerant/images/${index}`);
+  }
 }

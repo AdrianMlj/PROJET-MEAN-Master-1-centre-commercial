@@ -2,6 +2,7 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { BoutiqueService } from '../../../../core/services/boutique.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { User } from '../../../../core/models/auth.model';
 import { Boutique } from '../../../../core/models/boutique.model';
 import { environment } from '../../../../../environments/environment';
@@ -19,6 +20,7 @@ export class BoutiqueSidebarComponent implements OnInit {
   maBoutique: Boutique | null = null;
   loading = true;
   boutiqueEstActive = true;
+  notificationCount = 0;
 
   menuOpen: { [key: string]: boolean } = {
     gestionProduits: true,
@@ -29,6 +31,7 @@ export class BoutiqueSidebarComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private boutiqueService: BoutiqueService,
+    private notificationService: NotificationService,
     private router: Router
   ) {}
 
@@ -38,6 +41,7 @@ export class BoutiqueSidebarComponent implements OnInit {
       this.currentUser = user;
     });
     this.loadMaBoutique();
+    this.loadNotificationsCount();
   }
 
   loadMaBoutique(): void {
@@ -53,6 +57,17 @@ export class BoutiqueSidebarComponent implements OnInit {
         console.error('Erreur chargement boutique:', error);
         this.loading = false;
       }
+    });
+  }
+
+  loadNotificationsCount(): void {
+    this.notificationService.getNonLues().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.notificationCount = response.count;
+        }
+      },
+      error: (err) => console.error('Erreur chargement notifications', err)
     });
   }
 

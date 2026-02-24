@@ -104,4 +104,18 @@ export class AuthService {
       }
     }
   }
+
+  modifierProfil(data: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/auth/profil`, data);
+  }
+
+  changerMotDePasse(data: { ancien_mot_de_passe: string; nouveau_mot_de_passe: string }): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/auth/changer-mot-de-passe`, data);
+  }
+
+  uploadAvatar(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    return this.http.post<any>(`${this.apiUrl}/auth/avatar`, formData);
+  }
 }

@@ -1,15 +1,159 @@
 <div class="dashboard-container">
+  <!-- En-tête -->
   <div class="dashboard-header">
-    <h1>
-      <i class="fas fa-tachometer-alt"></i>
-      Tableau de Bord - Gérant
-    </h1>
-    <p class="welcome-message">
-      Bonjour, <strong>{{ currentUser?.prenom || currentUser?.nom || 'Gérant' }}</strong>
-    </p>
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-tachometer-alt"></i>
+        Tableau de Bord
+      </h1>
+      <p class="welcome-message">
+        <i class="fas fa-store"></i>
+        Boutique <strong>{{ boutiqueNom }}</strong>
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary" (click)="navigateTo('produits/creer')">
+        <i class="fas fa-plus-circle"></i> Nouveau produit
+      </button>
+    </div>
   </div>
 
-  <div class="dashboard-content">
-    <p>Bienvenue dans votre espace de gestion. Vous pourrez bientôt gérer vos produits et consulter vos statistiques.</p>
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des statistiques...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Contenu -->
+  <div class="dashboard-content" *ngIf="!loading && !errorMessage">
+    <!-- KPI Principaux -->
+    <div class="kpi-grid">
+      <div class="kpi-card commandes" (click)="navigateTo('commandes/liste')">
+        <div class="kpi-icon"><i class="fas fa-shopping-cart"></i></div>
+        <div class="kpi-content">
+          <h3>{{ totalCommandes }}</h3>
+          <p>Commandes totales</p>
+        </div>
+      </div>
+      <div class="kpi-card en-attente" (click)="navigateTo('commandes/liste?statut=en_attente')">
+        <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+        <div class="kpi-content">
+          <h3>{{ commandesEnAttente }}</h3>
+          <p>En attente</p>
+        </div>
+      </div>
+      <div class="kpi-card preparation" (click)="navigateTo('commandes/liste?statut=en_preparation')">
+        <div class="kpi-icon"><i class="fas fa-cog"></i></div>
+        <div class="kpi-content">
+          <h3>{{ commandesEnPreparation }}</h3>
+          <p>En préparation</p>
+        </div>
+      </div>
+      <div class="kpi-card livrees" (click)="navigateTo('commandes/liste?statut=livre')">
+        <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="kpi-content">
+          <h3>{{ commandesLivrees }}</h3>
+          <p>Livrées</p>
+        </div>
+      </div>
+      <div class="kpi-card ca">
+        <div class="kpi-icon"><i class="fas fa-euro-sign"></i></div>
+        <div class="kpi-content">
+          <h3>{{ formatCurrency(chiffreAffairesTotal) }}</h3>
+          <p>CA total</p>
+        </div>
+      </div>
+      <div class="kpi-card ca-mois">
+        <div class="kpi-icon"><i class="fas fa-calendar-alt"></i></div>
+        <div class="kpi-content">
+          <h3>{{ formatCurrency(chiffreAffairesMois) }}</h3>
+          <p>CA ce mois</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deux colonnes : produits et clients -->
+    <div class="two-columns">
+      <!-- Produits les plus vendus -->
+      <div class="card">
+        <h3><i class="fas fa-crown"></i> Produits les plus vendus</h3>
+        <div class="produits-list" *ngIf="produitsPlusVendus.length > 0; else aucunProduit">
+          <div class="produit-item" *ngFor="let p of produitsPlusVendus; let i = index">
+            <span class="rang">{{ i + 1 }}</span>
+            <span class="nom">{{ p.produit }}</span>
+            <span class="quantite">{{ p.quantiteVendue }} vendu(s)</span>
+            <span class="ca">{{ formatCurrency(p.chiffreAffaires) }}</span>
+          </div>
+        </div>
+        <ng-template #aucunProduit>
+          <p class="empty">Aucun produit vendu</p>
+        </ng-template>
+      </div>
+
+      <!-- Clients fidèles -->
+      <div class="card">
+        <h3><i class="fas fa-users"></i> Clients fidèles</h3>
+        <div class="clients-list" *ngIf="clientsFideles.length > 0; else aucunClient">
+          <div class="client-item" *ngFor="let c of clientsFideles">
+            <div class="client-info">
+              <strong>{{ c.client.prenom }} {{ c.client.nom }}</strong>
+              <span>{{ c.client.email }}</span>
+            </div>
+            <div class="client-stats">
+              <span>{{ c.nombreCommandes }} commande(s)</span>
+              <span>{{ formatCurrency(c.montantTotal) }}</span>
+            </div>
+          </div>
+        </div>
+        <ng-template #aucunClient>
+          <p class="empty">Aucun client fidèle</p>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Statistiques produits -->
+    <div class="card">
+      <h3><i class="fas fa-boxes"></i> Aperçu des produits</h3>
+      <div class="produits-stats">
+        <div class="stat-item">
+          <span class="label">Produits actifs</span>
+          <span class="value">{{ statistiquesProduits.produitsActifs || 0 }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">En promotion</span>
+          <span class="value">{{ statistiquesProduits.produitsEnPromotion || 0 }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Stock total</span>
+          <span class="value">{{ statistiquesProduits.stockTotal || 0 }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Stock faible</span>
+          <span class="value" [class.warning]="statistiquesProduits.produitsFaibleStock > 0">{{ statistiquesProduits.produitsFaibleStock || 0 }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Rupture</span>
+          <span class="value" [class.danger]="statistiquesProduits.produitsRuptureStock > 0">{{ statistiquesProduits.produitsRuptureStock || 0 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Évolution des ventes (mini graphique en barres) -->
+    <div class="card" *ngIf="evolutionVentes.length > 0">
+      <h3><i class="fas fa-chart-line"></i> Évolution des ventes (7 derniers jours)</h3>
+      <div class="evolution">
+        <div class="bar-chart">
+          <div class="bar-item" *ngFor="let ev of evolutionVentes.slice(-7)">
+            <div class="bar" [style.height.px]="ev.chiffreAffaires / 10" [style.background]="'#667eea'"></div>
+            <span class="bar-label">{{ formatDate(ev._id) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

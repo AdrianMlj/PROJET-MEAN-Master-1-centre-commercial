@@ -382,6 +382,54 @@ exports.uploadAvatar = async (req, res) => {
   }
 };
 
+// ============================================
+// Mettre à jour l'avatar de l'utilisateur connecté
+// ============================================
+exports.updateAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Aucun fichier uploadé'
+      });
+    }
+
+    const utilisateur = await Utilisateur.findById(req.user.id);
+    if (!utilisateur) {
+      return res.status(404).json({
+        success: false,
+        message: 'Utilisateur non trouvé'
+      });
+    }
+
+    // Supprimer l'ancien avatar du serveur (si existe)
+    if (utilisateur.avatar_url) {
+      const oldPath = path.join(__dirname, '../../', utilisateur.avatar_url);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    // Construire l'URL du nouvel avatar
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    utilisateur.avatar_url = avatarUrl;
+    await utilisateur.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Avatar mis à jour avec succès',
+      avatar_url: avatarUrl
+    });
+  } catch (error) {
+    console.error('Erreur mise à jour avatar:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la mise à jour de l\'avatar',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 exports.deconnexion = async (req, res) => {
   try {
     // Dans une implémentation JWT simple, la déconnexion est gérée côté client

@@ -9,8 +9,15 @@ import { CreerProduitComponent } from './gestion-produits/produits/creer-produit
 import { ListeProduitsComponent } from './gestion-produits/produits/liste-produits/liste-produits.component';
 import { ModifierProduitComponent } from './gestion-produits/produits/modifier-produit/modifier-produit.component';
 import { PaiementComponent } from './paiement/paiement.component';
+import { ListeCommandesComponent } from './commandes/liste-commandes/liste-commandes.component';
+import { DetailsCommandeComponent } from './commandes/details-commande/details-commande.component';
+import { NotificationsComponent } from './notifications/notifications.component';
 import { AuthGuard } from '../../core/guards/auth.guard';
 import { RoleGuard } from '../../core/guards/role.guard';
+import { StatistiquesProduitsComponent } from './statistiques-produits/statistiques-produits.component';
+import { ProfilGerantComponent } from './profil-gerant/profil-gerant.component';
+import { BoutiqueGerantComponent } from './boutique-gerant/boutique-gerant.component';
+
 
 const routes: Routes = [
   {
@@ -30,6 +37,14 @@ const routes: Routes = [
       { path: 'produits/modifier/:id', component: ModifierProduitComponent },
       // Paiement
       { path: 'paiement', component: PaiementComponent },
+      // Commandes
+      { path: 'commandes/liste', component: ListeCommandesComponent },
+      { path: 'commandes/details/:id', component: DetailsCommandeComponent },
+      // Notifications
+      { path: 'notifications', component: NotificationsComponent },
+      { path: 'statistiques-produits', component: StatistiquesProduitsComponent },
+      { path: 'profil', component: ProfilGerantComponent },
+      { path: 'ma-boutique', component: BoutiqueGerantComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

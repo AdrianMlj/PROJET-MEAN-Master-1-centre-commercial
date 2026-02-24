@@ -1,0 +1,195 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-store"></i>
+        Ma boutique
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/boutique/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Boutique</span>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-secondary" (click)="retour()">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+    </div>
+  </div>
+
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <div class="boutique-content" *ngIf="!loading">
+    <!-- Logo -->
+    <div class="card">
+      <h3><i class="fas fa-image"></i> Logo de la boutique</h3>
+      <div class="logo-container">
+        <img [src]="logoPreview || getLogoUrl()" alt="Logo" class="logo-img" (click)="openLightbox([getLogoUrl()], 0)">
+        <div class="logo-upload">
+          <input type="file" #logoInput accept="image/*" (change)="onLogoSelected($event)" style="display: none">
+          <button class="btn btn-secondary" (click)="logoInput.click()">
+            <i class="fas fa-upload"></i> Choisir
+          </button>
+          <button class="btn btn-primary" *ngIf="logoFile" (click)="uploadLogo()" [disabled]="logoUploading">
+            <i class="fas fa-spinner fa-spin" *ngIf="logoUploading"></i>
+            <i class="fas fa-save" *ngIf="!logoUploading"></i> Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Galerie d'images -->
+    <div class="card">
+      <h3><i class="fas fa-images"></i> Galerie d'images</h3>
+
+      <!-- Images existantes -->
+      <div class="gallery-grid" *ngIf="galleryImages.length > 0">
+        <div class="gallery-item" *ngFor="let img of galleryImages; let i = index">
+          <img [src]="getImageUrl(img)" alt="Image boutique" (click)="openLightbox(galleryImages, i)">
+          <button class="btn-delete" (click)="supprimerImage(i); $event.stopPropagation()" title="Supprimer">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+      <p class="empty" *ngIf="galleryImages.length === 0">Aucune image dans la galerie.</p>
+
+      <!-- Ajouter de nouvelles images -->
+      <div class="upload-section">
+        <input type="file" #galleryInput multiple accept="image/*" (change)="onImagesSelected($event)" style="display: none">
+        <button class="btn btn-secondary" (click)="galleryInput.click()">
+          <i class="fas fa-plus-circle"></i> Ajouter des images
+        </button>
+
+        <div class="new-previews" *ngIf="newPreviews.length > 0">
+          <div class="preview-item" *ngFor="let prev of newPreviews; let i = index">
+            <img [src]="prev" alt="Aperçu">
+            <button class="btn-remove" (click)="removeNewImage(i)"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" *ngIf="newImages.length > 0" (click)="uploadImages()" [disabled]="imagesUploading">
+          <i class="fas fa-spinner fa-spin" *ngIf="imagesUploading"></i>
+          <i class="fas fa-upload" *ngIf="!imagesUploading"></i> Uploader {{ newImages.length }} image(s)
+        </button>
+      </div>
+    </div>
+
+    <!-- Formulaire d'informations -->
+    <div class="card">
+      <h3><i class="fas fa-info-circle"></i> Informations générales</h3>
+      <form [formGroup]="boutiqueForm" (ngSubmit)="onSubmit()" class="modern-form">
+
+        <div class="form-group">
+          <label>Nom de la boutique *</label>
+          <input type="text" formControlName="nom" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Slogan</label>
+          <input type="text" formControlName="slogan" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Catégorie *</label>
+          <select formControlName="categorie" class="form-control">
+            <option value="" disabled>Sélectionner</option>
+            <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.nom_categorie }}</option>
+          </select>
+        </div>
+
+        <h4>Contact</h4>
+        <div formGroupName="contact">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" formControlName="email" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Téléphone</label>
+            <input type="text" formControlName="telephone" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Horaires</label>
+            <input type="text" formControlName="horaires" class="form-control">
+          </div>
+        </div>
+
+        <h4>Réseaux sociaux</h4>
+        <div formGroupName="social">
+          <div class="form-group">
+            <label>Site web</label>
+            <input type="url" formControlName="website" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Facebook</label>
+            <input type="url" formControlName="facebook" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Instagram</label>
+            <input type="url" formControlName="instagram" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Twitter</label>
+            <input type="url" formControlName="twitter" class="form-control">
+          </div>
+        </div>
+
+        <h4>Paramètres de livraison</h4>
+        <div formGroupName="parametres">
+          <div class="form-group">
+            <label>Frais de livraison (€)</label>
+            <input type="number" formControlName="frais_livraison" class="form-control" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Délai de préparation (min)</label>
+            <input type="number" formControlName="delai_preparation" class="form-control" min="0">
+          </div>
+          <div class="form-group">
+            <label>Livraison gratuite après (€)</label>
+            <input type="number" formControlName="livraison_gratuite_apres" class="form-control" step="0.01" min="0">
+          </div>
+          <div class="checkbox-group">
+            <label>
+              <input type="checkbox" formControlName="accepte_retrait"> Accepte le retrait en boutique
+            </label>
+          </div>
+          <div class="checkbox-group">
+            <label>
+              <input type="checkbox" formControlName="accepte_livraison"> Accepte la livraison
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="boutiqueForm.invalid || submitting">
+            <i class="fas fa-spinner fa-spin" *ngIf="submitting"></i>
+            <i class="fas fa-save" *ngIf="!submitting"></i> Enregistrer les modifications
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div class="lightbox" *ngIf="showLightbox" (click)="closeLightbox()">
+    <div class="lightbox-content" (click)="$event.stopPropagation()">
+      <button class="close-btn" (click)="closeLightbox()"><i class="fas fa-times"></i></button>
+      <button class="nav-btn prev" (click)="prevImage()"><i class="fas fa-chevron-left"></i></button>
+      <img [src]="getImageUrl(lightboxImages[currentLightboxIndex])" alt="Image agrandie">
+      <button class="nav-btn next" (click)="nextImage()"><i class="fas fa-chevron-right"></i></button>
+      <div class="image-counter">{{ currentLightboxIndex + 1 }} / {{ lightboxImages.length }}</div>
+    </div>
+  </div>
+</div>

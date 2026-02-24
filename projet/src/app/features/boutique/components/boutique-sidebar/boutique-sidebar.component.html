@@ -46,7 +46,7 @@
       </a>
     </div>
 
-    <!-- Informations de la boutique (sans catégorie) -->
+    <!-- Informations de la boutique -->
     <div class="boutique-profile" *ngIf="maBoutique && !isCollapsed">
       <div class="boutique-logo-wrapper">
         <img [src]="getBoutiqueLogoUrl()"
@@ -126,6 +126,45 @@
               <span *ngIf="!isCollapsed">Liste produits</span>
             </a>
           </div>
+        </div>
+      </div>
+
+      <!-- Gestion Commandes -->
+      <div class="nav-section">
+        <div class="nav-header" routerLink="/boutique/commandes/liste" routerLinkActive="active">
+          <i class="fas fa-shopping-cart"></i>
+          <span *ngIf="!isCollapsed">Commandes</span>
+        </div>
+      </div>
+
+      <!-- Notifications avec compteur -->
+      <div class="nav-section">
+        <div class="nav-header" routerLink="/boutique/notifications" routerLinkActive="active">
+          <i class="fas fa-bell"></i>
+          <span *ngIf="!isCollapsed">Notifications</span>
+          <span class="badge-notification" *ngIf="notificationCount > 0">{{ notificationCount }}</span>
+        </div>
+      </div>
+
+      <!-- Statistiques Produits -->
+      <div class="nav-section">
+        <div class="nav-header" routerLink="/boutique/statistiques-produits" routerLinkActive="active">
+          <i class="fas fa-chart-pie"></i>
+          <span *ngIf="!isCollapsed">Statistiques Produits</span>
+        </div>
+      </div>
+
+      <!-- Paramètres -->
+      <div class="nav-section">
+        <div class="nav-header" routerLink="/boutique/profil" routerLinkActive="active">
+          <i class="fas fa-user-cog"></i>
+          <span *ngIf="!isCollapsed">Mon profil</span>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-header" routerLink="/boutique/ma-boutique" routerLinkActive="active">
+          <i class="fas fa-store"></i>
+          <span *ngIf="!isCollapsed">Ma boutique</span>
         </div>
       </div>
     </nav>
