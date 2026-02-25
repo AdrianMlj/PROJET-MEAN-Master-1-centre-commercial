@@ -2,12 +2,16 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProduitService } from '../../../core/services/produit.service';
 import { BoutiqueService } from '../../../core/services/boutique.service';
+import { CategorieBoutiqueService } from '../../../core/services/categorie-boutique.service';
+import { CategorieProduitService } from '../../../core/services/categorie-produit.service';
 import { PanierService } from '../../../core/services/panier.service';
 import { AvisService } from '../../../core/services/avis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { FavorisService } from '../../../core/services/favoris.service';
 import { Produit, ProduitFilters } from '../../../core/models/produit.model';
 import { Boutique } from '../../../core/models/boutique.model';
+import { CategorieBoutique } from '../../../core/models/categorie-boutique.model';
+import { CategorieProduit } from '../../../core/models/categorie-produit.model';
 import { Avis } from '../../../core/models/avis.model';
 import { Subject, combineLatest, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -60,6 +64,33 @@ export class HomeComponent implements OnInit, OnDestroy {
     boutiques: true
   };
 
+  // Filter properties
+  categoriesBoutique: CategorieBoutique[] = [];
+  categoriesProduit: CategorieProduit[] = [];
+  categoriesProduitBoutique: CategorieProduit[] = [];
+  
+  // Unique product categories from loaded products (for filtering)
+  categoriesProduitCatalogue: { _id: string, nom_categorie: string }[] = [];
+
+  // Selected filters
+  filtreCategorieBoutique: string = '';
+  filtreCategorieProduit: string = '';
+  filtreCategorieProduitBoutique: string = '';
+  
+  // Price filters
+  filtrePrixMin: number | null = null;
+  filtrePrixMax: number | null = null;
+  
+  // Promotion filter
+  filtreEnPromotion: boolean | null = null;
+  
+  // Sort option
+  filtreTri: string = 'nouveautes';
+
+  loadingCategoriesBoutique = false;
+  loadingCategoriesProduit = false;
+  loadingCategoriesProduitBoutique = false;
+
   searchTerm = '';
   private currentBoutiqueId: string | null = null;
   private homeDataLoaded = false;
@@ -69,6 +100,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   constructor(
     private produitService: ProduitService,
     private boutiqueService: BoutiqueService,
+    private categorieBoutiqueService: CategorieBoutiqueService,
+    private categorieProduitService: CategorieProduitService,
     private panierService: PanierService,
     private avisService: AvisService,
     private authService: AuthService,
@@ -133,16 +166,23 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     if (this.currentViewMode === 'boutiques') {
+      this.resetFilters();
+      this.filtreCategorieBoutique = '';
+      this.filtreCategorieProduit = '';
       this.chargerBoutiques(24);
       return;
     }
 
     if (this.currentViewMode === 'produits') {
+      this.resetFilters();
       this.chargerCatalogueProduits({ page: 1, limit: 24, tri: 'nouveautes' });
       return;
     }
 
     if (this.currentViewMode === 'promotions') {
+      this.resetFilters();
+      this.filtreEnPromotion = true;
+      this.filtreTri = 'promotion';
       this.chargerCatalogueProduits({ page: 1, limit: 24, en_promotion: true, tri: 'promotion' });
       return;
     }
@@ -153,6 +193,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private activerVueBoutique(boutiqueId: string): void {
     this.vueBoutiqueActive = true;
     this.erreurBoutique = '';
+    this.filtreCategorieProduitBoutique = '';
 
     if (this.currentBoutiqueId === boutiqueId && this.boutiqueSelectionnee) return;
 
@@ -161,6 +202,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.produitsBoutique = [];
     this.loadingBoutiqueSelection = true;
     this.loadingProduitsBoutique = true;
+
+    // Load product categories for this boutique
+    this.chargerCategoriesProduitBoutique(boutiqueId);
 
     this.boutiqueService.obtenirBoutique(boutiqueId).subscribe({
       next: (response) => {
@@ -208,6 +252,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.likesAvisBoutiqueMap = {};
     this.aAimeAvisBoutiqueMap = {};
     this.avisBoutiqueLikeLoading = {};
+    this.filtreCategorieProduitBoutique = '';
+    this.categoriesProduitBoutique = [];
+    // Clear product-specific filters
+    this.filtrePrixMin = null;
+    this.filtrePrixMax = null;
+    this.filtreEnPromotion = null;
   }
 
   private chargerFavorisEtatGlobal(): void {
@@ -263,6 +313,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   chargerBoutiques(limit: number = 6): void {
     this.loading.boutiques = true;
+    // Load categories for filtering
+    this.chargerCategoriesBoutique();
+    
     this.boutiqueService.listerBoutiques({ limit, est_active: true }).subscribe({
       next: (response) => {
         this.boutiques = response.docs;
@@ -282,6 +335,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.produitService.listerProduits(filters).subscribe({
       next: (response) => {
         this.produitsCatalogue = response.docs;
+        // Extract unique product categories from loaded products
+        this.extraireCategoriesProduits();
         this.loadingCatalogue = false;
       },
       error: () => {
@@ -289,6 +344,19 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.loadingCatalogue = false;
       }
     });
+  }
+
+  private extraireCategoriesProduits(): void {
+    const categoriesMap = new Map<string, { _id: string, nom_categorie: string }>();
+    this.produitsCatalogue.forEach(produit => {
+      if (produit.categorie_produit && produit.categorie_produit._id) {
+        categoriesMap.set(produit.categorie_produit._id, {
+          _id: produit.categorie_produit._id,
+          nom_categorie: produit.categorie_produit.nom_categorie
+        });
+      }
+    });
+    this.categoriesProduitCatalogue = Array.from(categoriesMap.values());
   }
 
   chargerRechercheGlobale(term: string): void {
@@ -619,6 +687,191 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   getEchelleEtoiles(): number[] {
     return [1, 2, 3, 4, 5];
+  }
+
+  // ========================================
+  // Filter methods for products catalog
+  // ========================================
+
+  chargerCategoriesBoutique(): void {
+    if (this.categoriesBoutique.length > 0) return;
+    
+    this.loadingCategoriesBoutique = true;
+    this.categorieBoutiqueService.listerCategories().subscribe({
+      next: (response) => {
+        this.categoriesBoutique = response.categories || [];
+        this.loadingCategoriesBoutique = false;
+      },
+      error: () => {
+        this.loadingCategoriesBoutique = false;
+      }
+    });
+  }
+
+  chargerCategoriesProduit(): void {
+    // For products catalog, we need to get unique categories from products
+    // Since there's no global product category API, we'll just load all products
+    // and the filter will work on the client side based on product.categorie_produit
+    this.loadingCategoriesProduit = false;
+  }
+
+  appliquerFiltreCategorieBoutique(): void {
+    if (this.currentViewMode === 'boutiques') {
+      this.filtreCategorieProduit = '';
+      this.chargerBoutiquesFiltrees();
+    }
+  }
+
+  appliquerFiltreCategorieProduit(): void {
+    if (this.currentViewMode === 'produits' || this.currentViewMode === 'promotions') {
+      this.filtreCategorieBoutique = '';
+      this.chargerCatalogueProduitsFiltre();
+    }
+  }
+
+  appliquerFiltrePrix(): void {
+    if (this.currentViewMode === 'produits' || this.currentViewMode === 'promotions') {
+      this.chargerCatalogueProduitsFiltre();
+    }
+  }
+
+  appliquerFiltreTri(): void {
+    if (this.currentViewMode === 'produits' || this.currentViewMode === 'promotions') {
+      this.chargerCatalogueProduitsFiltre();
+    }
+  }
+
+  // For single boutique view
+  appliquerFiltrePrixBoutique(): void {
+    if (this.boutiqueSelectionnee) {
+      this.appliquerFiltreCategorieProduitBoutique();
+    }
+  }
+
+  resetFilters(): void {
+    this.filtreCategorieBoutique = '';
+    this.filtreCategorieProduit = '';
+    this.filtrePrixMin = null;
+    this.filtrePrixMax = null;
+    this.filtreEnPromotion = null;
+    this.filtreTri = 'nouveautes';
+  }
+
+  chargerBoutiquesFiltrees(): void {
+    this.loading.boutiques = true;
+    const filters: any = { est_active: true };
+    
+    if (this.filtreCategorieBoutique) {
+      filters.categorie = this.filtreCategorieBoutique;
+    }
+    
+    this.boutiqueService.listerBoutiques(filters).subscribe({
+      next: (response) => {
+        this.boutiques = response.docs;
+        this.loading.boutiques = false;
+      },
+      error: () => {
+        this.loading.boutiques = false;
+      }
+    });
+  }
+
+  chargerCatalogueProduitsFiltre(): void {
+    this.loadingCatalogue = true;
+    this.erreurCatalogue = '';
+
+    const filters: ProduitFilters = {
+      page: 1,
+      limit: 24,
+      tri: this.filtreTri as any
+    };
+
+    if (this.filtreCategorieProduit) {
+      filters.categorie = this.filtreCategorieProduit;
+    }
+
+    if (this.filtrePrixMin !== null && this.filtrePrixMin > 0) {
+      filters.min_prix = this.filtrePrixMin;
+    }
+
+    if (this.filtrePrixMax !== null && this.filtrePrixMax > 0) {
+      filters.max_prix = this.filtrePrixMax;
+    }
+
+    if (this.filtreEnPromotion !== null) {
+      filters.en_promotion = this.filtreEnPromotion;
+    }
+
+    if (this.currentViewMode === 'promotions' || this.filtreEnPromotion) {
+      filters.en_promotion = true;
+      filters.tri = 'promotion';
+    }
+
+    this.produitService.listerProduits(filters).subscribe({
+      next: (response) => {
+        this.produitsCatalogue = response.docs;
+        this.extraireCategoriesProduits();
+        this.loadingCatalogue = false;
+      },
+      error: () => {
+        this.erreurCatalogue = 'Impossible de charger les produits.';
+        this.loadingCatalogue = false;
+      }
+    });
+  }
+
+  // ========================================
+  // Filter methods for single boutique view
+  // ========================================
+
+  chargerCategoriesProduitBoutique(boutiqueId: string): void {
+    this.loadingCategoriesProduitBoutique = true;
+    this.categoriesProduitBoutique = [];
+    
+    this.categorieProduitService.listerCategoriesBoutique(boutiqueId).subscribe({
+      next: (response) => {
+        this.categoriesProduitBoutique = response.categories || [];
+        this.loadingCategoriesProduitBoutique = false;
+      },
+      error: () => {
+        this.loadingCategoriesProduitBoutique = false;
+      }
+    });
+  }
+
+  appliquerFiltreCategorieProduitBoutique(): void {
+    if (!this.boutiqueSelectionnee) return;
+    
+    this.loadingProduitsBoutique = true;
+    const filters: ProduitFilters = {
+      boutique: this.boutiqueSelectionnee._id,
+      page: 1,
+      limit: 24,
+      tri: 'nouveautes'
+    };
+
+    if (this.filtreCategorieProduitBoutique) {
+      filters.categorie = this.filtreCategorieProduitBoutique;
+    }
+
+    if (this.filtrePrixMin !== null && this.filtrePrixMin > 0) {
+      filters.min_prix = this.filtrePrixMin;
+    }
+
+    if (this.filtrePrixMax !== null && this.filtrePrixMax > 0) {
+      filters.max_prix = this.filtrePrixMax;
+    }
+
+    this.produitService.listerProduits(filters).subscribe({
+      next: (response) => {
+        this.produitsBoutique = response.docs;
+        this.loadingProduitsBoutique = false;
+      },
+      error: () => {
+        this.erreurBoutique = 'Impossible de charger les produits de cette boutique.';
+        this.loadingProduitsBoutique = false;
+      }
+    });
   }
 
   private afficherMessage(message: string, erreur: boolean = false): void {

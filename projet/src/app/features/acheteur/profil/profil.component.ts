@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { CommandeService } from '../../../core/services/commande.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { User } from '../../../core/models/auth.model';
+import { Commande } from '../../../core/models/commande.model';
 
 @Component({
   selector: 'app-profil',
@@ -32,11 +34,17 @@ export class ProfilComponent implements OnInit {
     boutiquesVisitees: 0
   };
 
+  // Orders
+  orders: Commande[] = [];
+  loadingOrders = false;
+  ordersError = '';
+
   activeTab = 'profil';
 
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
+    private commandeService: CommandeService,
     private http: HttpClient
   ) {
     this.profilForm = this.formBuilder.group({
@@ -91,6 +99,36 @@ export class ProfilComponent implements OnInit {
       error: (error) => {
         this.profileError = error.error?.message || 'Erreur lors du chargement du profil';
         this.loading = false;
+      }
+    });
+
+    // Charger les commandes des le debut pour les statistiques
+    this.chargerCommandes();
+  }
+
+  chargerCommandes(): void {
+    this.loadingOrders = true;
+    this.ordersError = '';
+    
+    this.commandeService.obtenirMesCommandes({ limit: 50 }).subscribe({
+      next: (response) => {
+        if (response.success)
+        {
+          this.orders = response.docs || [];
+          // Calculate stats from orders
+          this.stats.totalCommandes = this.orders.length;
+          this.stats.totalAchats = this.orders
+            .filter(o => o.statut === 'livre')
+            .reduce((sum, o) => sum + (o.total || 0), 0);
+          // Count unique boutiques
+          const boutiqueIds = new Set(this.orders.map(o => o.boutique?._id));
+          this.stats.boutiquesVisitees = boutiqueIds.size;
+        }
+        this.loadingOrders = false;
+      },
+      error: (error) => {
+        this.ordersError = error.error?.message || 'Erreur lors du chargement des commandes';
+        this.loadingOrders = false;
       }
     });
   }
@@ -170,6 +208,11 @@ export class ProfilComponent implements OnInit {
     this.profileError = '';
     this.passwordMessage = '';
     this.passwordError = '';
+    
+    // Load orders when switching to orders tab
+    if (tab === 'commandes' && this.orders.length === 0) {
+      this.chargerCommandes();
+    }
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
@@ -187,5 +230,37 @@ export class ProfilComponent implements OnInit {
 
   get preferencesForm(): FormGroup {
     return this.profilForm.get('preferences') as FormGroup;
+  }
+
+  getStatutLabel(statut: string): string {
+    const labels: Record<string, string> = {
+      'en_attente': 'En attente',
+      'en_preparation': 'En preparation',
+      'pret': 'Pret',
+      'livre': 'Livre',
+      'annule': 'Annule',
+      'refuse': 'Refuse'
+    };
+    return labels[statut] || statut;
+  }
+
+  getStatutClass(statut: string): string {
+    const classes: Record<string, string> = {
+      'en_attente': 'status-pending',
+      'en_preparation': 'status-processing',
+      'pret': 'status-ready',
+      'livre': 'status-delivered',
+      'annule': 'status-cancelled',
+      'refuse': 'status-cancelled'
+    };
+    return classes[statut] || '';
+  }
+
+  formatDate(date: Date | string): string {
+    return new Date(date).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   }
 }

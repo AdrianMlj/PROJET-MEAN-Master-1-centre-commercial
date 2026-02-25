@@ -48,6 +48,51 @@
         </div>
       </div>
 
+      <!-- Filter by product category for single boutique -->
+      <div class="filters-row" *ngIf="vueBoutiqueActive && categoriesProduitBoutique.length > 0">
+        <div class="filter-group">
+          <label for="filtreCatProdBoutique"><i class="fas fa-filter"></i> Categorie:</label>
+          <select 
+            id="filtreCatProdBoutique" 
+            [(ngModel)]="filtreCategorieProduitBoutique" 
+            (change)="appliquerFiltreCategorieProduitBoutique()"
+            class="form-control"
+          >
+            <option value="">Toutes les categories</option>
+            <option *ngFor="let cat of categoriesProduitBoutique" [value]="cat._id">
+              {{ cat.nom_categorie }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Price filters for boutique -->
+        <div class="filter-group">
+          <label for="filtrePrixMinBout"><i class="fas fa-euro-sign"></i> Prix min:</label>
+          <input
+            type="number"
+            id="filtrePrixMinBout"
+            [(ngModel)]="filtrePrixMin"
+            (change)="appliquerFiltrePrixBoutique()"
+            class="form-control"
+            placeholder="Min"
+            min="0"
+          >
+        </div>
+
+        <div class="filter-group">
+          <label for="filtrePrixMaxBout">-</label>
+          <input
+            type="number"
+            id="filtrePrixMaxBout"
+            [(ngModel)]="filtrePrixMax"
+            (change)="appliquerFiltrePrixBoutique()"
+            class="form-control"
+            placeholder="Max"
+            min="0"
+          >
+        </div>
+      </div>
+
       <div class="products-grid" *ngIf="!loadingProduitsBoutique && produitsBoutique.length > 0">
         <div class="product-card" *ngFor="let produit of produitsBoutique" (click)="voirProduit(produit._id)">
           <div class="product-image">
@@ -352,6 +397,24 @@
         </a>
       </div>
 
+      <!-- Filter by boutique category -->
+      <div class="filters-row" *ngIf="currentViewMode === 'boutiques' && categoriesBoutique.length > 0">
+        <div class="filter-group">
+          <label for="filtreCatBoutique"><i class="fas fa-filter"></i> Categorie:</label>
+          <select 
+            id="filtreCatBoutique" 
+            [(ngModel)]="filtreCategorieBoutique" 
+            (change)="appliquerFiltreCategorieBoutique()"
+            class="form-control"
+          >
+            <option value="">Toutes les categories</option>
+            <option *ngFor="let cat of categoriesBoutique" [value]="cat._id">
+              {{ cat.nom_categorie }}
+            </option>
+          </select>
+        </div>
+      </div>
+
       <div class="boutiques-grid" *ngIf="!loading.boutiques && boutiques.length > 0">
         <div class="boutique-card" *ngFor="let boutique of boutiques" (click)="voirBoutique(boutique._id)">
           <div class="boutique-logo">
@@ -479,6 +542,69 @@
           <i class="fas fa-search"></i>
           Rechercher
         </button>
+      </div>
+
+      <!-- Filter by product category -->
+      <div class="filters-row" *ngIf="categoriesProduitCatalogue.length > 0">
+        <div class="filter-group">
+          <label for="filtreCatProduit"><i class="fas fa-filter"></i> Categorie:</label>
+          <select 
+            id="filtreCatProduit" 
+            [(ngModel)]="filtreCategorieProduit" 
+            (change)="appliquerFiltreCategorieProduit()"
+            class="form-control"
+          >
+            <option value="">Toutes les categories</option>
+            <option *ngFor="let cat of categoriesProduitCatalogue" [value]="cat._id">
+              {{ cat.nom_categorie }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Price filters -->
+        <div class="filter-group">
+          <label for="filtrePrixMin"><i class="fas fa-euro-sign"></i> Prix min:</label>
+          <input
+            type="number"
+            id="filtrePrixMin"
+            [(ngModel)]="filtrePrixMin"
+            (change)="appliquerFiltrePrix()"
+            class="form-control"
+            placeholder="Min"
+            min="0"
+          >
+        </div>
+
+        <div class="filter-group">
+          <label for="filtrePrixMax">-</label>
+          <input
+            type="number"
+            id="filtrePrixMax"
+            [(ngModel)]="filtrePrixMax"
+            (change)="appliquerFiltrePrix()"
+            class="form-control"
+            placeholder="Max"
+            min="0"
+          >
+        </div>
+
+        <!-- Sort -->
+        <div class="filter-group">
+          <label for="filtreTri"><i class="fas fa-sort"></i> Trier:</label>
+          <select 
+            id="filtreTri" 
+            [(ngModel)]="filtreTri" 
+            (change)="appliquerFiltreTri()"
+            class="form-control"
+          >
+            <option value="nouveautes">Nouveautes</option>
+            <option value="prix_asc">Prix: croissant</option>
+            <option value="prix_desc">Prix: decroissant</option>
+            <option value="ventes">Meilleures ventes</option>
+            <option value="note">Mieux notes</option>
+            <option value="promotion">Promotions</option>
+          </select>
+        </div>
       </div>
 
       <div class="loading-spinner" *ngIf="loadingCatalogue">

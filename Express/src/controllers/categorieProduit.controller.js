@@ -1,6 +1,76 @@
 const CategorieProduit = require('../models/categorieProduit.model');
 const Boutique = require('../models/boutique.model');
 
+// ========================================
+// PUBLIC ROUTES - No authentication required
+// ========================================
+
+// Public: Lister les catégories de produits d'une boutique
+exports.listerCategoriesBoutiquePublic = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Vérifier que la boutique existe
+    const boutique = await Boutique.findById(id);
+    if (!boutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Boutique non trouvée'
+      });
+    }
+    
+    const categories = await CategorieProduit.find({ boutique: id })
+      .sort({ ordre_affichage: 1, nom_categorie: 1 });
+    
+    res.status(200).json({
+      success: true,
+      categories
+    });
+  } catch (error) {
+    console.error('Erreur liste catégories produit (public):', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des catégories',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Public: Lister les catégories actives d'une boutique
+exports.listerCategoriesBoutiquePublicActives = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Vérifier que la boutique existe
+    const boutique = await Boutique.findById(id);
+    if (!boutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Boutique non trouvée'
+      });
+    }
+    
+    const categories = await CategorieProduit.find({ boutique: id, est_active: true })
+      .sort({ ordre_affichage: 1, nom_categorie: 1 });
+    
+    res.status(200).json({
+      success: true,
+      categories
+    });
+  } catch (error) {
+    console.error('Erreur liste catégories actives (public):', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des catégories',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ========================================
+// PROTECTED ROUTES - Authentication required
+// ========================================
+
 // Gérant: Lister les catégories de produits de sa boutique
 exports.listerCategoriesBoutique = async (req, res) => {
   try {

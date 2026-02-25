@@ -17,6 +17,11 @@ export class CategorieBoutiqueService {
 
   constructor(private http: HttpClient) { }
 
+  // Public: Lister toutes les catégories actives
+  listerCategories(): Observable<CategorieResponse> {
+    return this.http.get<CategorieResponse>(`${this.apiUrl}`);
+  }
+
   // Admin: Lister toutes les catégories (avec inactives)
   listerToutesCategories(): Observable<CategorieResponse> {
     return this.http.get<CategorieResponse>(`${this.apiUrl}/admin/toutes`);

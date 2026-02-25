@@ -4,6 +4,62 @@ const categorieProduitController = require('../controllers/categorieProduit.cont
 const authMiddleware = require('../middlewares/auth.middleware');
 const roleMiddleware = require('../middlewares/role.middleware');
 
+// ========================================
+// PUBLIC ROUTES - No authentication required
+// ========================================
+
+/**
+ * @swagger
+ * /categories-produit/boutique/{id}:
+ *   get:
+ *     summary: Lister les catégories de produits d'une boutique (public)
+ *     description: Retourne toutes les catégories de produits pour une boutique spécifique
+ *     tags: [Catégories Produits]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la boutique
+ *     responses:
+ *       200:
+ *         description: Liste des catégories de produits
+ *       404:
+ *         description: Boutique non trouvée
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/boutique/:id', categorieProduitController.listerCategoriesBoutiquePublic);
+
+/**
+ * @swagger
+ * /categories-produit/boutique/{id}/actives:
+ *   get:
+ *     summary: Lister les catégories actives d'une boutique (public)
+ *     description: Retourne uniquement les catégories actives pour une boutique
+ *     tags: [Catégories Produits]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la boutique
+ *     responses:
+ *       200:
+ *         description: Liste des catégories actives
+ *       404:
+ *         description: Boutique non trouvée
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/boutique/:id/actives', categorieProduitController.listerCategoriesBoutiquePublicActives);
+
+// ========================================
+// PROTECTED ROUTES - Authentication required
+// ========================================
+
 /**
  * @swagger
  * /categories-produit:

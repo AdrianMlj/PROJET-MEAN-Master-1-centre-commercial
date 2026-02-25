@@ -48,6 +48,14 @@
         </button>
         <button 
           class="tab-btn" 
+          [class.active]="activeTab === 'commandes'"
+          (click)="setActiveTab('commandes')"
+        >
+          <i class="fas fa-shopping-bag"></i>
+          Mes commandes
+        </button>
+        <button 
+          class="tab-btn" 
           [class.active]="activeTab === 'password'"
           (click)="setActiveTab('password')"
         >
@@ -191,6 +199,65 @@
               </button>
             </div>
           </form>
+        </div>
+
+        <!-- Orders Tab -->
+        <div class="tab-pane" *ngIf="activeTab === 'commandes'">
+          <div class="form-section">
+            <h3>Historique des commandes</h3>
+
+            <!-- Loading -->
+            <div class="loading-state" *ngIf="loadingOrders">
+              <i class="fas fa-spinner fa-spin"></i>
+              <p>Chargement des commandes...</p>
+            </div>
+
+            <!-- Error -->
+            <div class="error-message" *ngIf="ordersError && !loadingOrders">
+              <i class="fas fa-exclamation-circle"></i>
+              {{ ordersError }}
+            </div>
+
+            <!-- Orders List -->
+            <div class="orders-list" *ngIf="!loadingOrders && !ordersError">
+              <div class="order-card" *ngFor="let order of orders">
+                <div class="order-header">
+                  <div class="order-info">
+                    <span class="order-number">Commande #{{ order.numero_commande }}</span>
+                    <span class="order-date">{{ formatDate(order.date_commande) }}</span>
+                  </div>
+                  <span class="order-status" [ngClass]="getStatutClass(order.statut)">
+                    {{ getStatutLabel(order.statut) }}
+                  </span>
+                </div>
+
+                <div class="order-details">
+                  <div class="order-boutique">
+                    <i class="fas fa-store"></i>
+                    {{ order.boutique?.nom }}
+                  </div>
+                  <div class="order-total">
+                    <strong>{{ order.total | number:'1.2-2' }} EUR</strong>
+                  </div>
+                </div>
+
+                <div class="order-items">
+                  <span *ngFor="let detail of order.details | slice:0:3">
+                    {{ detail.quantite }}x {{ detail.produit?.nom }}
+                  </span>
+                  <span *ngIf="order.details.length > 3">
+                    +{{ order.details.length - 3 }} autres produits
+                  </span>
+                </div>
+              </div>
+
+              <!-- Empty State -->
+              <div class="empty-state" *ngIf="orders.length === 0">
+                <i class="fas fa-shopping-bag"></i>
+                <p>Vous n'avez pas encore passe de commande</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Password Tab -->

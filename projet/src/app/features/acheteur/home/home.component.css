@@ -675,3 +675,60 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Filters */
+.filters-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+
+.filter-group label i {
+  color: #667eea;
+  margin-right: 5px;
+}
+
+.filter-group .form-control {
+  min-width: 200px;
+  padding: 10px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #333;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.filter-group .form-control:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Price input specific styles */
+.filter-group input[type="number"] {
+  min-width: 100px;
+}
+
+.filter-group input[type="number"]::-webkit-outer-spin-button,
+.filter-group input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.filter-group input[type="number"] {
+  -moz-appearance: textfield;
+}
