@@ -1,0 +1,571 @@
+<div class="home-container">
+  <div class="container action-message-wrapper" *ngIf="messageAction">
+    <div class="action-message" [class.error]="messageErreur">
+      <i class="fas" [ngClass]="messageErreur ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+      <span>{{ messageAction }}</span>
+    </div>
+  </div>
+
+  <section class="section boutique-focus-section" *ngIf="vueBoutiqueActive">
+    <div class="container">
+      <div class="boutique-view-actions">
+        <button class="btn btn-secondary" (click)="retourAuxBoutiques()">
+          <i class="fas fa-arrow-left"></i>
+          Retour aux boutiques
+        </button>
+      </div>
+
+      <div class="loading-spinner" *ngIf="loadingBoutiqueSelection || loadingProduitsBoutique">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement de la boutique...</p>
+      </div>
+
+      <div class="error-state" *ngIf="!loadingBoutiqueSelection && !loadingProduitsBoutique && erreurBoutique">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>{{ erreurBoutique }}</p>
+      </div>
+
+      <div class="boutique-highlight" *ngIf="!loadingBoutiqueSelection && boutiqueSelectionnee">
+        <div class="boutique-logo">
+          <img [src]="boutiqueSelectionnee.logo_url ? 'http://localhost:3000' + boutiqueSelectionnee.logo_url : 'assets/placeholder-boutique.png'" [alt]="boutiqueSelectionnee.nom">
+        </div>
+        <div class="boutique-info">
+          <h2>{{ boutiqueSelectionnee.nom }}</h2>
+          <p class="categorie">{{ boutiqueSelectionnee.categorie?.nom }}</p>
+          <p class="gerant" *ngIf="boutiqueSelectionnee.gerant">
+            Gerant: {{ boutiqueSelectionnee.gerant.prenom ? (boutiqueSelectionnee.gerant.prenom + ' ') : '' }}{{ boutiqueSelectionnee.gerant.nom }}
+          </p>
+          <p class="description" *ngIf="boutiqueSelectionnee.description">{{ boutiqueSelectionnee.description }}</p>
+          <button
+            type="button"
+            class="btn btn-outline-danger btn-sm favorite-btn"
+            (click)="toggleFavoriBoutique(boutiqueSelectionnee._id, $event)"
+            [disabled]="loadingFavoriBoutique[boutiqueSelectionnee._id] || isBoutiqueFavorie(boutiqueSelectionnee._id)"
+          >
+            <i class="fas" [ngClass]="loadingFavoriBoutique[boutiqueSelectionnee._id] ? 'fa-spinner fa-spin' : (isBoutiqueFavorie(boutiqueSelectionnee._id) ? 'fa-heart' : 'fa-heart-broken')"></i>
+            {{ isBoutiqueFavorie(boutiqueSelectionnee._id) ? 'Boutique deja favorite' : 'Favoriser cette boutique' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="products-grid" *ngIf="!loadingProduitsBoutique && produitsBoutique.length > 0">
+        <div class="product-card" *ngFor="let produit of produitsBoutique" (click)="voirProduit(produit._id)">
+          <div class="product-image">
+            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction(produit) }}%</span>
+          </div>
+          <div class="product-info">
+            <h3>{{ produit.nom }}</h3>
+            <p class="boutique-name">{{ produit.boutique?.nom }}</p>
+            <div class="price-container">
+              <span class="price" [class.promo-price]="produit.en_promotion">{{ getPrixAffiche(produit) | number:'1.2-2' }} EUR</span>
+              <span class="old-price" *ngIf="produit.en_promotion">{{ produit.prix | number:'1.2-2' }} EUR</span>
+            </div>
+            <p class="stock-info" [class.out]="produit.quantite_stock <= 0" [class.low]="produit.quantite_stock > 0 && produit.quantite_stock <= 5">
+              {{ getStockTexte(produit) }}
+            </p>
+            <div class="product-actions">
+              <button class="btn btn-outline-primary btn-sm action-btn" (click)="voirProduitDepuisCarte($event, produit._id)">
+                <i class="fas fa-eye"></i>
+                Voir
+              </button>
+              <button
+                class="btn btn-outline-danger btn-sm action-btn"
+                (click)="toggleFavoriProduit(produit, $event)"
+                [disabled]="loadingFavoriProduit[produit._id] || isProduitFavori(produit._id)"
+              >
+                <i class="fas" [ngClass]="loadingFavoriProduit[produit._id] ? 'fa-spinner fa-spin' : (isProduitFavori(produit._id) ? 'fa-heart' : 'fa-heart-broken')"></i>
+                {{ isProduitFavori(produit._id) ? 'Deja en favoris' : 'Ajouter favoris' }}
+              </button>
+              <button
+                class="btn btn-primary btn-sm action-btn"
+                (click)="acheterProduit(produit, $event)"
+                [disabled]="produit.quantite_stock <= 0 || ajoutEnCours[produit._id]"
+              >
+                <i class="fas" [ngClass]="ajoutEnCours[produit._id] ? 'fa-spinner fa-spin' : 'fa-cart-plus'"></i>
+                {{ ajoutEnCours[produit._id] ? 'Ajout...' : 'Acheter' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="!loadingProduitsBoutique && !erreurBoutique && produitsBoutique.length === 0">
+        <i class="fas fa-box-open"></i>
+        <p>Aucun produit en vente dans cette boutique</p>
+      </div>
+
+      <div class="boutique-avis-section" *ngIf="!loadingBoutiqueSelection && boutiqueSelectionnee">
+        <div class="boutique-avis-card">
+          <h3><i class="fas fa-pen"></i> Votre avis sur la boutique</h3>
+
+          <div class="reaction-row">
+            <button type="button" class="reaction-btn like" [class.active]="reactionBoutique === 'aime'" (click)="definirReactionBoutique('aime')">
+              <i class="fas fa-thumbs-up"></i>
+              J'aime
+            </button>
+            <button type="button" class="reaction-btn dislike" [class.active]="reactionBoutique === 'deteste'" (click)="definirReactionBoutique('deteste')">
+              <i class="fas fa-thumbs-down"></i>
+              Je deteste
+            </button>
+          </div>
+
+          <div class="note-row">
+            <span>Note:</span>
+            <button
+              type="button"
+              class="star-btn"
+              *ngFor="let star of getEchelleEtoiles()"
+              (click)="setNoteAvisBoutique(star)"
+            >
+              <i class="fas fa-star" [class.active]="star <= noteAvisBoutique"></i>
+            </button>
+            <strong>{{ noteAvisBoutique }}/5</strong>
+          </div>
+
+          <textarea
+            rows="4"
+            [(ngModel)]="commentaireAvisBoutique"
+            placeholder="Ecrivez votre commentaire sur cette boutique..."
+          ></textarea>
+
+          <button class="btn btn-primary" (click)="soumettreAvisBoutique()" [disabled]="sendingAvisBoutique">
+            <i class="fas" [ngClass]="sendingAvisBoutique ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+            {{ sendingAvisBoutique ? 'Envoi...' : 'Envoyer mon avis' }}
+          </button>
+        </div>
+
+        <div class="boutique-avis-card">
+          <h3><i class="fas fa-comments"></i> Avis boutique</h3>
+
+          <div class="loading-spinner compact" *ngIf="loadingAvisBoutique">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Chargement des avis...</p>
+          </div>
+
+          <div class="error-state compact" *ngIf="!loadingAvisBoutique && erreurAvisBoutique">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>{{ erreurAvisBoutique }}</p>
+          </div>
+
+          <div class="avis-list" *ngIf="!loadingAvisBoutique && !erreurAvisBoutique && avisBoutique.length > 0">
+            <div class="avis-item" *ngFor="let item of avisBoutique">
+              <div class="avis-head">
+                <div>
+                  <strong>{{ getAuteurAvis(item) }}</strong>
+                  <div class="avis-stars">
+                    <i class="fas fa-star" *ngFor="let star of getEtoiles(item.note)"></i>
+                    <span>{{ item.note }}/5</span>
+                  </div>
+                </div>
+                <span class="avis-badge" [class.dislike]="getTypeAvis(item) === 'deteste'">
+                  <i class="fas" [ngClass]="getTypeAvis(item) === 'aime' ? 'fa-thumbs-up' : 'fa-thumbs-down'"></i>
+                  {{ getTypeAvis(item) === 'aime' ? "J'aime" : 'Je deteste' }}
+                </span>
+              </div>
+
+              <p class="avis-comment">{{ item.commentaire || 'Sans commentaire.' }}</p>
+
+              <button
+                type="button"
+                class="btn-link"
+                (click)="toggleLikeAvisBoutique(item._id)"
+                [disabled]="avisBoutiqueLikeLoading[item._id]"
+              >
+                <i class="fas" [ngClass]="aAimeAvisBoutiqueMap[item._id] ? 'fa-heart' : 'fa-heart-broken'"></i>
+                {{ aAimeAvisBoutiqueMap[item._id] ? "J'aime deja" : "Utile" }} ({{ likesAvisBoutiqueMap[item._id] || 0 }})
+              </button>
+
+              <div class="avis-reponse" *ngIf="item.reponse?.texte">
+                <strong>Reponse boutique:</strong>
+                <p>{{ item.reponse?.texte }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-state compact" *ngIf="!loadingAvisBoutique && !erreurAvisBoutique && avisBoutique.length === 0">
+            <i class="fas fa-comment-slash"></i>
+            <p>Aucun avis pour cette boutique.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hero-section" *ngIf="!vueBoutiqueActive && currentViewMode === 'home'">
+    <div class="hero-content">
+      <h1>Bienvenue au Centre Commercial</h1>
+      <p>Decouvrez des milliers de produits de nos boutiques partenaires</p>
+
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Rechercher un produit ou une boutique..."
+          (keyup.enter)="rechercher()"
+        >
+        <button class="btn btn-primary" (click)="rechercher()">
+          <i class="fas fa-search"></i>
+          Rechercher
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section promotions-section" *ngIf="!vueBoutiqueActive && currentViewMode === 'home'">
+    <div class="container">
+      <div class="section-header">
+        <h2><i class="fas fa-tags"></i> Promotions</h2>
+        <a (click)="voirTousLesProduits()" class="voir-plus">
+          Voir tout <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="products-grid" *ngIf="!loading.promotions && produitsEnPromotion.length > 0">
+        <div class="product-card" *ngFor="let produit of produitsEnPromotion" (click)="voirProduit(produit._id)">
+          <div class="product-image">
+            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction(produit) }}%</span>
+          </div>
+          <div class="product-info">
+            <h3>{{ produit.nom }}</h3>
+            <p class="boutique-name" (click)="voirBoutiqueDepuisProduit($event, produit.boutique?._id)">{{ produit.boutique?.nom }}</p>
+            <div class="price-container">
+              <span class="price" [class.promo-price]="produit.en_promotion">{{ getPrixAffiche(produit) | number:'1.2-2' }} EUR</span>
+              <span class="old-price" *ngIf="produit.en_promotion">{{ produit.prix | number:'1.2-2' }} EUR</span>
+            </div>
+            <div class="rating" *ngIf="produit.note_moyenne > 0">
+              <i class="fas fa-star"></i>
+              <span>{{ produit.note_moyenne | number:'1.1-1' }}</span>
+              <span class="reviews">({{ produit.nombre_avis }})</span>
+            </div>
+            <p class="stock-info" [class.out]="produit.quantite_stock <= 0" [class.low]="produit.quantite_stock > 0 && produit.quantite_stock <= 5">
+              {{ getStockTexte(produit) }}
+            </p>
+            <div class="product-actions">
+              <button class="btn btn-outline-primary btn-sm action-btn" (click)="voirProduitDepuisCarte($event, produit._id)">
+                <i class="fas fa-eye"></i>
+                Voir
+              </button>
+              <button
+                class="btn btn-outline-danger btn-sm action-btn"
+                (click)="toggleFavoriProduit(produit, $event)"
+                [disabled]="loadingFavoriProduit[produit._id] || isProduitFavori(produit._id)"
+              >
+                <i class="fas" [ngClass]="loadingFavoriProduit[produit._id] ? 'fa-spinner fa-spin' : (isProduitFavori(produit._id) ? 'fa-heart' : 'fa-heart-broken')"></i>
+                {{ isProduitFavori(produit._id) ? 'Deja en favoris' : 'Ajouter favoris' }}
+              </button>
+              <button
+                class="btn btn-primary btn-sm action-btn"
+                (click)="acheterProduit(produit, $event)"
+                [disabled]="produit.quantite_stock <= 0 || ajoutEnCours[produit._id]"
+              >
+                <i class="fas" [ngClass]="ajoutEnCours[produit._id] ? 'fa-spinner fa-spin' : 'fa-cart-plus'"></i>
+                {{ ajoutEnCours[produit._id] ? 'Ajout...' : 'Acheter' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="loading-spinner" *ngIf="loading.promotions">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des promotions...</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!loading.promotions && produitsEnPromotion.length === 0">
+        <i class="fas fa-tag"></i>
+        <p>Aucune promotion en cours</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section nouveautes-section" *ngIf="!vueBoutiqueActive && currentViewMode === 'home'">
+    <div class="container">
+      <div class="section-header">
+        <h2><i class="fas fa-sparkles"></i> Nouveautes</h2>
+        <a (click)="voirTousLesProduits()" class="voir-plus">
+          Voir tout <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="products-grid" *ngIf="!loading.nouveautes && nouveautes.length > 0">
+        <div class="product-card" *ngFor="let produit of nouveautes" (click)="voirProduit(produit._id)">
+          <div class="product-image">
+            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <span class="badge new">Nouveau</span>
+          </div>
+          <div class="product-info">
+            <h3>{{ produit.nom }}</h3>
+            <p class="boutique-name" (click)="voirBoutiqueDepuisProduit($event, produit.boutique?._id)">{{ produit.boutique?.nom }}</p>
+            <div class="price-container">
+              <span class="price" [class.promo-price]="produit.en_promotion">{{ getPrixAffiche(produit) | number:'1.2-2' }} EUR</span>
+              <span class="old-price" *ngIf="produit.en_promotion">{{ produit.prix | number:'1.2-2' }} EUR</span>
+            </div>
+            <p class="stock-info" [class.out]="produit.quantite_stock <= 0" [class.low]="produit.quantite_stock > 0 && produit.quantite_stock <= 5">
+              {{ getStockTexte(produit) }}
+            </p>
+            <div class="product-actions">
+              <button class="btn btn-outline-primary btn-sm action-btn" (click)="voirProduitDepuisCarte($event, produit._id)">
+                <i class="fas fa-eye"></i>
+                Voir
+              </button>
+              <button
+                class="btn btn-outline-danger btn-sm action-btn"
+                (click)="toggleFavoriProduit(produit, $event)"
+                [disabled]="loadingFavoriProduit[produit._id] || isProduitFavori(produit._id)"
+              >
+                <i class="fas" [ngClass]="loadingFavoriProduit[produit._id] ? 'fa-spinner fa-spin' : (isProduitFavori(produit._id) ? 'fa-heart' : 'fa-heart-broken')"></i>
+                {{ isProduitFavori(produit._id) ? 'Deja en favoris' : 'Ajouter favoris' }}
+              </button>
+              <button
+                class="btn btn-primary btn-sm action-btn"
+                (click)="acheterProduit(produit, $event)"
+                [disabled]="produit.quantite_stock <= 0 || ajoutEnCours[produit._id]"
+              >
+                <i class="fas" [ngClass]="ajoutEnCours[produit._id] ? 'fa-spinner fa-spin' : 'fa-cart-plus'"></i>
+                {{ ajoutEnCours[produit._id] ? 'Ajout...' : 'Acheter' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="loading-spinner" *ngIf="loading.nouveautes">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des nouveautes...</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!loading.nouveautes && nouveautes.length === 0">
+        <i class="fas fa-box-open"></i>
+        <p>Aucune nouveaute pour le moment</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section boutiques-section" *ngIf="!vueBoutiqueActive && (currentViewMode === 'home' || currentViewMode === 'boutiques')">
+    <div class="container">
+      <div class="section-header">
+        <h2><i class="fas fa-store"></i> {{ currentViewMode === 'boutiques' ? 'Toutes les boutiques' : 'Nos Boutiques' }}</h2>
+        <a *ngIf="currentViewMode === 'home'" (click)="voirToutesLesBoutiques()" class="voir-plus">
+          Voir toutes <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="boutiques-grid" *ngIf="!loading.boutiques && boutiques.length > 0">
+        <div class="boutique-card" *ngFor="let boutique of boutiques" (click)="voirBoutique(boutique._id)">
+          <div class="boutique-logo">
+            <img [src]="'http://localhost:3000' + boutique.logo_url" [alt]="boutique.nom" onError="this.src='assets/placeholder-boutique.png'">
+          </div>
+          <div class="boutique-info">
+            <h3>{{ boutique.nom }}</h3>
+            <p class="categorie">{{ boutique.categorie?.nom }}</p>
+            <p class="gerant" *ngIf="boutique.gerant">
+              Gerant: {{ boutique.gerant.prenom ? (boutique.gerant.prenom + ' ') : '' }}{{ boutique.gerant.nom }}
+            </p>
+            <p class="description" *ngIf="boutique.description">{{ boutique.description | slice:0:80 }}...</p>
+            <button
+              type="button"
+              class="btn btn-outline-danger btn-sm favorite-btn"
+              (click)="toggleFavoriBoutique(boutique._id, $event)"
+              [disabled]="loadingFavoriBoutique[boutique._id] || isBoutiqueFavorie(boutique._id)"
+            >
+              <i class="fas" [ngClass]="loadingFavoriBoutique[boutique._id] ? 'fa-spinner fa-spin' : (isBoutiqueFavorie(boutique._id) ? 'fa-heart' : 'fa-heart-broken')"></i>
+              {{ isBoutiqueFavorie(boutique._id) ? 'Boutique deja en favoris' : 'Ajouter boutique' }}
+            </button>
+            <div class="boutique-stats" *ngIf="boutique.statistiques">
+              <span><i class="fas fa-box"></i> {{ boutique.statistiques.nombre_produits || 0 }} produits</span>
+              <span *ngIf="boutique.statistiques.note_moyenne">
+                <i class="fas fa-star"></i> {{ boutique.statistiques.note_moyenne | number:'1.1-1' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="loading-spinner" *ngIf="loading.boutiques">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des boutiques...</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!loading.boutiques && boutiques.length === 0">
+        <i class="fas fa-store-slash"></i>
+        <p>Aucune boutique disponible</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section ventes-section" *ngIf="!vueBoutiqueActive && currentViewMode === 'home'">
+    <div class="container">
+      <div class="section-header">
+        <h2><i class="fas fa-fire"></i> Meilleures Ventes</h2>
+        <a (click)="voirTousLesProduits()" class="voir-plus">
+          Voir tout <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="products-grid" *ngIf="!loading.ventes && meilleuresVentes.length > 0">
+        <div class="product-card" *ngFor="let produit of meilleuresVentes" (click)="voirProduit(produit._id)">
+          <div class="product-image">
+            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <span class="badge bestseller">Top vente</span>
+          </div>
+          <div class="product-info">
+            <h3>{{ produit.nom }}</h3>
+            <p class="boutique-name" (click)="voirBoutiqueDepuisProduit($event, produit.boutique?._id)">{{ produit.boutique?.nom }}</p>
+            <div class="price-container">
+              <span class="price" [class.promo-price]="produit.en_promotion">{{ getPrixAffiche(produit) | number:'1.2-2' }} EUR</span>
+              <span class="old-price" *ngIf="produit.en_promotion">{{ produit.prix | number:'1.2-2' }} EUR</span>
+            </div>
+            <div class="sales-count">
+              <i class="fas fa-shopping-bag"></i>
+              {{ produit.nombre_ventes }} vendus
+            </div>
+            <p class="stock-info" [class.out]="produit.quantite_stock <= 0" [class.low]="produit.quantite_stock > 0 && produit.quantite_stock <= 5">
+              {{ getStockTexte(produit) }}
+            </p>
+            <div class="product-actions">
+              <button class="btn btn-outline-primary btn-sm action-btn" (click)="voirProduitDepuisCarte($event, produit._id)">
+                <i class="fas fa-eye"></i>
+                Voir
+              </button>
+              <button
+                class="btn btn-outline-danger btn-sm action-btn"
+                (click)="toggleFavoriProduit(produit, $event)"
+                [disabled]="loadingFavoriProduit[produit._id] || isProduitFavori(produit._id)"
+              >
+                <i class="fas" [ngClass]="loadingFavoriProduit[produit._id] ? 'fa-spinner fa-spin' : (isProduitFavori(produit._id) ? 'fa-heart' : 'fa-heart-broken')"></i>
+                {{ isProduitFavori(produit._id) ? 'Deja en favoris' : 'Ajouter favoris' }}
+              </button>
+              <button
+                class="btn btn-primary btn-sm action-btn"
+                (click)="acheterProduit(produit, $event)"
+                [disabled]="produit.quantite_stock <= 0 || ajoutEnCours[produit._id]"
+              >
+                <i class="fas" [ngClass]="ajoutEnCours[produit._id] ? 'fa-spinner fa-spin' : 'fa-cart-plus'"></i>
+                {{ ajoutEnCours[produit._id] ? 'Ajout...' : 'Acheter' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="loading-spinner" *ngIf="loading.ventes">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des meilleures ventes...</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!loading.ventes && meilleuresVentes.length === 0">
+        <i class="fas fa-chart-line"></i>
+        <p>Aucune vente enregistree</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section catalogue-section" *ngIf="!vueBoutiqueActive && (currentViewMode === 'produits' || currentViewMode === 'recherche' || currentViewMode === 'promotions')">
+    <div class="container">
+      <div class="section-header">
+        <h2><i class="fas fa-grid-2"></i> {{ getTitreCatalogue() }}</h2>
+      </div>
+
+      <div class="search-box inline-search" *ngIf="currentViewMode === 'recherche'">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Rechercher un produit, une boutique ou un gerant..."
+          (keyup.enter)="rechercher()"
+        >
+        <button class="btn btn-primary" (click)="rechercher()">
+          <i class="fas fa-search"></i>
+          Rechercher
+        </button>
+      </div>
+
+      <div class="loading-spinner" *ngIf="loadingCatalogue">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des produits...</p>
+      </div>
+
+      <div class="error-state" *ngIf="!loadingCatalogue && erreurCatalogue">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>{{ erreurCatalogue }}</p>
+      </div>
+
+      <div class="products-grid" *ngIf="!loadingCatalogue && !erreurCatalogue && produitsCatalogue.length > 0">
+        <div class="product-card" *ngFor="let produit of produitsCatalogue" (click)="voirProduit(produit._id)">
+          <div class="product-image">
+            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction(produit) }}%</span>
+          </div>
+          <div class="product-info">
+            <h3>{{ produit.nom }}</h3>
+            <p class="boutique-name" (click)="voirBoutiqueDepuisProduit($event, produit.boutique?._id)">{{ produit.boutique?.nom }}</p>
+            <div class="price-container">
+              <span class="price" [class.promo-price]="produit.en_promotion">{{ getPrixAffiche(produit) | number:'1.2-2' }} EUR</span>
+              <span class="old-price" *ngIf="produit.en_promotion">{{ produit.prix | number:'1.2-2' }} EUR</span>
+            </div>
+            <p class="stock-info" [class.out]="produit.quantite_stock <= 0" [class.low]="produit.quantite_stock > 0 && produit.quantite_stock <= 5">
+              {{ getStockTexte(produit) }}
+            </p>
+            <div class="product-actions">
+              <button class="btn btn-outline-primary btn-sm action-btn" (click)="voirProduitDepuisCarte($event, produit._id)">
+                <i class="fas fa-eye"></i>
+                Voir
+              </button>
+              <button
+                class="btn btn-outline-danger btn-sm action-btn"
+                (click)="toggleFavoriProduit(produit, $event)"
+                [disabled]="loadingFavoriProduit[produit._id] || isProduitFavori(produit._id)"
+              >
+                <i class="fas" [ngClass]="loadingFavoriProduit[produit._id] ? 'fa-spinner fa-spin' : (isProduitFavori(produit._id) ? 'fa-heart' : 'fa-heart-broken')"></i>
+                {{ isProduitFavori(produit._id) ? 'Deja en favoris' : 'Ajouter favoris' }}
+              </button>
+              <button
+                class="btn btn-primary btn-sm action-btn"
+                (click)="acheterProduit(produit, $event)"
+                [disabled]="produit.quantite_stock <= 0 || ajoutEnCours[produit._id]"
+              >
+                <i class="fas" [ngClass]="ajoutEnCours[produit._id] ? 'fa-spinner fa-spin' : 'fa-cart-plus'"></i>
+                {{ ajoutEnCours[produit._id] ? 'Ajout...' : 'Acheter' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="recherche-boutiques" *ngIf="currentViewMode === 'recherche' && !loadingCatalogue && boutiquesRecherche.length > 0">
+        <div class="section-header small">
+          <h2><i class="fas fa-store"></i> Boutiques et gerants</h2>
+        </div>
+        <div class="boutiques-grid">
+          <div class="boutique-card" *ngFor="let boutique of boutiquesRecherche" (click)="voirBoutique(boutique._id)">
+            <div class="boutique-logo">
+              <img [src]="'http://localhost:3000' + boutique.logo_url" [alt]="boutique.nom" onError="this.src='assets/placeholder-boutique.png'">
+            </div>
+            <div class="boutique-info">
+              <h3>{{ boutique.nom }}</h3>
+              <p class="categorie">{{ boutique.categorie?.nom }}</p>
+              <p class="gerant" *ngIf="boutique.gerant">
+                Gerant: {{ boutique.gerant.prenom ? (boutique.gerant.prenom + ' ') : '' }}{{ boutique.gerant.nom }}
+              </p>
+              <button
+                type="button"
+                class="btn btn-outline-danger btn-sm favorite-btn"
+                (click)="toggleFavoriBoutique(boutique._id, $event)"
+                [disabled]="loadingFavoriBoutique[boutique._id] || isBoutiqueFavorie(boutique._id)"
+              >
+                <i class="fas" [ngClass]="loadingFavoriBoutique[boutique._id] ? 'fa-spinner fa-spin' : (isBoutiqueFavorie(boutique._id) ? 'fa-heart' : 'fa-heart-broken')"></i>
+                {{ isBoutiqueFavorie(boutique._id) ? 'Boutique deja en favoris' : 'Ajouter boutique' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="!loadingCatalogue && !erreurCatalogue && produitsCatalogue.length === 0">
+        <i class="fas fa-box-open"></i>
+        <p>Aucun resultat trouve.</p>
+      </div>
+    </div>
+  </section>
+</div>

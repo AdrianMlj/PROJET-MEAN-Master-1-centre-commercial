@@ -1,0 +1,214 @@
+<div class="produit-detail-container">
+  <div class="container">
+    <div class="page-header">
+      <button class="btn-back" (click)="retourProduits()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <h1><i class="fas fa-box-open"></i> Detail produit</h1>
+    </div>
+
+    <div class="loading-state" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement du produit...</p>
+    </div>
+
+    <div class="error-message" *ngIf="!loading && errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
+    <div class="action-message" *ngIf="!loading && actionMessage" [class.error]="actionError">
+      <i class="fas" [ngClass]="actionError ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+      <span>{{ actionMessage }}</span>
+    </div>
+
+    <div class="detail-content" *ngIf="!loading && produit">
+      <div class="gallery-card">
+        <div class="main-image">
+          <img [src]="getImagePrincipale()" [alt]="produit.nom">
+          <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction() }}%</span>
+        </div>
+        <div class="thumbs" *ngIf="produit.images?.length">
+          <button
+            type="button"
+            class="thumb"
+            [class.active]="imageIndex === i"
+            *ngFor="let image of produit.images; let i = index"
+            (click)="setImage(i)"
+          >
+            <img [src]="'http://localhost:3000' + image.url" [alt]="produit.nom + ' image ' + (i + 1)">
+          </button>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h2>{{ produit.nom }}</h2>
+        <p class="boutique">
+          Boutique:
+          <button type="button" class="link-btn" (click)="voirBoutique()">{{ produit.boutique?.nom }}</button>
+        </p>
+        <div class="favoris-row">
+          <button type="button" class="btn btn-outline-danger btn-sm" (click)="toggleFavoriProduit()" [disabled]="favoriProduitLoading || isProduitFavori">
+            <i class="fas" [ngClass]="favoriProduitLoading ? 'fa-spinner fa-spin' : (isProduitFavori ? 'fa-heart' : 'fa-heart-broken')"></i>
+            {{ isProduitFavori ? 'Deja dans favoris' : 'Ajouter aux favoris' }}
+          </button>
+          <button type="button" class="btn btn-outline-danger btn-sm" (click)="toggleFavoriBoutique()" [disabled]="favoriBoutiqueLoading || isBoutiqueFavorie">
+            <i class="fas" [ngClass]="favoriBoutiqueLoading ? 'fa-spinner fa-spin' : (isBoutiqueFavorie ? 'fa-heart' : 'fa-heart-broken')"></i>
+            {{ isBoutiqueFavorie ? 'Boutique deja favorite' : 'Favoriser la boutique' }}
+          </button>
+        </div>
+
+        <div class="prices">
+          <span class="price">{{ getPrixAffiche() | number:'1.2-2' }} EUR</span>
+          <span class="old-price" *ngIf="produit.en_promotion">{{ produit.prix | number:'1.2-2' }} EUR</span>
+        </div>
+
+        <div class="meta-row">
+          <span class="rating" *ngIf="produit.note_moyenne > 0">
+            <i class="fas fa-star"></i> {{ produit.note_moyenne | number:'1.1-1' }} ({{ produit.nombre_avis }})
+          </span>
+          <span class="sales"><i class="fas fa-shopping-bag"></i> {{ produit.nombre_ventes }} vendus</span>
+        </div>
+
+        <p class="stock" [class.low]="produit.quantite_stock > 0 && produit.quantite_stock <= 5" [class.out]="produit.quantite_stock <= 0">
+          {{ getStockTexte() }}
+        </p>
+
+        <p class="description">{{ produit.description || 'Aucune description disponible.' }}</p>
+
+        <div class="qty-row">
+          <label>Quantite</label>
+          <div class="qty-control">
+            <button type="button" class="qty-btn" (click)="decrementerQuantite()" [disabled]="quantite <= 1 || adding">
+              <i class="fas fa-minus"></i>
+            </button>
+            <input
+              type="number"
+              min="1"
+              [max]="produit.quantite_stock"
+              [value]="quantite"
+              (change)="onQuantiteSaisie($any($event.target).value)"
+              [disabled]="produit.quantite_stock <= 0 || adding"
+            >
+            <button
+              type="button"
+              class="qty-btn"
+              (click)="incrementerQuantite()"
+              [disabled]="quantite >= produit.quantite_stock || adding || produit.quantite_stock <= 0"
+            >
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" (click)="ajouterAuPanier()" [disabled]="produit.quantite_stock <= 0 || adding">
+            <i class="fas" [ngClass]="adding ? 'fa-spinner fa-spin' : 'fa-cart-plus'"></i>
+            {{ adding ? 'Ajout...' : 'Ajouter au panier' }}
+          </button>
+          <button class="btn btn-success" (click)="ajouterAuPanier(true)" [disabled]="produit.quantite_stock <= 0 || adding">
+            <i class="fas fa-bolt"></i>
+            Acheter maintenant
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="avis-section" *ngIf="!loading && produit">
+      <div class="avis-card">
+        <h3><i class="fas fa-comment-dots"></i> Donner votre avis</h3>
+
+        <div class="reaction-row">
+          <button type="button" class="reaction-btn like" [class.active]="reactionType === 'aime'" (click)="definirReaction('aime')">
+            <i class="fas fa-thumbs-up"></i>
+            J'aime
+          </button>
+          <button type="button" class="reaction-btn dislike" [class.active]="reactionType === 'deteste'" (click)="definirReaction('deteste')">
+            <i class="fas fa-thumbs-down"></i>
+            Je deteste
+          </button>
+        </div>
+
+        <div class="note-row">
+          <span>Note:</span>
+          <button
+            type="button"
+            class="star-btn"
+            *ngFor="let star of getEchelleEtoiles()"
+            (click)="setNoteAvis(star)"
+          >
+            <i class="fas fa-star" [class.active]="star <= noteAvis"></i>
+          </button>
+          <strong>{{ noteAvis }}/5</strong>
+        </div>
+
+        <textarea
+          rows="4"
+          [(ngModel)]="commentaireAvis"
+          placeholder="Partagez votre experience..."
+        ></textarea>
+
+        <div class="avis-message" *ngIf="avisMessage" [class.error]="avisErreur">
+          <i class="fas" [ngClass]="avisErreur ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+          <span>{{ avisMessage }}</span>
+        </div>
+
+        <button class="btn btn-primary" (click)="soumettreAvisProduit()" [disabled]="submittingAvis">
+          <i class="fas" [ngClass]="submittingAvis ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+          {{ submittingAvis ? 'Envoi...' : 'Envoyer mon avis' }}
+        </button>
+      </div>
+
+      <div class="avis-card">
+        <h3><i class="fas fa-list"></i> Avis clients</h3>
+
+        <div class="loading-state compact" *ngIf="loadingAvis">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Chargement des avis...</p>
+        </div>
+
+        <div class="error-message compact" *ngIf="!loadingAvis && erreurAvis">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ erreurAvis }}
+        </div>
+
+        <div class="avis-list" *ngIf="!loadingAvis && !erreurAvis && avis.length > 0">
+          <div class="avis-item" *ngFor="let item of avis">
+            <div class="avis-head">
+              <div>
+                <strong>{{ getAuteurAvis(item) }}</strong>
+                <div class="avis-stars">
+                  <i class="fas fa-star" *ngFor="let star of getEtoiles(item.note)"></i>
+                  <span>{{ item.note }}/5</span>
+                </div>
+              </div>
+              <span class="avis-badge" [class.dislike]="getTypeAvis(item) === 'deteste'">
+                <i class="fas" [ngClass]="getTypeAvis(item) === 'aime' ? 'fa-thumbs-up' : 'fa-thumbs-down'"></i>
+                {{ getTypeAvis(item) === 'aime' ? "J'aime" : 'Je deteste' }}
+              </span>
+            </div>
+
+            <p class="avis-comment">{{ item.commentaire || 'Sans commentaire.' }}</p>
+
+            <div class="avis-actions">
+              <button type="button" class="btn-link" (click)="toggleLikeAvis(item._id)" [disabled]="avisLikeLoading[item._id]">
+                <i class="fas" [ngClass]="aAimeMap[item._id] ? 'fa-heart' : 'fa-heart-broken'"></i>
+                {{ aAimeMap[item._id] ? "J'aime deja" : "Utile" }} ({{ likesMap[item._id] || 0 }})
+              </button>
+            </div>
+
+            <div class="avis-reponse" *ngIf="item.reponse?.texte">
+              <strong>Reponse boutique:</strong>
+              <p>{{ item.reponse?.texte }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state compact" *ngIf="!loadingAvis && !erreurAvis && avis.length === 0">
+          <i class="fas fa-comment-slash"></i>
+          <p>Aucun avis pour ce produit.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,82 @@
+<div class="favoris-container">
+  <div class="container">
+    <div class="page-header">
+      <h1><i class="fas fa-heart"></i> Mes favoris</h1>
+    </div>
+
+    <div class="action-message" *ngIf="actionMessage" [class.error]="actionError">
+      <i class="fas" [ngClass]="actionError ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+      <span>{{ actionMessage }}</span>
+    </div>
+
+    <div class="loading-state" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement des favoris...</p>
+    </div>
+
+    <div class="error-message" *ngIf="!loading && errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
+    <section class="section" *ngIf="!loading">
+      <div class="section-header">
+        <h2><i class="fas fa-box-open"></i> Produits favoris</h2>
+      </div>
+
+      <div class="products-grid" *ngIf="produitsFavoris.length > 0">
+        <div class="product-card" *ngFor="let produit of produitsFavoris" (click)="voirProduit(produit._id)">
+          <div class="product-image">
+            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction(produit) }}%</span>
+          </div>
+          <div class="product-info">
+            <h3>{{ produit.nom }}</h3>
+            <p class="boutique-name">{{ produit.boutique?.nom }}</p>
+            <div class="price-container">
+              <span class="price" [class.promo-price]="produit.en_promotion">{{ getPrixAffiche(produit) | number:'1.2-2' }} EUR</span>
+              <span class="old-price" *ngIf="produit.en_promotion">{{ produit.prix | number:'1.2-2' }} EUR</span>
+            </div>
+            <button class="btn btn-danger btn-sm" (click)="retirerProduit(produit._id, $event)" [disabled]="removeLoadingProduit[produit._id]">
+              <i class="fas" [ngClass]="removeLoadingProduit[produit._id] ? 'fa-spinner fa-spin' : 'fa-heart-broken'"></i>
+              {{ removeLoadingProduit[produit._id] ? 'Retrait...' : 'Retirer' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="produitsFavoris.length === 0">
+        <i class="fas fa-heart-broken"></i>
+        <p>Aucun produit dans vos favoris.</p>
+      </div>
+    </section>
+
+    <section class="section" *ngIf="!loading">
+      <div class="section-header">
+        <h2><i class="fas fa-store"></i> Boutiques favorites</h2>
+      </div>
+
+      <div class="boutiques-grid" *ngIf="boutiquesFavories.length > 0">
+        <div class="boutique-card" *ngFor="let boutique of boutiquesFavories" (click)="voirBoutique(boutique._id)">
+          <div class="boutique-logo">
+            <img [src]="boutique.logo_url ? 'http://localhost:3000' + boutique.logo_url : 'assets/placeholder-boutique.png'" [alt]="boutique.nom">
+          </div>
+          <div class="boutique-info">
+            <h3>{{ boutique.nom }}</h3>
+            <p class="categorie">{{ boutique.categorie?.nom }}</p>
+            <p class="description" *ngIf="boutique.description">{{ boutique.description }}</p>
+            <button class="btn btn-danger btn-sm" (click)="retirerBoutique(boutique._id, $event)" [disabled]="removeLoadingBoutique[boutique._id]">
+              <i class="fas" [ngClass]="removeLoadingBoutique[boutique._id] ? 'fa-spinner fa-spin' : 'fa-heart-broken'"></i>
+              {{ removeLoadingBoutique[boutique._id] ? 'Retrait...' : 'Retirer' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="boutiquesFavories.length === 0">
+        <i class="fas fa-store-slash"></i>
+        <p>Aucune boutique dans vos favoris.</p>
+      </div>
+    </section>
+  </div>
+</div>

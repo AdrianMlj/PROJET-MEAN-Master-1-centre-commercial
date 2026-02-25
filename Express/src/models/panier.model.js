@@ -25,6 +25,10 @@ const panierSchema = new mongoose.Schema({
     date_ajout: {
       type: Date,
       default: Date.now
+    },
+    note: {
+      type: String,
+      trim: true
     }
   }],
   date_modification: {
@@ -44,5 +48,57 @@ panierSchema.virtual('total').get(function() {
     return total + (element.prix_unitaire * element.quantite);
   }, 0);
 });
+
+// Virtual pour le nombre d'articles
+panierSchema.virtual('nombre_articles').get(function() {
+  return this.elements.reduce((total, element) => {
+    return total + element.quantite;
+  }, 0);
+});
+
+// Méthode pour ajouter un produit
+panierSchema.methods.ajouterProduit = async function(produitId, quantite, prixUnitaire) {
+  const existingElement = this.elements.find(element => 
+    element.produit.toString() === produitId.toString()
+  );
+  
+  if (existingElement) {
+    existingElement.quantite += quantite;
+    existingElement.date_ajout = new Date();
+  } else {
+    this.elements.push({
+      produit: produitId,
+      quantite: quantite,
+      prix_unitaire: prixUnitaire
+    });
+  }
+  
+  this.date_modification = new Date();
+  return this.save();
+};
+
+// Méthode pour retirer un produit
+panierSchema.methods.retirerProduit = function(produitId) {
+  this.elements = this.elements.filter(element => 
+    element.produit.toString() !== produitId.toString()
+  );
+  this.date_modification = new Date();
+  return this.save();
+};
+
+// Méthode pour mettre à jour la quantité
+panierSchema.methods.mettreAJourQuantite = function(produitId, nouvelleQuantite) {
+  const element = this.elements.find(element => 
+    element.produit.toString() === produitId.toString()
+  );
+  
+  if (element) {
+    element.quantite = nouvelleQuantite;
+    element.date_ajout = new Date();
+    this.date_modification = new Date();
+  }
+  
+  return this.save();
+};
 
 module.exports = mongoose.model('Panier', panierSchema);

@@ -60,7 +60,9 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return this.tokenService.getToken() !== null;
+    const token = this.tokenService.getToken();
+    if (!token) return false;
+    return !this.tokenService.isTokenExpired();
   }
 
   getProfile(): Observable<any> {

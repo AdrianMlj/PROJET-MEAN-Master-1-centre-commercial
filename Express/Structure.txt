@@ -1,0 +1,80 @@
+backend/
+│
+├── src/
+│   ├── server.js
+│   ├── app.js
+│   │
+│   ├── config/
+│   │   ├── database.js
+│   │   └── jwt.js
+│   │
+│   ├── models/
+│   │   ├── role.model.js
+│   │   ├── utilisateur.model.js
+│   │   ├── categorieBoutique.model.js
+│   │   ├── boutique.model.js
+│   │   ├── categorieProduit.model.js
+│   │   ├── produit.model.js
+│   │   ├── panier.model.js
+│   │   ├── panierElement.model.js           
+│   │   ├── commande.model.js
+│   │   ├── commandeDetail.model.js
+│   │   ├── commandeStatutHistorique.model.js
+│   │   ├── paiement.model.js
+│   │   ├── avis.model.js
+│   │   └── favoris.model.js
+│   │
+│   ├── controllers/
+│   │   ├── auth.controller.js
+│   │   ├── role.controller.js
+│   │   ├── utilisateur.controller.js
+│   │   ├── boutique.controller.js
+│   │   ├── categorieBoutique.controller.js
+│   │   ├── categorieProduit.controller.js
+│   │   ├── produit.controller.js
+│   │   ├── panier.controller.js
+│   │   ├── commande.controller.js
+│   │   ├── paiement.controller.js
+│   │   ├── statistiques.controller.js
+│   │   ├── admin.controller.js              
+│   │   ├── avis.controller.js
+│   │   └── favoris.controller.js
+│   │
+│   ├── routes/
+│   │   ├── auth.routes.js
+│   │   ├── role.routes.js
+│   │   ├── utilisateur.routes.js
+│   │   ├── boutique.routes.js
+│   │   ├── categorieBoutique.routes.js
+│   │   ├── categorieProduit.routes.js
+│   │   ├── produit.routes.js
+│   │   ├── panier.routes.js
+│   │   ├── commande.routes.js
+│   │   ├── paiement.routes.js
+│   │   ├── statistiques.routes.js
+│   │   ├── admin.routes.js                  
+│   │   ├── avis.routes.js
+│   │   └── favoris.routes.js
+│   │
+│   ├── middlewares/
+│   │   ├── auth.middleware.js
+│   │   ├── role.middleware.js
+│   │   ├── validation.middleware.js
+│   │   ├── error.middleware.js
+│   │   └── upload.middleware.js
+│   │
+│   └── utils/
+│       ├── password.util.js
+│       ├── token.util.js
+│       ├── validators.js
+│       └── generateur.js
+│
+├── uploads/
+│   ├── produits/
+│   ├── boutiques/
+│   └── avatars/
+│
+├── .env
+├── .gitignore
+├── package.json
+└── README.md

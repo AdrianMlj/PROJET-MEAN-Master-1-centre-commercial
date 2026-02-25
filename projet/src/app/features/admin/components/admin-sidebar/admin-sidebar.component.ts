@@ -1,0 +1,65 @@
+import { Component, OnInit, HostListener } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
+
+@Component({
+  selector: 'app-admin-sidebar',
+  templateUrl: './admin-sidebar.component.html',
+  styleUrls: ['./admin-sidebar.component.css'],
+  standalone: false
+})
+export class AdminSidebarComponent implements OnInit {
+  isCollapsed = false;
+  isMobileMenuOpen = false;
+  menuOpen: { [key: string]: boolean } = {
+    gestionBoutiques: true
+  };
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.checkScreenSize();
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    this.checkScreenSize();
+  }
+
+  checkScreenSize(): void {
+    const width = window.innerWidth;
+    if (width <= 768) {
+      this.isCollapsed = true;
+      this.isMobileMenuOpen = false;
+    }
+  }
+
+  toggleMenu(menu: string): void {
+    this.menuOpen[menu] = !this.menuOpen[menu];
+  }
+
+  toggleSidebar(): void {
+    if (window.innerWidth <= 768) {
+      this.isMobileMenuOpen = !this.isMobileMenuOpen;
+    } else {
+      this.isCollapsed = !this.isCollapsed;
+    }
+  }
+
+  toggleMobileMenu(): void {
+    this.isMobileMenuOpen = false;
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
+  }
+
+  getCurrentAdminName(): string {
+    const user = this.authService.getCurrentUser();
+    return user ? `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Administrateur' : 'Administrateur';
+  }
+}

@@ -34,5 +34,6 @@ const commandeStatutHistoriqueSchema = new mongoose.Schema({
 // Indexes
 commandeStatutHistoriqueSchema.index({ commande: 1 });
 commandeStatutHistoriqueSchema.index({ date_modification: -1 });
+commandeStatutHistoriqueSchema.index({ utilisateur_modif: 1 });
 
 module.exports = mongoose.model('CommandeStatutHistorique', commandeStatutHistoriqueSchema);

@@ -1,0 +1,176 @@
+<div class="commande-detail-container">
+  <div class="container">
+    <div class="page-header">
+      <button class="btn-back" (click)="retourListe()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <h1><i class="fas fa-receipt"></i> Détails de la commande</h1>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement de la commande...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-message" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
+    <!-- Commande Content -->
+    <div class="commande-content" *ngIf="!loading && commande">
+      <!-- Header Card -->
+      <div class="info-card header-card">
+        <div class="header-main">
+          <div class="commande-numero">
+            <span class="label">Commande</span>
+            <span class="numero">{{ commande.numero_commande }}</span>
+          </div>
+          <div class="commande-statuts">
+            <span class="status-badge" [ngClass]="getStatutClass(commande.statut)">
+              <i class="fas" [ngClass]="getStatutIcon(commande.statut)"></i>
+              {{ getStatutLabel(commande.statut) }}
+            </span>
+            <span class="payment-badge" [ngClass]="getPaiementClass(commande.statut_paiement)">
+              {{ getPaiementLabel(commande.statut_paiement) }}
+            </span>
+          </div>
+        </div>
+        <div class="header-meta">
+          <span><i class="fas fa-calendar"></i> {{ commande.date_commande | date:'dd/MM/yyyy à HH:mm' }}</span>
+          <span><i class="fas fa-store"></i> {{ commande.boutique?.nom }}</span>
+        </div>
+        <div class="header-actions" *ngIf="peutAnnuler()">
+          <button class="btn btn-danger" (click)="annulerCommande()">
+            <i class="fas fa-times"></i>
+            Annuler la commande
+          </button>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <div class="main-content">
+          <!-- Produits -->
+          <div class="info-card">
+            <h2><i class="fas fa-box"></i> Produits commandés</h2>
+            <div class="products-list">
+              <div class="product-item" *ngFor="let detail of commande.details">
+                <div class="product-image">
+                  <img [src]="detail.produit?.images && detail.produit.images[0] ? detail.produit.images[0] : 'assets/placeholder-product.png'" [alt]="detail.produit?.nom">
+                </div>
+                <div class="product-info">
+                  <h3>{{ detail.produit?.nom }}</h3>
+                  <p class="boutique">{{ commande.boutique?.nom }}</p>
+                </div>
+                <div class="product-quantity">
+                  <span>x{{ detail.quantite }}</span>
+                </div>
+                <div class="product-price">
+                  <span class="unit-price">{{ detail.prix_unitaire | number:'1.2-2' }} €</span>
+                  <span class="total-price">{{ detail.prix_total | number:'1.2-2' }} €</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Historique des statuts -->
+          <div class="info-card">
+            <h2><i class="fas fa-history"></i> Suivi de la commande</h2>
+            
+            <div class="loading-spinner" *ngIf="loadingHistorique">
+              <i class="fas fa-spinner fa-spin"></i>
+            </div>
+
+            <div class="timeline" *ngIf="!loadingHistorique && historique.length > 0">
+              <div class="timeline-item" *ngFor="let item of historique">
+                <div class="timeline-marker" [ngClass]="getStatutClass(item.nouveau_statut)">
+                  <i class="fas" [ngClass]="getStatutIcon(item.nouveau_statut)"></i>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <span class="status">{{ getStatutLabel(item.nouveau_statut) }}</span>
+                    <span class="date">{{ item.date_modification | date:'dd/MM/yyyy à HH:mm' }}</span>
+                  </div>
+                  <p class="raison" *ngIf="item.raison">{{ item.raison }}</p>
+                  <p class="user" *ngIf="item.utilisateur_modif">
+                    Par {{ item.utilisateur_modif.prenom }} {{ item.utilisateur_modif.nom }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="empty-timeline" *ngIf="!loadingHistorique && historique.length === 0">
+              <p>Aucun historique disponible</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="side-content">
+          <!-- Récapitulatif -->
+          <div class="info-card summary-card">
+            <h2><i class="fas fa-calculator"></i> Récapitulatif</h2>
+            <div class="summary-lines">
+              <div class="summary-line">
+                <span>Sous-total</span>
+                <span>{{ commande.sous_total | number:'1.2-2' }} €</span>
+              </div>
+              <div class="summary-line">
+                <span>Frais de livraison</span>
+                <span [class.free]="commande.frais_livraison === 0">
+                  {{ commande.frais_livraison === 0 ? 'Gratuit' : (commande.frais_livraison | number:'1.2-2') + ' €' }}
+                </span>
+              </div>
+              <div class="summary-line total">
+                <span>Total</span>
+                <span>{{ commande.total | number:'1.2-2' }} €</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Livraison -->
+          <div class="info-card">
+            <h2><i class="fas fa-truck"></i> Livraison</h2>
+            <div class="info-content">
+              <p class="mode">
+                <strong>Mode:</strong> {{ getModeLivraisonLabel(commande.mode_livraison) }}
+              </p>
+              <div class="address">
+                <p><strong>{{ commande.adresse_livraison?.nom_complet }}</strong></p>
+                <p>{{ commande.adresse_livraison?.rue }}</p>
+                <p *ngIf="commande.adresse_livraison?.complement">{{ commande.adresse_livraison?.complement }}</p>
+                <p>{{ commande.adresse_livraison?.code_postal }} {{ commande.adresse_livraison?.ville }}</p>
+                <p>{{ commande.adresse_livraison?.pays }}</p>
+                <p class="phone"><i class="fas fa-phone"></i> {{ commande.adresse_livraison?.telephone }}</p>
+              </div>
+              <p class="instructions" *ngIf="commande.adresse_livraison?.instructions">
+                <i class="fas fa-info-circle"></i> {{ commande.adresse_livraison?.instructions }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Paiement -->
+          <div class="info-card">
+            <h2><i class="fas fa-credit-card"></i> Paiement</h2>
+            <div class="info-content">
+              <p><strong>Méthode:</strong> {{ getMethodePaiementLabel(commande.methode_paiement) }}</p>
+              <p>
+                <strong>Statut:</strong> 
+                <span class="payment-status" [ngClass]="getPaiementClass(commande.statut_paiement)">
+                  {{ getPaiementLabel(commande.statut_paiement) }}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="info-card" *ngIf="commande.notes">
+            <h2><i class="fas fa-sticky-note"></i> Notes</h2>
+            <p class="notes-content">{{ commande.notes }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

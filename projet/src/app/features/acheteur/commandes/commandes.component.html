@@ -1,0 +1,149 @@
+<div class="commandes-container">
+  <div class="container">
+    <div class="page-header">
+      <h1><i class="fas fa-shopping-bag"></i> Mes Commandes</h1>
+      <span class="total-count" *ngIf="totalDocs > 0">{{ totalDocs }} commande(s)</span>
+    </div>
+
+    <div class="action-message" *ngIf="actionMessage" [class.error]="actionError">
+      <i class="fas" [ngClass]="actionError ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+      <span>{{ actionMessage }}</span>
+    </div>
+
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label>Statut:</label>
+        <select [(ngModel)]="statutFiltre" (change)="filtrerParStatut()">
+          <option *ngFor="let statut of statuts" [value]="statut.value">{{ statut.label }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Recherche:</label>
+        <input
+          type="text"
+          [(ngModel)]="recherche"
+          (input)="onRechercheChange()"
+          placeholder="Numero commande ou boutique"
+        >
+      </div>
+
+      <div class="filter-group">
+        <label>Tri:</label>
+        <select [(ngModel)]="tri" (change)="onTriChange()">
+          <option value="date_desc">Date (plus recente)</option>
+          <option value="date_asc">Date (plus ancienne)</option>
+          <option value="total_desc">Total (plus eleve)</option>
+          <option value="total_asc">Total (plus bas)</option>
+        </select>
+      </div>
+
+      <button class="btn btn-sm btn-outline-primary" (click)="resetFiltresLocaux()">
+        <i class="fas fa-rotate-left"></i>
+        Reset
+      </button>
+    </div>
+
+    <div class="loading-state" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement des commandes...</p>
+    </div>
+
+    <div class="error-message" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && commandesAffichees.length === 0">
+      <i class="fas fa-shopping-bag"></i>
+      <h2>Aucune commande</h2>
+      <p>Aucun resultat pour vos filtres actuels.</p>
+      <a routerLink="/acheteur/produits" class="btn btn-primary">
+        <i class="fas fa-store"></i>
+        Decouvrir les produits
+      </a>
+    </div>
+
+    <div class="commandes-list" *ngIf="!loading && commandesAffichees.length > 0">
+      <div class="commande-card" *ngFor="let commande of commandesAffichees" (click)="voirDetails(commande._id)">
+        <div class="commande-header">
+          <div class="commande-info">
+            <span class="numero">{{ commande.numero_commande }}</span>
+            <span class="date">{{ commande.date_commande | date:'dd/MM/yyyy a HH:mm' }}</span>
+          </div>
+          <div class="commande-statuts">
+            <span class="status-badge" [ngClass]="getStatutClass(commande.statut)">
+              {{ getStatutLabel(commande.statut) }}
+            </span>
+            <span class="payment-badge" [ngClass]="getPaiementClass(commande.statut_paiement)">
+              {{ getPaiementLabel(commande.statut_paiement) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="commande-body">
+          <div class="boutique-info clickable" (click)="voirBoutique(commande.boutique?._id, $event)">
+            <img [src]="commande.boutique?.logo_url ? 'http://localhost:3000' + commande.boutique.logo_url : 'assets/placeholder-boutique.png'" [alt]="commande.boutique?.nom">
+            <span>{{ commande.boutique?.nom }}</span>
+          </div>
+
+          <div class="articles-preview">
+            <div class="article" *ngFor="let detail of commande.details.slice(0, 3)">
+              <img [src]="detail.produit?.images && detail.produit.images[0] ? 'http://localhost:3000' + detail.produit.images[0].url : 'assets/placeholder-product.png'" [alt]="detail.produit?.nom">
+            </div>
+            <div class="more-articles" *ngIf="commande.details.length > 3">
+              +{{ commande.details.length - 3 }}
+            </div>
+          </div>
+
+          <div class="commande-total">
+            <span class="label">Total</span>
+            <span class="amount">{{ commande.total | number:'1.2-2' }} EUR</span>
+          </div>
+        </div>
+
+        <div class="commande-footer">
+          <div class="livraison-info">
+            <i class="fas fa-truck"></i>
+            <span>{{ commande.adresse_livraison?.ville }}</span>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-sm btn-secondary" (click)="voirDetails(commande._id); $event.stopPropagation()">
+              <i class="fas fa-eye"></i>
+              Details
+            </button>
+            <button
+              class="btn btn-sm btn-outline-primary"
+              (click)="recommander(commande, $event)"
+              [disabled]="loadingRecommande[commande._id]"
+            >
+              <i class="fas" [ngClass]="loadingRecommande[commande._id] ? 'fa-spinner fa-spin' : 'fa-repeat'"></i>
+              {{ loadingRecommande[commande._id] ? 'Ajout...' : 'Recommander' }}
+            </button>
+            <button
+              class="btn btn-sm btn-danger"
+              *ngIf="peutAnnuler(commande)"
+              (click)="annulerCommande(commande, $event)"
+            >
+              <i class="fas fa-times"></i>
+              Annuler
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn btn-secondary" (click)="pagePrecedente()" [disabled]="currentPage === 1">
+        <i class="fas fa-chevron-left"></i>
+        Precedent
+      </button>
+      <span class="page-info">Page {{ currentPage }} sur {{ totalPages }}</span>
+      <button class="btn btn-secondary" (click)="pageSuivante()" [disabled]="currentPage === totalPages">
+        Suivant
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>

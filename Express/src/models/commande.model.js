@@ -1,9 +1,13 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
+
+const { genererNumeroCommande } = require('../utils/generateur');
 
 const commandeSchema = new mongoose.Schema({
   numero_commande: {
     type: String,
     required: true,
+    default: genererNumeroCommande,
     unique: true
   },
   client: {
@@ -37,13 +41,14 @@ const commandeSchema = new mongoose.Schema({
     min: 0
   },
   adresse_livraison: {
-    nom_complet: String,
-    telephone: String,
-    rue: String,
-    ville: String,
-    code_postal: String,
-    pays: String,
-    instructions: String
+    nom_complet: { type: String, required: true },
+    telephone: { type: String, required: true },
+    rue: { type: String, required: true },
+    complement: { type: String },
+    ville: { type: String, required: true },
+    code_postal: { type: String, required: true },
+    pays: { type: String, default: 'France' },
+    instructions: { type: String }
   },
   mode_livraison: {
     type: String,
@@ -69,10 +74,17 @@ const commandeSchema = new mongoose.Schema({
     date_paiement: Date
   },
   date_livraison_estimee: Date,
-  date_livraison_reelle: Date
+  date_livraison_reelle: Date,
+  suivi_livraison: {
+    numero_suivi: String,
+    transporteur: String,
+    url_suivi: String
+  }
 }, {
   timestamps: { createdAt: 'date_commande', updatedAt: 'date_modification_statut' }
 });
+
+commandeSchema.plugin(mongoosePaginate);
 
 // Indexes
 commandeSchema.index({ client: 1 });
@@ -80,22 +92,50 @@ commandeSchema.index({ boutique: 1 });
 commandeSchema.index({ statut: 1 });
 commandeSchema.index({ date_commande: -1 });
 commandeSchema.index({ numero_commande: 1 });
+commandeSchema.index({ 'adresse_livraison.ville': 1 });
+commandeSchema.index({ 'informations_paiement.statut': 1 });
+
+// Virtual pour le statut de livraison
+commandeSchema.virtual('est_livre').get(function() {
+  return this.statut === 'livre';
+});
+
+// Virtual pour le statut de paiement
+commandeSchema.virtual('est_paye').get(function() {
+  return this.informations_paiement.statut === 'paye';
+});
 
 // Hook pour générer le numéro de commande avant la sauvegarde
 commandeSchema.pre('save', async function(next) {
   if (!this.numero_commande) {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    this.numero_commande = `CMD-${year}${month}${day}-${random}`;
+    this.numero_commande = genererNumeroCommande();
   }
   
   // Calculer le total général
   this.total_general = this.total_commande + this.frais_livraison;
   
+  // Calculer la date de livraison estimée
+  if (!this.date_livraison_estimee) {
+    const delai = this.mode_livraison === 'livraison_express' ? 1 : 3; // jours
+    const dateLivraison = new Date();
+    dateLivraison.setDate(dateLivraison.getDate() + delai);
+    this.date_livraison_estimee = dateLivraison;
+  }
+  
   next();
+});
+
+// Hook pour mettre à jour les statistiques de la boutique après livraison
+commandeSchema.post('save', async function(doc) {
+  if (doc.statut === 'livre' && doc.informations_paiement.statut === 'paye') {
+    const Boutique = mongoose.model('Boutique');
+    await Boutique.findByIdAndUpdate(doc.boutique, {
+      $inc: { 
+        'statistiques.commandes_traitees': 1,
+        'statistiques.chiffre_affaires': doc.total_commande
+      }
+    });
+  }
 });
 
 module.exports = mongoose.model('Commande', commandeSchema);

@@ -1,7 +1,6 @@
 const Panier = require('../models/panier.model');
 const Produit = require('../models/produit.model');
 const Boutique = require('../models/boutique.model');
-const mongoose = require('mongoose');
 
 // Obtenir le panier de l'utilisateur
 exports.obtenirPanier = async (req, res) => {
@@ -9,7 +8,7 @@ exports.obtenirPanier = async (req, res) => {
     const panier = await Panier.findOne({ client: req.user.id })
       .populate({
         path: 'elements.produit',
-        select: 'nom prix prix_promotion en_promotion images quantite_stock boutique',
+        select: 'nom prix prix_promotion en_promotion images quantite_stock boutique est_actif',
         populate: {
           path: 'boutique',
           select: 'nom logo_url est_active'
@@ -26,7 +25,9 @@ exports.obtenirPanier = async (req, res) => {
       
       return res.status(200).json({
         success: true,
-        panier: nouveauPanier
+        panier: nouveauPanier,
+        total: 0,
+        nombre_articles: 0
       });
     }
 
@@ -35,24 +36,47 @@ exports.obtenirPanier = async (req, res) => {
       return element.produit && 
              element.produit.est_actif &&
              element.produit.boutique &&
-             element.produit.boutique.est_active;
+             element.produit.boutique.est_active &&
+             element.produit.quantite_stock >= element.quantite;
     });
 
-    // Mettre à jour le panier si des éléments ont été filtrés
+    // Ajuster les quantités si le stock est insuffisant
+    for (const element of elementsValides) {
+      if (element.produit.quantite_stock < element.quantite) {
+        element.quantite = element.produit.quantite_stock;
+      }
+    }
+
+    // Mettre à jour le panier si des modifications ont été faites
     if (elementsValides.length !== panier.elements.length) {
       panier.elements = elementsValides;
+      panier.date_modification = new Date();
       await panier.save();
     }
 
+    // Calculer le total
+    const total = panier.elements.reduce((sum, element) => {
+      const prix = element.produit.en_promotion && element.produit.prix_promotion 
+        ? element.produit.prix_promotion 
+        : element.produit.prix;
+      return sum + (prix * element.quantite);
+    }, 0);
+
+    // Calculer le nombre d'articles
+    const nombreArticles = panier.elements.reduce((sum, element) => sum + element.quantite, 0);
+
     res.status(200).json({
       success: true,
-      panier
+      panier,
+      total,
+      nombre_articles: nombreArticles
     });
   } catch (error) {
+    console.error('Erreur obtention panier:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération du panier',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -61,6 +85,22 @@ exports.obtenirPanier = async (req, res) => {
 exports.ajouterAuPanier = async (req, res) => {
   try {
     const { produitId, quantite } = req.body;
+
+    if (!produitId) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID produit requis'
+      });
+    }
+
+    const quantiteNum = parseInt(quantite) || 1;
+    
+    if (quantiteNum < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'La quantité doit être au moins 1'
+      });
+    }
 
     // Vérifier que le produit existe et est disponible
     const produit = await Produit.findById(produitId)
@@ -87,7 +127,7 @@ exports.ajouterAuPanier = async (req, res) => {
       });
     }
 
-    if (produit.quantite_stock < quantite) {
+    if (produit.quantite_stock < quantiteNum) {
       return res.status(400).json({
         success: false,
         message: `Stock insuffisant. Il ne reste que ${produit.quantite_stock} unité(s)`
@@ -111,13 +151,13 @@ exports.ajouterAuPanier = async (req, res) => {
 
     if (elementExistant) {
       // Mettre à jour la quantité
-      const nouvelleQuantite = elementExistant.quantite + parseInt(quantite);
+      const nouvelleQuantite = elementExistant.quantite + quantiteNum;
       
       // Vérifier le stock
       if (produit.quantite_stock < nouvelleQuantite) {
         return res.status(400).json({
           success: false,
-          message: `Stock insuffisant pour ajouter cette quantité. Maximum: ${produit.quantite_stock}`
+          message: `Stock insuffisant pour ajouter cette quantité. Maximum disponible: ${produit.quantite_stock}`
         });
       }
       
@@ -125,25 +165,48 @@ exports.ajouterAuPanier = async (req, res) => {
       elementExistant.date_ajout = new Date();
     } else {
       // Ajouter le produit au panier
+      const prixUnitaire = produit.en_promotion && produit.prix_promotion 
+        ? produit.prix_promotion 
+        : produit.prix;
+      
       panier.elements.push({
         produit: produit._id,
-        quantite: parseInt(quantite),
-        prix_unitaire: produit.en_promotion && produit.prix_promotion ? produit.prix_promotion : produit.prix
+        quantite: quantiteNum,
+        prix_unitaire: prixUnitaire,
+        date_ajout: new Date()
       });
     }
 
+    panier.date_modification = new Date();
     await panier.save();
+
+    // Recharger le panier avec les informations du produit
+    await panier.populate({
+      path: 'elements.produit',
+      select: 'nom prix prix_promotion en_promotion images boutique',
+      populate: {
+        path: 'boutique',
+        select: 'nom logo_url'
+      }
+    });
+
+    // Calculer le total
+    const total = panier.elements.reduce((sum, element) => {
+      return sum + (element.prix_unitaire * element.quantite);
+    }, 0);
 
     res.status(200).json({
       success: true,
       message: 'Produit ajouté au panier avec succès',
-      panier
+      panier,
+      total
     });
   } catch (error) {
+    console.error('Erreur ajout panier:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de l\'ajout au panier',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -153,6 +216,15 @@ exports.modifierQuantitePanier = async (req, res) => {
   try {
     const { quantite } = req.body;
     const { elementId } = req.params;
+
+    if (!quantite || quantite < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'La quantité doit être au moins 1'
+      });
+    }
+
+    const quantiteNum = parseInt(quantite);
 
     // Récupérer le panier
     const panier = await Panier.findOne({ client: req.user.id });
@@ -174,7 +246,9 @@ exports.modifierQuantitePanier = async (req, res) => {
     }
 
     // Vérifier le produit
-    const produit = await Produit.findById(element.produit);
+    const produit = await Produit.findById(element.produit)
+      .populate('boutique');
+    
     if (!produit || !produit.est_actif) {
       // Retirer l'élément si le produit n'est plus disponible
       panier.elements.pull(elementId);
@@ -186,8 +260,19 @@ exports.modifierQuantitePanier = async (req, res) => {
       });
     }
 
+    // Vérifier que la boutique est active
+    if (!produit.boutique.est_active) {
+      panier.elements.pull(elementId);
+      await panier.save();
+      
+      return res.status(400).json({
+        success: false,
+        message: 'La boutique de ce produit est fermée. Le produit a été retiré de votre panier.'
+      });
+    }
+
     // Vérifier le stock
-    if (produit.quantite_stock < quantite) {
+    if (produit.quantite_stock < quantiteNum) {
       return res.status(400).json({
         success: false,
         message: `Stock insuffisant. Il ne reste que ${produit.quantite_stock} unité(s)`
@@ -195,21 +280,42 @@ exports.modifierQuantitePanier = async (req, res) => {
     }
 
     // Mettre à jour la quantité
-    element.quantite = parseInt(quantite);
+    element.quantite = quantiteNum;
     element.date_ajout = new Date();
+    element.prix_unitaire = produit.en_promotion && produit.prix_promotion 
+      ? produit.prix_promotion 
+      : produit.prix;
     
+    panier.date_modification = new Date();
     await panier.save();
+
+    // Recharger le panier
+    await panier.populate({
+      path: 'elements.produit',
+      select: 'nom prix prix_promotion en_promotion images boutique',
+      populate: {
+        path: 'boutique',
+        select: 'nom logo_url'
+      }
+    });
+
+    // Calculer le total
+    const total = panier.elements.reduce((sum, element) => {
+      return sum + (element.prix_unitaire * element.quantite);
+    }, 0);
 
     res.status(200).json({
       success: true,
       message: 'Quantité mise à jour avec succès',
-      panier
+      panier,
+      total
     });
   } catch (error) {
+    console.error('Erreur modification quantité panier:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la modification de la quantité',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -228,20 +334,47 @@ exports.retirerDuPanier = async (req, res) => {
       });
     }
 
+    // Vérifier que l'élément existe
+    const element = panier.elements.id(elementId);
+    if (!element) {
+      return res.status(404).json({
+        success: false,
+        message: 'Élément non trouvé dans le panier'
+      });
+    }
+
     // Retirer l'élément
     panier.elements.pull(elementId);
+    panier.date_modification = new Date();
     await panier.save();
+
+    // Recharger le panier
+    await panier.populate({
+      path: 'elements.produit',
+      select: 'nom prix prix_promotion en_promotion images boutique',
+      populate: {
+        path: 'boutique',
+        select: 'nom logo_url'
+      }
+    });
+
+    // Calculer le total
+    const total = panier.elements.reduce((sum, element) => {
+      return sum + (element.prix_unitaire * element.quantite);
+    }, 0);
 
     res.status(200).json({
       success: true,
       message: 'Produit retiré du panier avec succès',
-      panier
+      panier,
+      total
     });
   } catch (error) {
+    console.error('Erreur retrait panier:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors du retrait du produit',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -259,6 +392,7 @@ exports.viderPanier = async (req, res) => {
     }
 
     panier.elements = [];
+    panier.date_modification = new Date();
     await panier.save();
 
     res.status(200).json({
@@ -267,15 +401,16 @@ exports.viderPanier = async (req, res) => {
       panier
     });
   } catch (error) {
+    console.error('Erreur vidage panier:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors du vidage du panier',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Calculer le total du panier
+// Calculer le total du panier avec détails par boutique
 exports.calculerTotal = async (req, res) => {
   try {
     const panier = await Panier.findOne({ client: req.user.id })
@@ -322,34 +457,64 @@ exports.calculerTotal = async (req, res) => {
 
     // Calculer les frais de livraison par boutique
     let totalGeneral = 0;
+    let totalLivraison = 0;
     const detailParBoutique = [];
     
     Object.values(totalsParBoutique).forEach(item => {
       // Appliquer les frais de livraison de la boutique
-      const seuilLivraisonGratuite = item.boutique.parametres.livraison_gratuite_apres || 50;
+      const seuilLivraisonGratuite = item.boutique.parametres?.livraison_gratuite_apres || 50;
       const fraisLivraison = item.total >= seuilLivraisonGratuite 
         ? 0 
-        : (item.boutique.parametres.frais_livraison || 5);
+        : (item.boutique.parametres?.frais_livraison || 5);
       
       item.frais_livraison = fraisLivraison;
       item.total_general = item.total + fraisLivraison;
       
       detailParBoutique.push(item);
       totalGeneral += item.total_general;
+      totalLivraison += fraisLivraison;
     });
+
+    const totalProduits = Object.values(totalsParBoutique).reduce((sum, item) => sum + item.total, 0);
 
     res.status(200).json({
       success: true,
-      total: Object.values(totalsParBoutique).reduce((sum, item) => sum + item.total, 0),
-      frais_livraison_total: Object.values(totalsParBoutique).reduce((sum, item) => sum + item.frais_livraison, 0),
+      total_produits: totalProduits,
+      frais_livraison_total: totalLivraison,
       total_general: totalGeneral,
-      detail_par_boutique: detailParBoutique
+      detail_par_boutique: detailParBoutique,
+      nombre_boutiques: detailParBoutique.length
     });
   } catch (error) {
+    console.error('Erreur calcul total:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors du calcul du total',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Obtenir le nombre d'articles dans le panier
+exports.obtenirNombreArticles = async (req, res) => {
+  try {
+    const panier = await Panier.findOne({ client: req.user.id });
+    
+    let nombreArticles = 0;
+    if (panier) {
+      nombreArticles = panier.elements.reduce((sum, element) => sum + element.quantite, 0);
+    }
+
+    res.status(200).json({
+      success: true,
+      nombre_articles: nombreArticles
+    });
+  } catch (error) {
+    console.error('Erreur nombre articles:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération du nombre d\'articles',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
