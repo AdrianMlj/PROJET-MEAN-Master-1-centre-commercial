@@ -1,0 +1,333 @@
+<div class="profil-container">
+  <div class="container">
+    <div class="page-header">
+      <h1><i class="fas fa-user-circle"></i> Mon Profil</h1>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement du profil...</p>
+    </div>
+
+    <div class="profil-content" *ngIf="!loading">
+      <!-- Stats Cards -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <i class="fas fa-shopping-bag"></i>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.totalCommandes }}</span>
+            <span class="stat-label">Commandes</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-euro-sign"></i>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.totalAchats | number:'1.2-2' }} €</span>
+            <span class="stat-label">Total d'achats</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-store"></i>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.boutiquesVisitees }}</span>
+            <span class="stat-label">Boutiques visitées</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button 
+          class="tab-btn" 
+          [class.active]="activeTab === 'profil'"
+          (click)="setActiveTab('profil')"
+        >
+          <i class="fas fa-user"></i>
+          Informations personnelles
+        </button>
+        <button 
+          class="tab-btn" 
+          [class.active]="activeTab === 'password'"
+          (click)="setActiveTab('password')"
+        >
+          <i class="fas fa-lock"></i>
+          Mot de passe
+        </button>
+        <button 
+          class="tab-btn" 
+          [class.active]="activeTab === 'preferences'"
+          (click)="setActiveTab('preferences')"
+        >
+          <i class="fas fa-cog"></i>
+          Préférences
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="tab-content">
+        <!-- Profil Tab -->
+        <div class="tab-pane" *ngIf="activeTab === 'profil'">
+          <form [formGroup]="profilForm" (ngSubmit)="sauvegarderProfil()">
+            <div class="form-section">
+              <h3>Informations de base</h3>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="nom">Nom *</label>
+                  <input 
+                    type="text" 
+                    id="nom" 
+                    formControlName="nom"
+                    class="form-control"
+                    [ngClass]="{'is-invalid': profilForm.get('nom')?.touched && profilForm.get('nom')?.invalid}"
+                  >
+                  <div class="error-text" *ngIf="profilForm.get('nom')?.touched && profilForm.get('nom')?.invalid">
+                    Le nom est requis (min. 2 caractères)
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="prenom">Prénom</label>
+                  <input 
+                    type="text" 
+                    id="prenom" 
+                    formControlName="prenom"
+                    class="form-control"
+                  >
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input 
+                  type="email" 
+                  id="email" 
+                  [value]="currentUser?.email"
+                  class="form-control"
+                  disabled
+                >
+                <small class="help-text">L'email ne peut pas être modifié</small>
+              </div>
+
+              <div class="form-group">
+                <label for="telephone">Téléphone</label>
+                <input 
+                  type="tel" 
+                  id="telephone" 
+                  formControlName="telephone"
+                  class="form-control"
+                  placeholder="+33 6 12 34 56 78"
+                >
+              </div>
+            </div>
+
+            <div class="form-section" formGroupName="adresse">
+              <h3>Adresse</h3>
+              
+              <div class="form-group">
+                <label for="rue">Rue</label>
+                <input 
+                  type="text" 
+                  id="rue" 
+                  formControlName="rue"
+                  class="form-control"
+                  placeholder="Numéro et nom de rue"
+                >
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="ville">Ville</label>
+                  <input 
+                    type="text" 
+                    id="ville" 
+                    formControlName="ville"
+                    class="form-control"
+                  >
+                </div>
+
+                <div class="form-group">
+                  <label for="code_postal">Code postal</label>
+                  <input 
+                    type="text" 
+                    id="code_postal" 
+                    formControlName="code_postal"
+                    class="form-control"
+                  >
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="pays">Pays</label>
+                <input 
+                  type="text" 
+                  id="pays" 
+                  formControlName="pays"
+                  class="form-control"
+                >
+              </div>
+            </div>
+
+            <div class="success-message" *ngIf="profileMessage">
+              <i class="fas fa-check-circle"></i>
+              {{ profileMessage }}
+            </div>
+
+            <div class="error-message" *ngIf="profileError">
+              <i class="fas fa-exclamation-circle"></i>
+              {{ profileError }}
+            </div>
+
+            <div class="form-actions">
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="profilForm.invalid || savingProfile"
+              >
+                <i class="fas fa-save" *ngIf="!savingProfile"></i>
+                <i class="fas fa-spinner fa-spin" *ngIf="savingProfile"></i>
+                {{ savingProfile ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Password Tab -->
+        <div class="tab-pane" *ngIf="activeTab === 'password'">
+          <form [formGroup]="passwordForm" (ngSubmit)="changerMotDePasse()">
+            <div class="form-section">
+              <h3>Changer le mot de passe</h3>
+              
+              <div class="form-group">
+                <label for="ancien_mot_de_passe">Mot de passe actuel *</label>
+                <input 
+                  type="password" 
+                  id="ancien_mot_de_passe" 
+                  formControlName="ancien_mot_de_passe"
+                  class="form-control"
+                  [ngClass]="{'is-invalid': passwordForm.get('ancien_mot_de_passe')?.touched && passwordForm.get('ancien_mot_de_passe')?.invalid}"
+                >
+                <div class="error-text" *ngIf="passwordForm.get('ancien_mot_de_passe')?.touched && passwordForm.get('ancien_mot_de_passe')?.invalid">
+                  Le mot de passe actuel est requis
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="nouveau_mot_de_passe">Nouveau mot de passe *</label>
+                <input 
+                  type="password" 
+                  id="nouveau_mot_de_passe" 
+                  formControlName="nouveau_mot_de_passe"
+                  class="form-control"
+                  [ngClass]="{'is-invalid': passwordForm.get('nouveau_mot_de_passe')?.touched && passwordForm.get('nouveau_mot_de_passe')?.invalid}"
+                >
+                <div class="error-text" *ngIf="passwordForm.get('nouveau_mot_de_passe')?.touched && passwordForm.get('nouveau_mot_de_passe')?.invalid">
+                  Minimum 6 caractères
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="confirmer_mot_de_passe">Confirmer le nouveau mot de passe *</label>
+                <input 
+                  type="password" 
+                  id="confirmer_mot_de_passe" 
+                  formControlName="confirmer_mot_de_passe"
+                  class="form-control"
+                  [ngClass]="{'is-invalid': passwordForm.get('confirmer_mot_de_passe')?.touched && passwordForm.errors?.['passwordMismatch']}"
+                >
+                <div class="error-text" *ngIf="passwordForm.get('confirmer_mot_de_passe')?.touched && passwordForm.errors?.['passwordMismatch']">
+                  Les mots de passe ne correspondent pas
+                </div>
+              </div>
+            </div>
+
+            <div class="success-message" *ngIf="passwordMessage">
+              <i class="fas fa-check-circle"></i>
+              {{ passwordMessage }}
+            </div>
+
+            <div class="error-message" *ngIf="passwordError">
+              <i class="fas fa-exclamation-circle"></i>
+              {{ passwordError }}
+            </div>
+
+            <div class="form-actions">
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="passwordForm.invalid || savingPassword"
+              >
+                <i class="fas fa-key" *ngIf="!savingPassword"></i>
+                <i class="fas fa-spinner fa-spin" *ngIf="savingPassword"></i>
+                {{ savingPassword ? 'Modification...' : 'Changer le mot de passe' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Preferences Tab -->
+        <div class="tab-pane" *ngIf="activeTab === 'preferences'">
+          <form [formGroup]="profilForm" (ngSubmit)="sauvegarderProfil()">
+            <div class="form-section" formGroupName="preferences">
+              <h3>Préférences de communication</h3>
+              
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="newsletter">
+                  <span class="checkmark"></span>
+                  <span class="label-text">
+                    <strong>Newsletter</strong>
+                    <small>Recevoir les offres et nouveautés par email</small>
+                  </span>
+                </label>
+              </div>
+
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="notifications">
+                  <span class="checkmark"></span>
+                  <span class="label-text">
+                    <strong>Notifications</strong>
+                    <small>Recevoir les notifications de commandes</small>
+                  </span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label for="langue">Langue préférée</label>
+                <select id="langue" formControlName="langue" class="form-control">
+                  <option value="fr">Français</option>
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="success-message" *ngIf="profileMessage">
+              <i class="fas fa-check-circle"></i>
+              {{ profileMessage }}
+            </div>
+
+            <div class="error-message" *ngIf="profileError">
+              <i class="fas fa-exclamation-circle"></i>
+              {{ profileError }}
+            </div>
+
+            <div class="form-actions">
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="savingProfile"
+              >
+                <i class="fas fa-save" *ngIf="!savingProfile"></i>
+                <i class="fas fa-spinner fa-spin" *ngIf="savingProfile"></i>
+                {{ savingProfile ? 'Enregistrement...' : 'Enregistrer les préférences' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

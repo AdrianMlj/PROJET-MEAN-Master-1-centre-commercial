@@ -1,0 +1,272 @@
+﻿<div class="checkout-container">
+  <div class="container">
+    <div class="page-header">
+      <button class="btn-back" (click)="retourPanier()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <h1><i class="fas fa-credit-card"></i> Finaliser la commande</h1>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-message" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
+    <!-- Success Message -->
+    <div class="success-message" *ngIf="successMessage">
+      <i class="fas fa-check-circle"></i>
+      {{ successMessage }}
+      <p>Redirection vers vos commandes...</p>
+    </div>
+
+    <!-- Checkout Form -->
+    <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()" *ngIf="!loading && !successMessage && panierTotal">
+      <div class="checkout-content">
+        <div class="checkout-form">
+          <!-- Adresse de livraison -->
+          <div class="form-section">
+            <h2><i class="fas fa-map-marker-alt"></i> Adresse de livraison</h2>
+            
+            <div formGroupName="adresse_livraison">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="nom_complet">Nom complet *</label>
+                  <input 
+                    type="text" 
+                    id="nom_complet" 
+                    formControlName="nom_complet"
+                    class="form-control"
+                    placeholder="Prenom Nom"
+                    [ngClass]="{'is-invalid': adresseForm.get('nom_complet')?.touched && adresseForm.get('nom_complet')?.invalid}"
+                  >
+                  <div class="error-text" *ngIf="adresseForm.get('nom_complet')?.touched && adresseForm.get('nom_complet')?.invalid">
+                    Le nom complet est requis (min. 3 caractÃ¨res)
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="telephone">Telephone *</label>
+                  <input 
+                    type="tel" 
+                    id="telephone" 
+                    formControlName="telephone"
+                    class="form-control"
+                    placeholder="+33 6 12 34 56 78"
+                    [ngClass]="{'is-invalid': adresseForm.get('telephone')?.touched && adresseForm.get('telephone')?.invalid}"
+                  >
+                  <div class="error-text" *ngIf="adresseForm.get('telephone')?.touched && adresseForm.get('telephone')?.invalid">
+                    Le telephone est requis
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="rue">Adresse *</label>
+                <input 
+                  type="text" 
+                  id="rue" 
+                  formControlName="rue"
+                  class="form-control"
+                  placeholder="Numero et nom de rue"
+                  [ngClass]="{'is-invalid': adresseForm.get('rue')?.touched && adresseForm.get('rue')?.invalid}"
+                >
+                <div class="error-text" *ngIf="adresseForm.get('rue')?.touched && adresseForm.get('rue')?.invalid">
+                  L'adresse est requise
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="complement">Complement d'adresse</label>
+                <input 
+                  type="text" 
+                  id="complement" 
+                  formControlName="complement"
+                  class="form-control"
+                  placeholder="Appartement, etage, batiment..."
+                >
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="ville">Ville *</label>
+                  <input 
+                    type="text" 
+                    id="ville" 
+                    formControlName="ville"
+                    class="form-control"
+                    placeholder="Ville"
+                    [ngClass]="{'is-invalid': adresseForm.get('ville')?.touched && adresseForm.get('ville')?.invalid}"
+                  >
+                  <div class="error-text" *ngIf="adresseForm.get('ville')?.touched && adresseForm.get('ville')?.invalid">
+                    La ville est requise
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="code_postal">Code postal *</label>
+                  <input 
+                    type="text" 
+                    id="code_postal" 
+                    formControlName="code_postal"
+                    class="form-control"
+                    placeholder="75000"
+                    [ngClass]="{'is-invalid': adresseForm.get('code_postal')?.touched && adresseForm.get('code_postal')?.invalid}"
+                  >
+                  <div class="error-text" *ngIf="adresseForm.get('code_postal')?.touched && adresseForm.get('code_postal')?.invalid">
+                    Le code postal est requis
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="pays">Pays</label>
+                <input 
+                  type="text" 
+                  id="pays" 
+                  formControlName="pays"
+                  class="form-control"
+                  placeholder="France"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="instructions">Instructions de livraison</label>
+                <textarea 
+                  id="instructions" 
+                  formControlName="instructions"
+                  class="form-control"
+                  rows="2"
+                  placeholder="Instructions pour le livreur..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mode de livraison -->
+          <div class="form-section">
+            <h2><i class="fas fa-truck"></i> Mode de livraison</h2>
+            
+            <div class="options-grid">
+              <label 
+                class="option-card" 
+                *ngFor="let mode of modesLivraison"
+                [class.selected]="checkoutForm.get('mode_livraison')?.value === mode.value"
+              >
+                <input 
+                  type="radio" 
+                  formControlName="mode_livraison" 
+                  [value]="mode.value"
+                >
+                <div class="option-content">
+                  <span class="option-label">{{ mode.label }}</span>
+                  <span class="option-description">{{ mode.description }}</span>
+                </div>
+                <i class="fas fa-check-circle check-icon"></i>
+              </label>
+            </div>
+          </div>
+
+          <!-- Methode de paiement -->
+          <div class="form-section">
+            <h2><i class="fas fa-wallet"></i> Methode de paiement</h2>
+            
+            <div class="options-grid payment-options">
+              <label 
+                class="option-card" 
+                *ngFor="let methode of methodesPaiement"
+                [class.selected]="checkoutForm.get('methode_paiement')?.value === methode.value"
+              >
+                <input 
+                  type="radio" 
+                  formControlName="methode_paiement" 
+                  [value]="methode.value"
+                >
+                <div class="option-content">
+                  <i class="fas {{ methode.icon }} payment-icon"></i>
+                  <span class="option-label">{{ methode.label }}</span>
+                </div>
+                <i class="fas fa-check-circle check-icon"></i>
+              </label>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-section">
+            <h2><i class="fas fa-sticky-note"></i> Notes (optionnel)</h2>
+            <textarea 
+              formControlName="notes"
+              class="form-control"
+              rows="3"
+              placeholder="Ajoutez des notes pour votre commande..."
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="order-summary">
+          <h2>Recapitulatif</h2>
+          
+          <div class="summary-boutiques">
+            <div class="boutique-detail" *ngFor="let detail of panierTotal.detail_par_boutique">
+              <h4>{{ detail.boutique.nom }}</h4>
+              <div class="boutique-articles">
+                <div class="article" *ngFor="let article of detail.articles">
+                  <span class="article-name">{{ article.produit.nom }} x{{ article.quantite }}</span>
+                  <span class="article-price">{{ article.prix_total | number:'1.2-2' }} EUR</span>
+                </div>
+              </div>
+              <div class="boutique-subtotal">
+                <span>Sous-total</span>
+                <span>{{ detail.total | number:'1.2-2' }} EUR</span>
+              </div>
+              <div class="boutique-shipping">
+                <span>Livraison</span>
+                <span [class.free]="detail.frais_livraison === 0">
+                  {{ detail.frais_livraison === 0 ? 'Gratuit' : (detail.frais_livraison | number:'1.2-2') + ' EUR' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-totals">
+            <div class="total-line">
+              <span>Total produits</span>
+              <span>{{ panierTotal.total_produits | number:'1.2-2' }} EUR</span>
+            </div>
+            <div class="total-line">
+              <span>Frais de livraison</span>
+              <span>{{ panierTotal.frais_livraison_total | number:'1.2-2' }} EUR</span>
+            </div>
+            <div class="total-line grand-total">
+              <span>Total a payer</span>
+              <span>{{ panierTotal.total_general | number:'1.2-2' }} EUR</span>
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            class="btn btn-primary btn-block btn-lg"
+            [disabled]="submitting"
+          >
+            <i class="fas fa-lock" *ngIf="!submitting"></i>
+            <i class="fas fa-spinner fa-spin" *ngIf="submitting"></i>
+            {{ submitting ? 'Traitement...' : 'Confirmer et payer' }}
+          </button>
+
+          <p class="secure-notice">
+            <i class="fas fa-shield-alt"></i>
+            Paiement securise
+          </p>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+

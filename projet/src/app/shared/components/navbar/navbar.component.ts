@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { PanierService } from '../../../core/services/panier.service';
 import { User } from '../../../core/models/auth.model';
 
 @Component({
@@ -12,15 +13,21 @@ import { User } from '../../../core/models/auth.model';
 export class NavbarComponent implements OnInit {
   currentUser: User | null = null;
   isMenuOpen = false;
+  cartCount = 0;
 
   constructor(
     private authService: AuthService,
+    private panierService: PanierService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+    });
+
+    this.panierService.nombreArticles$.subscribe(count => {
+      this.cartCount = count;
     });
   }
 

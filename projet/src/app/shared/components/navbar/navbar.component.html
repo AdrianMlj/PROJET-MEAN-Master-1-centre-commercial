@@ -12,25 +12,6 @@
 
       <div class="nav-links" [class.active]="isMenuOpen">
         <ng-container *ngIf="currentUser; else notLoggedIn">
-          <a [routerLink]="getDashboardLink()" class="nav-link">
-            <i class="fas fa-tachometer-alt"></i>
-            {{ getDashboardTitle() }}
-          </a>
-          <div class="user-info">
-            <span class="welcome">
-              <i class="fas fa-user"></i>
-              Bonjour, {{ currentUser.prenom || currentUser.nom }}
-            </span>
-            <span class="role-badge" [ngClass]="currentUser.role">
-              <i class="fas" 
-                 [class.fa-user-shield]="currentUser.role === 'admin_centre'"
-                 [class.fa-store]="currentUser.role === 'boutique'"
-                 [class.fa-shopping-cart]="currentUser.role === 'acheteur'">
-              </i>
-              {{ currentUser.role === 'admin_centre' ? 'Admin' : 
-                 currentUser.role === 'boutique' ? 'Boutique' : 'Acheteur' }}
-            </span>
-          </div>
           <button class="nav-link btn-logout" (click)="logout()">
             <i class="fas fa-sign-out-alt"></i>
             Déconnexion

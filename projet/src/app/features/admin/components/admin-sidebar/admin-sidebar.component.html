@@ -1,0 +1,106 @@
+<div class="admin-layout">
+  <!-- Sidebar - FIXE -->
+  <aside class="sidebar" [class.collapsed]="isCollapsed" [class.active]="isMobileMenuOpen">
+    <!-- Header toujours visible -->
+    <div class="sidebar-header">
+      <div class="logo">
+        <i class="fas fa-store-alt"></i>
+        <span *ngIf="!isCollapsed">ONLINE SHOP</span>
+      </div>
+      <button class="toggle-btn" (click)="toggleSidebar()" [attr.aria-label]="isCollapsed ? 'Étendre' : 'Réduire'">
+        <i class="fas" [class.fa-chevron-left]="!isCollapsed" [class.fa-chevron-right]="isCollapsed"></i>
+      </button>
+    </div>
+
+    <!-- Profil administrateur - TOUJOURS VISIBLE EN HAUT -->
+    <div class="admin-profile" *ngIf="!isCollapsed">
+      <div class="avatar">
+        <i class="fas fa-user-shield"></i>
+      </div>
+      <div class="info">
+        <h4>{{ getCurrentAdminName() }}</h4>
+        <span class="badge">Administrateur</span>
+      </div>
+    </div>
+
+    <!-- Version mobile du profil (quand collapsed) -->
+    <div class="admin-profile-mobile" *ngIf="isCollapsed" title="{{ getCurrentAdminName() }}">
+      <div class="avatar">
+        <i class="fas fa-user-shield"></i>
+      </div>
+    </div>
+
+    <!-- Navigation - SCROLLABLE -->
+    <nav class="sidebar-nav">
+      <!-- Dashboard -->
+      <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
+        <i class="fas fa-tachometer-alt"></i>
+        <span *ngIf="!isCollapsed">Dashboard</span>
+      </a>
+
+      <!-- Gestion Boutiques -->
+      <div class="nav-section">
+        <div class="nav-header" (click)="toggleMenu('gestionBoutiques')" [class.active]="menuOpen['gestionBoutiques']">
+          <i class="fas fa-store"></i>
+          <span *ngIf="!isCollapsed">Gestion Boutiques</span>
+          <i *ngIf="!isCollapsed" class="fas" 
+             [class.fa-chevron-down]="menuOpen['gestionBoutiques']"
+             [class.fa-chevron-right]="!menuOpen['gestionBoutiques']"></i>
+        </div>
+        <div class="sub-menu" *ngIf="menuOpen['gestionBoutiques'] || isCollapsed">
+          <a routerLink="/admin/boutiques/categories/creer" 
+             routerLinkActive="active" 
+             class="sub-item"
+             [class.collapsed]="isCollapsed"
+             [title]="isCollapsed ? 'Créer catégorie' : ''">
+            <i class="fas fa-plus-circle"></i>
+            <span *ngIf="!isCollapsed">Créer catégorie</span>
+          </a>
+          <a routerLink="/admin/boutiques/categories/liste" 
+             routerLinkActive="active" 
+             class="sub-item"
+             [class.collapsed]="isCollapsed"
+             [title]="isCollapsed ? 'Listes catégories' : ''">
+            <i class="fas fa-list"></i>
+            <span *ngIf="!isCollapsed">Listes catégories</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Gestion Utilisateurs -->
+      <div class="nav-section">
+        <div class="nav-header">
+          <i class="fas fa-users"></i>
+          <span *ngIf="!isCollapsed">Gestion Utilisateurs</span>
+        </div>
+      </div>
+
+      <!-- Statistiques -->
+      <div class="nav-section">
+        <div class="nav-header">
+          <i class="fas fa-chart-line"></i>
+          <span *ngIf="!isCollapsed">Statistiques</span>
+        </div>
+      </div>
+      
+      <!-- Espace pour le scroll -->
+      <div class="nav-footer-space"></div>
+    </nav>
+
+    <!-- Footer avec bouton déconnexion - TOUJOURS VISIBLE EN BAS -->
+    <div class="sidebar-footer">
+      <button class="nav-item logout-btn" (click)="logout()" [title]="isCollapsed ? 'Déconnexion' : ''">
+        <i class="fas fa-sign-out-alt"></i>
+        <span *ngIf="!isCollapsed">Déconnexion</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content - SCROLLABLE -->
+  <main class="main-content" [class.expanded]="isCollapsed">
+    <router-outlet></router-outlet>
+  </main>
+  
+  <!-- Overlay mobile -->
+  <div class="mobile-overlay" *ngIf="isMobileMenuOpen" (click)="toggleMobileMenu()"></div>
+</div>

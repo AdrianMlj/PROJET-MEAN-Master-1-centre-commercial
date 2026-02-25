@@ -89,7 +89,7 @@ export class InscriptionComponent implements OnInit {
   }
 
   private navigateToDashboard(): void {
-    this.router.navigate(['/acheteur/dashboard']);
+    this.router.navigate(['/acheteur']);
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {

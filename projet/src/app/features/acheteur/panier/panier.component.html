@@ -1,0 +1,186 @@
+<div class="panier-container">
+  <div class="container">
+    <div class="page-header">
+      <h1><i class="fas fa-shopping-cart"></i> Mon Panier</h1>
+      <span class="articles-count" *ngIf="nombreArticles > 0">{{ nombreArticles }} article(s)</span>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement du panier...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-message" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
+    <div class="action-message" *ngIf="actionMessage" [class.error]="actionError">
+      <i class="fas" [ngClass]="actionError ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+      {{ actionMessage }}
+    </div>
+
+    <!-- Empty Cart -->
+    <div class="empty-cart" *ngIf="!loading && (!panier || panier.elements.length === 0)">
+      <i class="fas fa-shopping-cart"></i>
+      <h2>Votre panier est vide</h2>
+      <p>Découvrez nos produits et ajoutez-les à votre panier</p>
+      <button class="btn btn-primary" (click)="continuerAchats()">
+        <i class="fas fa-store"></i>
+        Découvrir les produits
+      </button>
+    </div>
+
+    <!-- Cart Content -->
+    <div class="cart-content" *ngIf="!loading && panier && panier.elements.length > 0">
+      <div class="cart-items">
+        <div class="cart-header">
+          <span class="col-product">Produit</span>
+          <span class="col-price">Prix unitaire</span>
+          <span class="col-quantity">Quantité</span>
+          <span class="col-total">Total</span>
+          <span class="col-actions">Actions</span>
+        </div>
+
+        <div class="cart-item" *ngFor="let element of panier.elements" [class.updating]="updating[element._id]">
+          <div class="col-product">
+            <div class="product-image" (click)="voirProduit(element.produit._id)">
+              <img [src]="element.produit.images && element.produit.images[0] ? 'http://localhost:3000' + element.produit.images[0].url : 'assets/placeholder-product.png'" [alt]="element.produit.nom">
+            </div>
+            <div class="product-details">
+              <h3 (click)="voirProduit(element.produit._id)">{{ element.produit.nom }}</h3>
+              <p class="boutique">{{ element.produit.boutique?.nom }}</p>
+              <span class="badge promo" *ngIf="element.produit.en_promotion">Promo</span>
+              <p class="stock" *ngIf="element.produit.quantite_stock < 10" [class.low-stock]="element.produit.quantite_stock < 5">
+                <i class="fas fa-exclamation-triangle"></i>
+                Plus que {{ element.produit.quantite_stock }} en stock
+              </p>
+            </div>
+          </div>
+
+          <div class="col-price">
+            <span class="price" [class.promo-price]="element.produit.en_promotion">
+              {{ getPrixAffiche(element) | number:'1.2-2' }} €
+            </span>
+            <span class="old-price" *ngIf="element.produit.en_promotion">
+              {{ element.produit.prix | number:'1.2-2' }} €
+            </span>
+          </div>
+
+          <div class="col-quantity">
+            <div class="quantity-control">
+              <button 
+                class="btn-quantity" 
+                (click)="decrementerQuantite(element)"
+                [disabled]="element.quantite <= 1 || updating[element._id]"
+              >
+                <i class="fas fa-minus"></i>
+              </button>
+              <input 
+                type="number" 
+                [value]="element.quantite" 
+                min="1"
+                [max]="getQuantiteMax(element)"
+                (keyup.enter)="onQuantiteInputBlur(element, $any($event.target).value)"
+                [disabled]="updating[element._id]"
+              >
+              <button 
+                class="btn-quantity" 
+                (click)="incrementerQuantite(element)"
+                [disabled]="element.quantite >= getQuantiteMax(element) || updating[element._id]"
+              >
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="col-total">
+            <span class="total-price">{{ getPrixAffiche(element) * element.quantite | number:'1.2-2' }} €</span>
+          </div>
+
+          <div class="col-actions">
+            <button
+              class="btn-view"
+              (click)="voirProduit(element.produit._id)"
+              [disabled]="updating[element._id]"
+              title="Voir le produit"
+            >
+              <i class="fas fa-eye"></i>
+            </button>
+            <button 
+              class="btn-remove" 
+              (click)="retirerProduit(element)"
+              [disabled]="updating[element._id]"
+              title="Retirer du panier"
+            >
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+
+          <div class="updating-overlay" *ngIf="updating[element._id]">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cart Summary -->
+      <div class="cart-summary">
+        <h2>Récapitulatif</h2>
+        
+        <div class="summary-loading" *ngIf="loadingTotal">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Calcul en cours...</p>
+        </div>
+
+        <div class="summary-content" *ngIf="!loadingTotal && panierTotal">
+          <!-- Par boutique -->
+          <div class="boutique-summary" *ngFor="let detail of panierTotal.detail_par_boutique">
+            <h4>{{ detail.boutique.nom }}</h4>
+            <div class="summary-line">
+              <span>Sous-total</span>
+              <span>{{ detail.total | number:'1.2-2' }} €</span>
+            </div>
+            <div class="summary-line">
+              <span>Frais de livraison</span>
+              <span [class.free]="detail.frais_livraison === 0">
+                {{ detail.frais_livraison === 0 ? 'Gratuit' : (detail.frais_livraison | number:'1.2-2') + ' €' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-line total-line">
+            <span>Total produits</span>
+            <span>{{ panierTotal.total_produits | number:'1.2-2' }} €</span>
+          </div>
+          <div class="summary-line">
+            <span>Frais de livraison total</span>
+            <span>{{ panierTotal.frais_livraison_total | number:'1.2-2' }} €</span>
+          </div>
+          <div class="summary-line grand-total">
+            <span>Total</span>
+            <span>{{ panierTotal.total_general | number:'1.2-2' }} €</span>
+          </div>
+        </div>
+
+        <div class="summary-actions">
+          <button class="btn btn-primary btn-block" (click)="passerCommande()">
+            <i class="fas fa-credit-card"></i>
+            Passer la commande
+          </button>
+          <button class="btn btn-secondary btn-block" (click)="continuerAchats()">
+            <i class="fas fa-arrow-left"></i>
+            Continuer mes achats
+          </button>
+          <button class="btn btn-danger btn-block" (click)="viderPanier()">
+            <i class="fas fa-trash"></i>
+            Vider le panier
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

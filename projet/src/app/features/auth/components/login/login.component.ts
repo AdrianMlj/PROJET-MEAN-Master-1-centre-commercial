@@ -63,7 +63,7 @@ export class LoginComponent implements OnInit {
   private navigateToDashboard(): void {
     const user = this.authService.getCurrentUser();
     if (!user) {
-      this.router.navigate(['/']);
+      this.router.navigate(['/auth/login']);
       return;
     }
 
@@ -75,10 +75,10 @@ export class LoginComponent implements OnInit {
         this.router.navigate(['/boutique/dashboard']);
         break;
       case 'acheteur':
-        this.router.navigate(['/acheteur/dashboard']);
+        this.router.navigate(['/acheteur']);
         break;
       default:
-        this.router.navigate(['/']);
+        this.router.navigate(['/auth/login']);
     }
   }
 
