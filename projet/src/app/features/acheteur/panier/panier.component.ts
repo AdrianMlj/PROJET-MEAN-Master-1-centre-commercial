@@ -1,7 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PanierService } from '../../../core/services/panier.service';
+import { CommandeService } from '../../../core/services/commande.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Panier, PanierElement, PanierTotalResponse } from '../../../core/models/panier.model';
+import { MethodePaiement, ModeLivraison } from '../../../core/models/commande.model';
 
 @Component({
   selector: 'app-panier',
@@ -18,15 +22,64 @@ export class PanierComponent implements OnInit, OnDestroy {
   errorMessage = '';
   actionMessage = '';
   actionError = false;
+  
+  // Checkout form
+  showCheckout = false;
+  checkoutForm: FormGroup;
+  submitting = false;
+  
+  modesLivraison: { value: ModeLivraison; label: string; description: string }[] = [
+    { value: 'livraison_standard', label: 'Livraison standard', description: '3-5 jours ouvrés' },
+    { value: 'livraison_express', label: 'Livraison express', description: '24-48h' },
+    { value: 'retrait_boutique', label: 'Retrait en boutique', description: 'Gratuit' }
+  ];
+
+  methodesPaiement: { value: MethodePaiement; label: string; icon: string }[] = [
+    { value: 'carte_bancaire', label: 'Carte bancaire', icon: 'fa-credit-card' },
+    { value: 'especes', label: 'Espèces à la livraison', icon: 'fa-money-bill-wave' },
+    { value: 'mobile', label: 'Paiement mobile', icon: 'fa-mobile-alt' }
+  ];
   private messageTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private panierService: PanierService,
+    private commandeService: CommandeService,
+    private authService: AuthService,
+    private formBuilder: FormBuilder,
     private router: Router
-  ) {}
+  ) {
+    this.checkoutForm = this.formBuilder.group({
+      adresse_livraison: this.formBuilder.group({
+        nom_complet: ['', [Validators.required, Validators.minLength(3)]],
+        telephone: ['', [Validators.required]],
+        rue: ['', [Validators.required]],
+        complement: [''],
+        ville: ['', [Validators.required]],
+        code_postal: ['', [Validators.required]],
+        pays: ['France'],
+        instructions: ['']
+      }),
+      mode_livraison: ['livraison_standard', Validators.required],
+      methode_paiement: ['carte_bancaire', Validators.required],
+      notes: ['']
+    });
+  }
 
   ngOnInit(): void {
     this.chargerPanier();
+    this.preremplirAdresse();
+  }
+
+  preremplirAdresse(): void {
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.checkoutForm.patchValue({
+        adresse_livraison: {
+          nom_complet: `${user.prenom || ''} ${user.nom}`.trim(),
+          telephone: user.telephone || ''
+        }
+      });
+    }
   }
 
   ngOnDestroy(): void {
@@ -167,7 +220,48 @@ export class PanierComponent implements OnInit, OnDestroy {
   }
 
   passerCommande(): void {
-    this.router.navigate(['/acheteur/checkout']);
+    if (!this.panier || this.panier.elements.length === 0) {
+      this.afficherMessage('Votre panier est vide', true);
+      return;
+    }
+
+    // Préparer les données de commande avec des valeurs par défaut
+    const user = this.authService.getCurrentUser();
+    const commandeData = {
+      adresse_livraison: {
+        nom_complet: user ? `${user.prenom || ''} ${user.nom}`.trim() : 'Client',
+        telephone: user?.telephone || '0600000000',
+        rue: 'Adresse à confirmer',
+        ville: 'Ville à confirmer',
+        code_postal: '00000',
+        pays: 'France'
+      },
+      mode_livraison: 'retrait_boutique' as ModeLivraison,
+      methode_paiement: 'especes' as MethodePaiement,
+      notes: 'Commande passée depuis le panier'
+    };
+
+    this.submitting = true;
+    this.commandeService.passerCommande(commandeData).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.afficherMessage(`Commande(s) passée(s) avec succès! ${response.nombre_commandes} commande(s) créée(s) en attente de confirmation.`);
+          this.panierService.resetNombreArticles();
+          this.panier = null;
+          this.panierTotal = null;
+          setTimeout(() => {
+            this.router.navigate(['/acheteur/commandes']);
+          }, 1500);
+        } else {
+          this.errorMessage = response.message;
+          this.submitting = false;
+        }
+      },
+      error: (error) => {
+        this.errorMessage = error.error?.message || 'Erreur lors de la commande';
+        this.submitting = false;
+      }
+    });
   }
 
   continuerAchats(): void {

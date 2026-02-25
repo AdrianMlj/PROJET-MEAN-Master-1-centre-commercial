@@ -6,8 +6,10 @@ import { AcheteurRoutingModule } from './acheteur-routing.module';
 import { AcheteurSidebarComponent } from './components/acheteur-sidebar/acheteur-sidebar.component';
 import { AcheteurDashboardComponent } from './dashboard/acheteur-dashboard.component';
 import { HomeComponent } from './home/home.component';
+import { NotificationsComponent } from './notifications/notifications.component';
 import { PanierComponent } from './panier/panier.component';
 import { CheckoutComponent } from './checkout/checkout.component';
+import { PayerComponent } from './payer/payer.component';
 import { CommandesComponent } from './commandes/commandes.component';
 import { CommandeDetailComponent } from './commande-detail/commande-detail.component';
 import { ProfilComponent } from './profil/profil.component';
@@ -19,8 +21,10 @@ import { FavorisComponent } from './favoris/favoris.component';
     AcheteurSidebarComponent,
     AcheteurDashboardComponent,
     HomeComponent,
+    NotificationsComponent,
     PanierComponent,
     CheckoutComponent,
+    PayerComponent,
     CommandesComponent,
     CommandeDetailComponent,
     ProfilComponent,

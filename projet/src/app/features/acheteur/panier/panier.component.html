@@ -167,9 +167,9 @@
         </div>
 
         <div class="summary-actions">
-          <button class="btn btn-primary btn-block" (click)="passerCommande()">
-            <i class="fas fa-credit-card"></i>
-            Passer la commande
+          <button class="btn btn-primary btn-block" (click)="passerCommande()" [disabled]="submitting">
+            <i class="fas" [class.fa-spinner]="submitting" [class.fa-spin]="submitting"></i>
+            {{ submitting ? 'Commande en cours...' : 'Passer la commande' }}
           </button>
           <button class="btn btn-secondary btn-block" (click)="continuerAchats()">
             <i class="fas fa-arrow-left"></i>

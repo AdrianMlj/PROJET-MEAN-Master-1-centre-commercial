@@ -2,6 +2,7 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PanierService } from '../../../../core/services/panier.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 @Component({
   selector: 'app-acheteur-sidebar',
@@ -17,10 +18,12 @@ export class AcheteurSidebarComponent implements OnInit {
     compte: true
   };
   cartCount = 0;
+  unreadNotifications = 0;
 
   constructor(
     private authService: AuthService,
     private panierService: PanierService,
+    private notificationService: NotificationService,
     private router: Router
   ) {}
 
@@ -30,6 +33,26 @@ export class AcheteurSidebarComponent implements OnInit {
     this.panierService.nombreArticles$.subscribe(count => {
       this.cartCount = count;
     });
+
+    // Charger le nombre de notifications non lues
+    this.chargerNombreNotifications();
+  }
+
+  chargerNombreNotifications(): void {
+    this.notificationService.obtenirNonLues().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.unreadNotifications = response.count;
+        }
+      },
+      error: () => {
+        // Silencieux en cas d'erreur
+      }
+    });
+  }
+
+  refreshNotifications(): void {
+    this.chargerNombreNotifications();
   }
 
   @HostListener('window:resize', ['$event'])

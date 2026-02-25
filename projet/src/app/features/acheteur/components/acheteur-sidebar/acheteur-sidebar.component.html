@@ -120,6 +120,13 @@
         </div>
       </div>
 
+      <!-- Notifications -->
+      <a routerLink="/acheteur/notifications" routerLinkActive="active" class="nav-item">
+        <i class="fas fa-bell"></i>
+        <span *ngIf="!isCollapsed">Notifications</span>
+        <span class="notification-badge" *ngIf="unreadNotifications > 0">{{ unreadNotifications }}</span>
+      </a>
+
       <!-- Panier -->
       <a routerLink="/acheteur/panier" routerLinkActive="active" class="nav-item cart-item">
         <i class="fas fa-shopping-cart"></i>

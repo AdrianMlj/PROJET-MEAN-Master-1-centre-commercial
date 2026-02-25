@@ -11,12 +11,12 @@
       </button>
 
       <div class="nav-links" [class.active]="isMenuOpen">
-        <ng-container *ngIf="currentUser; else notLoggedIn">
+        <!-- <ng-container *ngIf="currentUser; else notLoggedIn">
           <button class="nav-link btn-logout" (click)="logout()">
             <i class="fas fa-sign-out-alt"></i>
             Déconnexion
           </button>
-        </ng-container>
+        </ng-container> -->
         
         <ng-template #notLoggedIn>
           <a [routerLink]="['/auth/login']" class="nav-link">

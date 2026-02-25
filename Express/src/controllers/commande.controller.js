@@ -177,6 +177,27 @@ exports.passerCommande = async (req, res) => {
         console.error('Erreur notification boutique:', notifError);
       }
 
+      // ✅ NOTIFICATION POUR L'ACHETEUR (confirmation de commande)
+      try {
+        const notificationAcheteur = new Notification({
+          destinataire: req.user.id,
+          type: 'commande',
+          titre: 'Commande confirmée',
+          message: `Votre commande n°${commandeSauvee.numero_commande} a été transmise à la boutique ${boutique.nom}. Elle sera traitée sous peu.`,
+          donnees: {
+            commandeId: commandeSauvee._id,
+            numeroCommande: commandeSauvee.numero_commande,
+            boutiqueId: boutique._id,
+            boutiqueNom: boutique.nom,
+            action: 'voir_commande',
+            total: total_general
+          }
+        });
+        await notificationAcheteur.save();
+      } catch (notifError) {
+        console.error('Erreur notification acheteur:', notifError);
+      }
+
       // Mettre à jour le stock des produits
       for (const element of elements) {
         await Produit.findByIdAndUpdate(

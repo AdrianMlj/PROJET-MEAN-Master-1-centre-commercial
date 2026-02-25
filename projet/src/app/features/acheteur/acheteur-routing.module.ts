@@ -5,8 +5,10 @@ import { AcheteurDashboardComponent } from './dashboard/acheteur-dashboard.compo
 import { AuthGuard } from '../../core/guards/auth.guard';
 import { RoleGuard } from '../../core/guards/role.guard';
 import { HomeComponent } from './home/home.component';
+import { NotificationsComponent } from './notifications/notifications.component';
 import { PanierComponent } from './panier/panier.component';
 import { CheckoutComponent } from './checkout/checkout.component';
+import { PayerComponent } from './payer/payer.component';
 import { CommandesComponent } from './commandes/commandes.component';
 import { CommandeDetailComponent } from './commande-detail/commande-detail.component';
 import { ProfilComponent } from './profil/profil.component';
@@ -23,8 +25,10 @@ const routes: Routes = [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'dashboard', component: AcheteurDashboardComponent },
       { path: 'home', component: HomeComponent },
+      { path: 'notifications', component: NotificationsComponent },
       { path: 'panier', component: PanierComponent },
       { path: 'checkout', component: CheckoutComponent },
+      { path: 'payer/:id', component: PayerComponent },
       { path: 'commandes', component: CommandesComponent },
       { path: 'commande/:id', component: CommandeDetailComponent },
       { path: 'produit/:id', component: ProduitDetailComponent },

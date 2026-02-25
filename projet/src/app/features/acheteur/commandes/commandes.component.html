@@ -84,10 +84,10 @@
         <div class="commande-body">
           <div class="boutique-info clickable" (click)="voirBoutique(commande.boutique?._id, $event)">
             <img [src]="commande.boutique?.logo_url ? 'http://localhost:3000' + commande.boutique.logo_url : 'assets/placeholder-boutique.png'" [alt]="commande.boutique?.nom">
-            <span>{{ commande.boutique?.nom }}</span>
+            <span>{{ commande.boutique?.nom || 'Boutique' }}</span>
           </div>
 
-          <div class="articles-preview">
+          <div class="articles-preview" *ngIf="commande.details && commande.details.length > 0; else noDetails">
             <div class="article" *ngFor="let detail of commande.details.slice(0, 3)">
               <img [src]="detail.produit?.images && detail.produit.images[0] ? 'http://localhost:3000' + detail.produit.images[0].url : 'assets/placeholder-product.png'" [alt]="detail.produit?.nom">
             </div>
@@ -95,10 +95,18 @@
               +{{ commande.details.length - 3 }}
             </div>
           </div>
+          <ng-template #noDetails>
+            <div class="articles-preview">
+              <div class="no-details">
+                <i class="fas fa-box"></i>
+                <span>Voir les details</span>
+              </div>
+            </div>
+          </ng-template>
 
           <div class="commande-total">
             <span class="label">Total</span>
-            <span class="amount">{{ commande.total | number:'1.2-2' }} EUR</span>
+            <span class="amount">{{ getCommandeTotal(commande) | number:'1.2-2' }} EUR</span>
           </div>
         </div>
 
@@ -113,13 +121,13 @@
               <i class="fas fa-eye"></i>
               Details
             </button>
-            <button
-              class="btn btn-sm btn-outline-primary"
-              (click)="recommander(commande, $event)"
-              [disabled]="loadingRecommande[commande._id]"
+            <button 
+              class="btn btn-sm btn-success" 
+              *ngIf="commande.statut === 'pret' && (commande.statut_paiement === 'en_attente' || !commande.statut_paiement)"
+              (click)="payerCommande(commande, $event)"
             >
-              <i class="fas" [ngClass]="loadingRecommande[commande._id] ? 'fa-spinner fa-spin' : 'fa-repeat'"></i>
-              {{ loadingRecommande[commande._id] ? 'Ajout...' : 'Recommander' }}
+              <i class="fas fa-credit-card"></i>
+              Payer
             </button>
             <button
               class="btn btn-sm btn-danger"

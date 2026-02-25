@@ -102,6 +102,12 @@ export class CommandesComponent implements OnInit {
     this.router.navigate(['/acheteur/commande', commandeId]);
   }
 
+  payerCommande(commande: Commande, event: Event): void {
+    event.stopPropagation();
+    // Navigate to payment page for this commande
+    this.router.navigate(['/acheteur/payer', commande._id]);
+  }
+
   voirBoutique(boutiqueId: string | undefined, event: Event): void {
     event.stopPropagation();
     if (!boutiqueId) return;
@@ -224,6 +230,11 @@ export class CommandesComponent implements OnInit {
 
   peutAnnuler(commande: Commande): boolean {
     return commande.statut === 'en_attente';
+  }
+
+  getCommandeTotal(commande: Commande): number {
+    // Utiliser total_general si disponible, sinon total
+    return (commande as any).total_general || commande.total || 0;
   }
 
   private appliquerFiltresLocaux(): void {

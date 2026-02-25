@@ -1,0 +1,79 @@
+<div class="notifications-container">
+  <div class="container">
+    <div class="page-header">
+      <h1><i class="fas fa-bell"></i> Notifications</h1>
+      <button class="btn btn-secondary" (click)="toutMarquerLues()" *ngIf="notifications.length > 0">
+        <i class="fas fa-check-double"></i>
+        Tout marquer comme lu
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement des notifications...</p>
+    </div>
+
+    <!-- Error -->
+    <div class="error-message" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-state" *ngIf="!loading && !errorMessage && notifications.length === 0">
+      <i class="fas fa-bell-slash"></i>
+      <h2>Aucune notification</h2>
+      <p>Vous n'avez aucune notification pour le moment.</p>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="notifications-list" *ngIf="!loading && notifications.length > 0">
+      <div 
+        class="notification-card" 
+        *ngFor="let notification of notifications"
+        [class.unread]="!notification.lu"
+        (click)="marquerCommeLue(notification)"
+      >
+        <div class="notification-icon" [ngClass]="getTypeClass(notification.type)">
+          <i class="fas {{ getTypeIcon(notification.type) }}"></i>
+        </div>
+        
+        <div class="notification-content">
+          <div class="notification-header">
+            <h3>{{ notification.titre }}</h3>
+            <span class="notification-time">{{ formatDate(notification.date_creation) }}</span>
+          </div>
+          <p class="notification-message">{{ notification.message }}</p>
+          
+          <!-- Action Buttons -->
+          <div class="notification-actions" *ngIf="notification.donnees?.commandeId" (click)="$event.stopPropagation()">
+            <button 
+              class="btn btn-sm btn-primary" 
+              (click)="marquerCommeLue(notification)">
+              <i class="fas fa-eye"></i> Voir
+            </button>
+            <button 
+              *ngIf="notification.type === 'paiement' || (notification.donnees?.action === 'payer')"
+              class="btn btn-sm btn-success" 
+              (click)="marquerCommeLue(notification)">
+              <i class="fas fa-credit-card"></i> Payer
+            </button>
+          </div>
+          <!-- Fallback action for notifications without commandeId -->
+          <div class="notification-actions" *ngIf="!notification.donnees?.commandeId" (click)="$event.stopPropagation()">
+            <button 
+              class="btn btn-sm btn-primary" 
+              (click)="marquerCommeLue(notification)">
+              <i class="fas fa-eye"></i> Voir
+            </button>
+          </div>
+        </div>
+        
+        <div class="notification-status" *ngIf="!notification.lu">
+          <span class="unread-badge"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
