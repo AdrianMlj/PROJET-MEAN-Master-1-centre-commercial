@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 
-
 const avisSchema = new mongoose.Schema({
   produit: {
     type: mongoose.Schema.Types.ObjectId,
@@ -58,8 +57,7 @@ const avisSchema = new mongoose.Schema({
 
 avisSchema.plugin(mongoosePaginate);
 
-
-// Indexes
+// Indexes de base
 avisSchema.index({ produit: 1 });
 avisSchema.index({ boutique: 1 });
 avisSchema.index({ client: 1 });
@@ -67,9 +65,28 @@ avisSchema.index({ note: 1 });
 avisSchema.index({ 'reponse.date': 1 });
 avisSchema.index({ est_valide: 1 });
 
-// Compound index pour éviter les doublons
-avisSchema.index({ produit: 1, client: 1 }, { unique: true, sparse: true });
-avisSchema.index({ boutique: 1, client: 1 }, { unique: true, sparse: true });
+// ✅ SOLUTION : Index partiels au lieu de sparse
+// Un client ne peut laisser qu'un seul avis sur un même produit
+avisSchema.index(
+  { produit: 1, client: 1 }, 
+  { 
+    unique: true,
+    partialFilterExpression: { 
+      produit: { $type: "objectId" }  // l'index ne s'applique que si produit est un ObjectId valide
+    }
+  }
+);
+
+// Un client ne peut laisser qu'un seul avis sur une même boutique
+avisSchema.index(
+  { boutique: 1, client: 1 }, 
+  { 
+    unique: true,
+    partialFilterExpression: { 
+      boutique: { $type: "objectId" }  // l'index ne s'applique que si boutique est un ObjectId valide
+    }
+  }
+);
 
 // Hook pour mettre à jour les statistiques après un avis
 avisSchema.post('save', async function(doc) {
@@ -78,26 +95,30 @@ avisSchema.post('save', async function(doc) {
       const Produit = mongoose.model('Produit');
       // Calculer la nouvelle moyenne
       const produit = await Produit.findById(doc.produit);
-      const totalNotes = produit.statistiques.note_moyenne * produit.statistiques.nombre_avis;
-      const nouvelleMoyenne = (totalNotes + doc.note) / (produit.statistiques.nombre_avis + 1);
-      
-      await Produit.findByIdAndUpdate(doc.produit, {
-        'statistiques.note_moyenne': nouvelleMoyenne,
-        $inc: { 'statistiques.nombre_avis': 1 }
-      });
+      if (produit) {
+        const totalNotes = (produit.statistiques.note_moyenne || 0) * (produit.statistiques.nombre_avis || 0);
+        const nouvelleMoyenne = (totalNotes + doc.note) / ((produit.statistiques.nombre_avis || 0) + 1);
+        
+        await Produit.findByIdAndUpdate(doc.produit, {
+          'statistiques.note_moyenne': nouvelleMoyenne,
+          $inc: { 'statistiques.nombre_avis': 1 }
+        });
+      }
     }
     
     if (doc.boutique) {
       const Boutique = mongoose.model('Boutique');
       // Calculer la nouvelle moyenne
       const boutique = await Boutique.findById(doc.boutique);
-      const totalNotes = boutique.statistiques.note_moyenne * boutique.statistiques.nombre_avis;
-      const nouvelleMoyenne = (totalNotes + doc.note) / (boutique.statistiques.nombre_avis + 1);
-      
-      await Boutique.findByIdAndUpdate(doc.boutique, {
-        'statistiques.note_moyenne': nouvelleMoyenne,
-        $inc: { 'statistiques.nombre_avis': 1 }
-      });
+      if (boutique) {
+        const totalNotes = (boutique.statistiques.note_moyenne || 0) * (boutique.statistiques.nombre_avis || 0);
+        const nouvelleMoyenne = (totalNotes + doc.note) / ((boutique.statistiques.nombre_avis || 0) + 1);
+        
+        await Boutique.findByIdAndUpdate(doc.boutique, {
+          'statistiques.note_moyenne': nouvelleMoyenne,
+          $inc: { 'statistiques.nombre_avis': 1 }
+        });
+      }
     }
   }
 });
