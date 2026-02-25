@@ -11,7 +11,7 @@ const server = express();
 // Configuration CORS supplémentaire
 server.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin && (origin.includes('localhost') || origin.includes(process.env.FRONTEND_URL || 'https://projet-mean-master-1-centre-commercial-1.onrender.com'))) {
+  if (origin && (origin.includes('localhost') || origin.includes(process.env.FRONTEND_URL || 'http://localhost:4200'))) {
     res.header('Access-Control-Allow-Origin', origin);
   }
   res.header('Access-Control-Allow-Credentials', 'true');
