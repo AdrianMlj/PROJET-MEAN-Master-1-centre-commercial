@@ -402,7 +402,7 @@ exports.obtenirDetailCommande = async (req, res) => {
 };
 
 // ============================================
-// Gérant: Mettre à jour le statut d'une commande (avec notification client)
+// Gérant: Mettre à jour le statut d'une commande (avec notifications)
 // ============================================
 exports.mettreAJourStatutCommande = async (req, res) => {
   try {
@@ -415,7 +415,9 @@ exports.mettreAJourStatutCommande = async (req, res) => {
       });
     }
 
-    const commande = await Commande.findById(req.params.id).populate('boutique');
+    const commande = await Commande.findById(req.params.id)
+      .populate('boutique')
+      .populate('client', 'nom prenom email'); // ✅ pour récupérer les infos du client
 
     if (!commande) {
       return res.status(404).json({
@@ -483,11 +485,11 @@ exports.mettreAJourStatutCommande = async (req, res) => {
       );
     }
 
-    // ✅ Si le nouveau statut est 'pret', notifier l'acheteur
+    // ✅ NOTIFICATION POUR L'ACHETEUR (statut 'pret')
     if (nouveau_statut === 'pret') {
       try {
         const notification = new Notification({
-          destinataire: commande.client,
+          destinataire: commande.client._id,
           type: 'commande',
           titre: 'Commande prête à être payée',
           message: `Votre commande ${commande.numero_commande} est maintenant prête. Veuillez procéder au paiement.`,
@@ -499,7 +501,27 @@ exports.mettreAJourStatutCommande = async (req, res) => {
         });
         await notification.save();
       } catch (notifError) {
-        console.error('Erreur notification client:', notifError);
+        console.error('Erreur notification client (pret):', notifError);
+      }
+    }
+
+    // ✅ NOUVELLE NOTIFICATION POUR L'ACHETEUR (statut 'livre')
+    if (nouveau_statut === 'livre') {
+      try {
+        const notification = new Notification({
+          destinataire: commande.client._id,
+          type: 'commande',
+          titre: 'Commande livrée',
+          message: `Votre commande ${commande.numero_commande} a été marquée comme livrée. Merci de votre achat !`,
+          donnees: {
+            commandeId: commande._id,
+            numeroCommande: commande.numero_commande,
+            dateLivraison: new Date()
+          }
+        });
+        await notification.save();
+      } catch (notifError) {
+        console.error('Erreur notification client (livraison):', notifError);
       }
     }
 
@@ -518,7 +540,6 @@ exports.mettreAJourStatutCommande = async (req, res) => {
     });
   }
 };
-
 // Obtenir l'historique des statuts d'une commande
 exports.obtenirHistoriqueStatuts = async (req, res) => {
   try {
@@ -567,10 +588,12 @@ exports.obtenirHistoriqueStatuts = async (req, res) => {
   }
 };
 
-// Client: Annuler une commande
+// ============================================
+// Client: Annuler une commande (avec notification boutique)
+// ============================================
 exports.annulerCommande = async (req, res) => {
   try {
-    const commande = await Commande.findById(req.params.id);
+    const commande = await Commande.findById(req.params.id).populate('boutique');
 
     if (!commande) {
       return res.status(404).json({
@@ -624,6 +647,29 @@ exports.annulerCommande = async (req, res) => {
       { commande: commande._id },
       { statut_paiement: 'rembourse' }
     );
+
+    // ✅ NOTIFICATION À LA BOUTIQUE
+    try {
+      if (commande.boutique && commande.boutique.gerant) {
+        const Notification = require('../models/notification.model');
+        const notification = new Notification({
+          destinataire: commande.boutique.gerant,
+          type: 'commande',
+          titre: 'Commande annulée',
+          message: `La commande ${commande.numero_commande} a été annulée par le client.`,
+          donnees: {
+            commandeId: commande._id,
+            numeroCommande: commande.numero_commande,
+            clientId: req.user.id,
+            ancienStatut,
+            raison: 'Annulée par le client'
+          }
+        });
+        await notification.save();
+      }
+    } catch (notifError) {
+      console.error('Erreur notification boutique (annulation):', notifError);
+    }
 
     res.status(200).json({
       success: true,

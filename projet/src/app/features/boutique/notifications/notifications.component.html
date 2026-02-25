@@ -38,13 +38,24 @@
           <span class="notification-date">{{ formaterDate(notif.date_creation) }}</span>
         </div>
         <p class="notification-message">{{ notif.message }}</p>
-        <div class="notification-details" *ngIf="notif.donnees">
-          <span *ngIf="notif.type === 'commande' && notif.donnees.numeroCommande">
-            Commande: {{ notif.donnees.numeroCommande }}
-          </span>
-          <span *ngIf="notif.donnees.montant">
-            Montant: {{ notif.donnees.montant | currency:'EUR' }}
-          </span>
+        
+        <!-- Détails et bouton d'action -->
+        <div class="notification-footer">
+          <div class="notification-details" *ngIf="notif.donnees">
+            <span *ngIf="notif.type === 'commande' && notif.donnees.numeroCommande">
+              Commande: {{ notif.donnees.numeroCommande }}
+            </span>
+            <span *ngIf="notif.donnees.montant">
+              Montant: {{ notif.donnees.montant | currency:'EUR' }}
+            </span>
+          </div>
+          
+          <!-- ✅ BOUTON VOIR LA COMMANDE pour les notifications de type commande -->
+          <button class="btn-view" 
+                  *ngIf="notif.type === 'commande' && notif.donnees?.commandeId"
+                  (click)="voirCommande(notif, $event)">
+            <i class="fas fa-eye"></i> Voir la commande
+          </button>
         </div>
       </div>
       <div class="notification-status" *ngIf="!notif.lu">

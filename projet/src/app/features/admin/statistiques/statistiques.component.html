@@ -53,7 +53,8 @@
           <canvas #caChart></canvas>
         </div>
         <div class="chart-footer" *ngIf="statistiques.evolutionCA.length === 0">
-          <i class="fas fa-info-circle"></i> Aucune donnée d'évolution disponible
+          <i class="fas fa-info-circle"></i> 
+          Données d'évolution non disponibles. CA total : {{ formatCurrency(statistiques.chiffreAffairesTotal) }}
         </div>
       </div>
 
@@ -130,8 +131,8 @@
       <div class="products-list">
         <div class="product-item" *ngFor="let produit of statistiques.produitsPlusVendus; let i = index">
           <span class="product-rank">{{ i + 1 }}</span>
-          <span class="product-name">{{ produit.nom }}</span>
-          <span class="product-count">{{ produit.totalVendu }} vendus</span>
+          <span class="product-name">{{ produit.produit }}</span>  <!-- ✅ Changé de produit.nom à produit.produit -->
+          <span class="product-count">{{ produit.quantiteVendue }} vendus</span>
         </div>
       </div>
     </div>

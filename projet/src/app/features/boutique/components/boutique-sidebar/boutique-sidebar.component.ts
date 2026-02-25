@@ -133,6 +133,15 @@ export class BoutiqueSidebarComponent implements OnInit {
     return `${baseUrl}${this.maBoutique.logo_url}`;
   }
 
+  getCategorieName(): string {
+    if (!this.maBoutique || !this.maBoutique.categorie) return '';
+    
+    if (typeof this.maBoutique.categorie === 'object' && this.maBoutique.categorie.nom_categorie) {
+      return this.maBoutique.categorie.nom_categorie;
+    }
+    return '';
+  }
+
   onAvatarError(event: any): void {
     event.target.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png';
   }

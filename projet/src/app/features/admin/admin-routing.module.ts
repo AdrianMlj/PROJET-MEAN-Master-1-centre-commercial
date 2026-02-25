@@ -22,7 +22,8 @@ import { AuthGuard } from '../../core/guards/auth.guard';
 import { RoleGuard } from '../../core/guards/role.guard';
 
 import { StatistiquesComponent } from './statistiques/statistiques.component';
-
+import { AdminNotificationsComponent } from './notifications/notifications.component';
+import { ProfilAdminComponent } from './profil/profil-admin.component';
 
 const routes: Routes = [
   {
@@ -50,6 +51,9 @@ const routes: Routes = [
 
       { path: 'statistiques', component: StatistiquesComponent },
 
+      { path: 'notifications', component: AdminNotificationsComponent },
+
+      { path: 'profil', component: ProfilAdminComponent },
       
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

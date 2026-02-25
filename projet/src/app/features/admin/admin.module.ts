@@ -23,6 +23,8 @@ import { CreerUtilisateurBoutiqueComponent } from './gestion-utilisateurs/creer-
 import { ListeUtilisateursComponent } from './gestion-utilisateurs/liste-utilisateurs/liste-utilisateurs.component';
 
 import { StatistiquesComponent } from './statistiques/statistiques.component';
+import { AdminNotificationsComponent } from './notifications/notifications.component';
+import { ProfilAdminComponent } from './profil/profil-admin.component';
 
 @NgModule({
   declarations: [
@@ -35,10 +37,11 @@ import { StatistiquesComponent } from './statistiques/statistiques.component';
     ListeBoutiquesComponent,
     DetailsBoutiqueComponent,
     ModifierBoutiqueComponent,
-    // ✅ NOUVEAU
     CreerUtilisateurBoutiqueComponent,
     ListeUtilisateursComponent,
-    StatistiquesComponent
+    StatistiquesComponent,
+    AdminNotificationsComponent,
+    ProfilAdminComponent
   ],
   imports: [
     CommonModule,

@@ -19,10 +19,11 @@ export interface StatistiquesGlobales {
       nom: string;
       totalVendu: number;
     }>;
+    // ✅ Correction : adaptation à la structure réelle de l'API
     evolutionCA: Array<{
-      mois: string;
-      annee: number;
-      total: number;
+      _id: string;              // Date au format YYYY-MM-DD
+      chiffreAffaires: number;   // Montant du CA pour cette période
+      nombreCommandes?: number;  // Optionnel
     }>;
     statistiquesPaiements: Array<{
       _id: string;

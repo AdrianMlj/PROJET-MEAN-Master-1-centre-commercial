@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { User } from '../../../../core/models/auth.model';
 import { environment } from '../../../../../environments/environment';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 @Component({
   selector: 'app-admin-sidebar',
@@ -13,6 +14,7 @@ import { environment } from '../../../../../environments/environment';
 export class AdminSidebarComponent implements OnInit {
   isCollapsed = false;
   isMobileMenuOpen = false;
+  notificationCount = 0;
   menuOpen: { [key: string]: boolean } = {
     gestionBoutiques: true,
     categories: true,
@@ -24,11 +26,13 @@ export class AdminSidebarComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
+    private notificationService: NotificationService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.checkScreenSize();
+    this.loadNotificationsCount();
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
     });
@@ -93,5 +97,16 @@ export class AdminSidebarComponent implements OnInit {
   // ✅ Gestion d'erreur de chargement d'avatar
   onAvatarError(event: any): void {
     event.target.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png';
+  }
+
+  loadNotificationsCount(): void { // ← NOUVELLE MÉTHODE
+    this.notificationService.getNonLues().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.notificationCount = response.count;
+        }
+      },
+      error: (err) => console.error('Erreur chargement notifications', err)
+    });
   }
 }

@@ -131,6 +131,15 @@
         </div>
       </div>
 
+      <!-- Notifications -->
+    <div class="nav-section">
+      <div class="nav-header" routerLink="/admin/notifications" routerLinkActive="active">
+        <i class="fas fa-bell"></i>
+        <span *ngIf="!isCollapsed">Notifications</span>
+        <span class="badge-notification" *ngIf="notificationCount > 0">{{ notificationCount }}</span>
+      </div>
+    </div>
+
       <!-- Statistiques -->
       <div class="nav-section">
         <div class="nav-header" routerLink="/admin/statistiques" routerLinkActive="active">
@@ -138,6 +147,14 @@
           <span *ngIf="!isCollapsed">Statistiques</span>
         </div>
       </div>
+
+      <!-- Profil -->
+    <div class="nav-section">
+      <div class="nav-header" routerLink="/admin/profil" routerLinkActive="active">
+        <i class="fas fa-user-cog"></i>
+        <span *ngIf="!isCollapsed">Mon profil</span>
+      </div>
+    </div>
       
       <!-- Espace pour le scroll -->
       <div class="nav-footer-space"></div>

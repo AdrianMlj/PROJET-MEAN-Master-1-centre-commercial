@@ -4,12 +4,12 @@ import { NotificationService } from '../../../core/services/notification.service
 import { Notification } from '../../../core/models/notification.model';
 
 @Component({
-  selector: 'app-notifications',
+  selector: 'app-admin-notifications',
   templateUrl: './notifications.component.html',
   styleUrls: ['./notifications.component.css'],
   standalone: false
 })
-export class NotificationsComponent implements OnInit {
+export class AdminNotificationsComponent implements OnInit {
   notifications: Notification[] = [];
   loading = true;
   errorMessage = '';
@@ -45,6 +45,7 @@ export class NotificationsComponent implements OnInit {
     this.notificationService.marquerCommeLue(notif._id).subscribe({
       next: () => {
         notif.lu = true;
+        // Mettre à jour le compteur dans la sidebar (optionnel)
       },
       error: (err) => console.error('Erreur', err)
     });
@@ -71,25 +72,31 @@ export class NotificationsComponent implements OnInit {
 
   getIcone(type: string): string {
     switch (type) {
-      case 'commande': return 'fa-shopping-cart';
       case 'paiement_location': return 'fa-credit-card';
+      case 'commande': return 'fa-shopping-cart';
       case 'nouvelle_boutique': return 'fa-store';
       case 'alerte': return 'fa-exclamation-triangle';
       default: return 'fa-bell';
     }
   }
 
-  // ✅ NOUVELLE MÉTHODE : Redirection vers les détails de la commande
-  voirCommande(notif: Notification, event: Event): void {
-    event.stopPropagation(); // Empêche le click de déclencher marquerCommeLue
-    
-    if (notif.donnees && notif.donnees.commandeId) {
-      // Pour le gérant de boutique
-      this.router.navigate(['/boutique/commandes/details', notif.donnees.commandeId]);
-    } else if (notif.donnees && notif.donnees.numeroCommande) {
-      // Alternative si l'ID n'est pas disponible mais le numéro oui
-      // Il faudrait alors faire une recherche par numéro
-      console.log('Redirection vers commande:', notif.donnees.numeroCommande);
+  getCouleur(type: string): string {
+    switch (type) {
+      case 'paiement_location': return '#4caf50';
+      case 'commande': return '#2196f3';
+      case 'nouvelle_boutique': return '#ff9800';
+      case 'alerte': return '#f44336';
+      default: return '#667eea';
     }
+  }
+
+  voirDetails(notif: Notification): void {
+    if (!notif.donnees) return;
+    
+    // Navigation selon le type de notification
+    if (notif.type === 'paiement_location' && notif.donnees.boutiqueId) {
+      this.router.navigate(['/admin/boutiques/boutiques/details', notif.donnees.boutiqueId]);
+    }
+    // Ajouter d'autres cas si nécessaire
   }
 }

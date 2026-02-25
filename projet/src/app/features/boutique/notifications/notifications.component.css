@@ -29,3 +29,38 @@
 .empty-icon i { font-size: 40px; color: #adb5bd; }
 .empty-state h3 { color: #333; font-size: 20px; margin-bottom: 10px; }
 .empty-state p { color: #666; margin-bottom: 20px; }
+/* Style pour le footer de la notification */
+.notification-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Bouton "Voir la commande" */
+.btn-view {
+  background: #e3f2fd;
+  color: #1976d2;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-view:hover {
+  background: #1976d2;
+  color: white;
+}
+
+/* Pour que le bouton ne soit pas affecté par le click sur l'élément parent */
+.btn-view {
+  position: relative;
+  z-index: 2;
+}

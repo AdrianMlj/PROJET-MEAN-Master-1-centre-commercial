@@ -1,0 +1,90 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-bell"></i>
+        Notifications
+      </h1>
+      <nav class="breadcrumb">
+        <a routerLink="/admin/dashboard">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="current">Notifications</span>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-secondary" (click)="marquerToutesLues()" *ngIf="notifications.length > 0">
+        <i class="fas fa-check-double"></i> Tout marquer comme lu
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des notifications...</p>
+  </div>
+
+  <!-- Notifications List -->
+  <div class="notifications-list" *ngIf="!loading">
+    <div class="notification-item" 
+         *ngFor="let notif of notifications" 
+         [class.non-lue]="!notif.lu"
+         (click)="marquerCommeLue(notif)">
+      <div class="notification-icon" [style.background]="getCouleur(notif.type)">
+        <i class="fas" [ngClass]="getIcone(notif.type)"></i>
+      </div>
+      <div class="notification-content">
+        <div class="notification-header">
+          <h4>{{ notif.titre }}</h4>
+          <span class="notification-date">{{ formaterDate(notif.date_creation) }}</span>
+        </div>
+        <p class="notification-message">{{ notif.message }}</p>
+        
+        <!-- Détails spécifiques selon le type -->
+        <div class="notification-details" *ngIf="notif.donnees">
+          <div *ngIf="notif.type === 'paiement_location'">
+            <span class="detail-badge">
+              <i class="fas fa-store"></i> {{ notif.donnees.boutiqueNom }}
+            </span>
+            <span class="detail-badge">
+              <i class="fas fa-credit-card"></i> {{ notif.donnees.methode }}
+            </span>
+          </div>
+          <div *ngIf="notif.type === 'commande'">
+            <span class="detail-badge" *ngIf="notif.donnees.numeroCommande">
+              <i class="fas fa-hashtag"></i> {{ notif.donnees.numeroCommande }}
+            </span>
+            <span class="detail-badge" *ngIf="notif.donnees.montant">
+              <i class="fas fa-euro-sign"></i> {{ notif.donnees.montant | number:'1.2-2' }} €
+            </span>
+          </div>
+        </div>
+
+        <!-- Bouton voir détails si applicable -->
+        <button class="btn-details" 
+                *ngIf="notif.donnees && notif.type === 'paiement_location' && notif.donnees.boutiqueId"
+                (click)="voirDetails(notif); $event.stopPropagation()">
+          <i class="fas fa-eye"></i> Voir la boutique
+        </button>
+      </div>
+      <div class="notification-status" *ngIf="!notif.lu">
+        <span class="badge-non-lue"></span>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="notifications.length === 0">
+      <div class="empty-icon">
+        <i class="fas fa-bell-slash"></i>
+      </div>
+      <h3>Aucune notification</h3>
+      <p>Vous n'avez pas encore de notifications.</p>
+    </div>
+  </div>
+</div>

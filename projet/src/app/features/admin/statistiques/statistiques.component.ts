@@ -15,7 +15,7 @@ export class StatistiquesComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('paiementsChart') paiementsChartRef!: ElementRef;
   @ViewChild('boutiquesChart') boutiquesChartRef!: ElementRef;
 
-  statistiques: StatistiquesGlobales['statistiques'] | null = null;
+  statistiques: any = null; // 👈 Utilisation de 'any' pour éviter les problèmes de typage
   loading = true;
   errorMessage = '';
 
@@ -33,12 +33,9 @@ export class StatistiquesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadStatistiques();
   }
 
-  ngAfterViewInit(): void {
-    // Les graphiques seront créés après le chargement des données
-  }
+  ngAfterViewInit(): void {}
 
   ngOnDestroy(): void {
-    // Détruire les graphiques pour éviter les fuites mémoire
     this.destroyCharts();
   }
 
@@ -48,7 +45,8 @@ export class StatistiquesComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (response) => {
         if (response.success) {
           this.statistiques = response.statistiques;
-          setTimeout(() => this.createCharts(), 100); // Petit délai pour que les vues soient prêtes
+          console.log('Statistiques chargées:', this.statistiques);
+          setTimeout(() => this.createCharts(), 100);
         }
         this.loading = false;
       },
@@ -79,55 +77,106 @@ export class StatistiquesComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.statistiques || !this.caChartRef) return;
 
     const evolutionCA = this.statistiques.evolutionCA || [];
-    const labels = evolutionCA.map(item => `${item.mois}/${item.annee}`);
-    const data = evolutionCA.map(item => item.total);
+    
+    if (evolutionCA.length > 0) {
+      // Utiliser les données telles qu'elles viennent de l'API
+      const labels = evolutionCA.map((item: any) => {
+        // Formater la date si c'est possible
+        if (item._id && typeof item._id === 'string') {
+          try {
+            const dateParts = item._id.split('-');
+            if (dateParts.length === 3) {
+              return `${dateParts[2]}/${dateParts[1]}`; // JJ/MM
+            }
+          } catch (e) {}
+          return item._id;
+        }
+        return `Jour ${evolutionCA.indexOf(item) + 1}`;
+      });
+      
+      const data = evolutionCA.map((item: any) => item.chiffreAffaires || 0);
 
-    this.caChart = new Chart(this.caChartRef.nativeElement, {
-      type: 'line',
-      data: {
-        labels: labels.length ? labels : ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
-        datasets: [{
-          label: 'Chiffre d\'affaires (€)',
-          data: data.length ? data : [0, 0, 0, 0, 0, 0],
-          borderColor: '#667eea',
-          backgroundColor: 'rgba(102, 126, 234, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: '#667eea',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 4,
-          pointHoverRadius: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                return `CA: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(context.raw as number)}`;
+      this.caChart = new Chart(this.caChartRef.nativeElement, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Chiffre d\'affaires (€)',
+            data: data,
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#667eea',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  return `CA: ${this.formatCurrency(context.raw as number)}`;
+                }
               }
             }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: (value) => {
-                return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', notation: 'compact' }).format(value as number);
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => this.formatCurrency(value as number)
               }
             }
           }
         }
-      }
-    });
+      });
+    } else {
+      // Si pas de données d'évolution, afficher le CA total
+      const caTotal = this.statistiques.chiffreAffairesTotal || 0;
+      
+      this.caChart = new Chart(this.caChartRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: ['Chiffre d\'affaires total'],
+          datasets: [{
+            label: 'CA total',
+            data: [caTotal],
+            backgroundColor: '#667eea',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  return `CA total: ${this.formatCurrency(context.raw as number)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => this.formatCurrency(value as number)
+              }
+            }
+          }
+        }
+      });
+    }
   }
 
   createCommandesChart(): void {
@@ -143,11 +192,7 @@ export class StatistiquesComponent implements OnInit, AfterViewInit, OnDestroy {
         labels: ['Cette semaine', 'Ce mois', 'Total'],
         datasets: [{
           data: [commandesCetteSemaine, commandesCeMois, totalCommandes],
-          backgroundColor: [
-            '#ff9800',
-            '#4caf50',
-            '#667eea'
-          ],
+          backgroundColor: ['#ff9800', '#4caf50', '#667eea'],
           borderWidth: 0
         }]
       },
@@ -155,19 +200,17 @@ export class StatistiquesComponent implements OnInit, AfterViewInit, OnDestroy {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              padding: 20,
-              usePointStyle: true,
-              pointStyle: 'circle'
-            }
+          legend: { 
+            position: 'bottom', 
+            labels: { 
+              padding: 20, 
+              usePointStyle: true, 
+              pointStyle: 'circle' 
+            } 
           },
           tooltip: {
             callbacks: {
-              label: (context) => {
-                return `${context.label}: ${context.raw} commandes`;
-              }
+              label: (context) => `${context.label}: ${context.raw} commandes`
             }
           }
         },
@@ -182,7 +225,6 @@ export class StatistiquesComponent implements OnInit, AfterViewInit, OnDestroy {
     const paiements = this.statistiques.statistiquesPaiements || [];
     
     if (paiements.length === 0) {
-      // Données par défaut si aucune
       this.paiementsChart = new Chart(this.paiementsChartRef.nativeElement, {
         type: 'pie',
         data: {
@@ -195,10 +237,8 @@ export class StatistiquesComponent implements OnInit, AfterViewInit, OnDestroy {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom'
-            }
+          plugins: { 
+            legend: { position: 'bottom' } 
           }
         }
       });
@@ -206,19 +246,17 @@ export class StatistiquesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.paiementsChart = new Chart(this.paiementsChartRef.nativeElement, {
         type: 'pie',
         data: {
-          labels: paiements.map(p => p._id === 'paye' ? 'Payé' : 'Impayé'),
+          labels: paiements.map((p: any) => p._id === 'paye' ? 'Payé' : 'Impayé'),
           datasets: [{
-            data: paiements.map(p => p.count),
+            data: paiements.map((p: any) => p.count),
             backgroundColor: ['#4caf50', '#f44336', '#ff9800', '#9c27b0']
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom'
-            }
+          plugins: { 
+            legend: { position: 'bottom' } 
           }
         }
       });
@@ -236,46 +274,39 @@ export class StatistiquesComponent implements OnInit, AfterViewInit, OnDestroy {
       data: {
         labels: ['Boutiques'],
         datasets: [
-          {
-            label: 'Actives',
-            data: [actives],
-            backgroundColor: '#4caf50',
-            borderRadius: 6
+          { 
+            label: 'Actives', 
+            data: [actives], 
+            backgroundColor: '#4caf50', 
+            borderRadius: 6 
           },
-          {
-            label: 'Inactives',
-            data: [inactives],
-            backgroundColor: '#f44336',
-            borderRadius: 6
+          { 
+            label: 'Inactives', 
+            data: [inactives], 
+            backgroundColor: '#f44336', 
+            borderRadius: 6 
           }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom'
-          }
+        plugins: { 
+          legend: { position: 'bottom' } 
         },
         scales: {
-          x: {
-            grid: {
-              display: false
-            }
+          x: { 
+            grid: { display: false } 
           },
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1
-            }
+          y: { 
+            beginAtZero: true, 
+            ticks: { stepSize: 1 } 
           }
         }
       }
     });
   }
 
-  // Méthodes utilitaires
   formatNumber(value: number): string {
     return new Intl.NumberFormat('fr-FR').format(value);
   }

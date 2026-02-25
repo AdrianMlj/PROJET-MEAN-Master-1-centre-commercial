@@ -46,7 +46,7 @@
       </a>
     </div>
 
-    <!-- Informations de la boutique -->
+    <!-- Informations de la boutique avec catégorie -->
     <div class="boutique-profile" *ngIf="maBoutique && !isCollapsed">
       <div class="boutique-logo-wrapper">
         <img [src]="getBoutiqueLogoUrl()"
@@ -56,13 +56,19 @@
       </div>
       <div class="boutique-info">
         <h4>{{ maBoutique.nom }}</h4>
+        <!-- ✅ Affichage de la catégorie -->
+        <div class="categorie-badge" *ngIf="getCategorieName()">
+          <i class="fas fa-tag"></i>
+          <span>{{ getCategorieName() }}</span>
+        </div>
+        <!-- ✅ Statut en dessous de la catégorie -->
         <span class="badge" [ngClass]="maBoutique.est_active ? 'active' : 'inactive'">
           {{ maBoutique.est_active ? 'Active' : 'Inactive' }}
         </span>
       </div>
     </div>
     <!-- Version mobile de la boutique -->
-    <div class="boutique-profile-mobile" *ngIf="maBoutique && isCollapsed" title="{{ maBoutique.nom }}">
+    <div class="boutique-profile-mobile" *ngIf="maBoutique && isCollapsed" title="{{ maBoutique.nom }} - {{ getCategorieName() }}">
       <div class="boutique-logo-wrapper">
         <img [src]="getBoutiqueLogoUrl()"
              [alt]="maBoutique.nom"
