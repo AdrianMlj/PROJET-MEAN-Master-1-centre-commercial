@@ -44,6 +44,8 @@ export interface Commande {
   sous_total: number;
   frais_livraison: number;
   total: number;
+  total_commande: number;
+  total_general: number;
   notes?: string;
   date_commande: Date;
   date_livraison_estimee?: Date;

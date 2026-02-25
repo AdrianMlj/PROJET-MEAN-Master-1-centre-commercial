@@ -42,8 +42,12 @@
           <span><i class="fas fa-calendar"></i> {{ commande.date_commande | date:'dd/MM/yyyy à HH:mm' }}</span>
           <span><i class="fas fa-store"></i> {{ commande.boutique?.nom }}</span>
         </div>
-        <div class="header-actions" *ngIf="peutAnnuler()">
-          <button class="btn btn-danger" (click)="annulerCommande()">
+        <div class="header-actions">
+          <button class="btn btn-success" *ngIf="peutPayer()" (click)="payerCommande()">
+            <i class="fas fa-credit-card"></i>
+            Payer la commande
+          </button>
+          <button class="btn btn-danger" *ngIf="peutAnnuler()" (click)="annulerCommande()">
             <i class="fas fa-times"></i>
             Annuler la commande
           </button>

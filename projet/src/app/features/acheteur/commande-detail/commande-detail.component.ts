@@ -149,6 +149,20 @@ export class CommandeDetailComponent implements OnInit {
     return this.commande?.statut === 'en_attente';
   }
 
+  peutPayer(): boolean {
+    return this.commande?.statut === 'pret' && 
+           (this.commande.statut_paiement === 'en_attente' || !this.commande.statut_paiement);
+  }
+
+  payerCommande(): void {
+    if (!this.commande) return;
+    
+    // Navigate to checkout with the commande ID
+    this.router.navigate(['/acheteur/checkout'], { 
+      queryParams: { commandeId: this.commande._id } 
+    });
+  }
+
   getStatutIcon(statut: StatutCommande): string {
     const icons: { [key: string]: string } = {
       'en_attente': 'fa-clock',

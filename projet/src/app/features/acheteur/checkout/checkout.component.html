@@ -19,15 +19,68 @@
       {{ errorMessage }}
     </div>
 
-    <!-- Success Message -->
-    <div class="success-message" *ngIf="successMessage">
+    <!-- Success Message with Invoice -->
+    <div class="success-container" *ngIf="successMessage && commandePayee">
+      <div class="success-card">
+        <div class="success-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <h2>Paiement reussi !</h2>
+        <p class="success-message">{{ successMessage }}</p>
+        
+        <!-- Invoice Summary -->
+        <div class="invoice-preview">
+          <div class="invoice-header">
+            <h3><i class="fas fa-file-invoice"></i> Recu de paiement</h3>
+          </div>
+          <div class="invoice-details">
+            <div class="invoice-row">
+              <span class="label">Numero de commande</span>
+              <span class="value numero">{{ commandePayee.numero_commande }}</span>
+            </div>
+            <div class="invoice-row">
+              <span class="label">Boutique</span>
+              <span class="value">{{ commandePayee.boutique?.nom }}</span>
+            </div>
+            <div class="invoice-row">
+              <span class="label">Date</span>
+              <span class="value">{{ commandePayee.date_commande | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="invoice-row">
+              <span class="label">Mode de paiement</span>
+              <span class="value">{{ getMethodeLabel(commandePayee.methode_paiement) }}</span>
+            </div>
+            <div class="invoice-row total">
+              <span class="label">Montant paye</span>
+              <span class="value amount">{{ (commandePayee.total_general || commandePayee.total_commande || commandePayee.total || 0) | number:'1.2-2' }} EUR</span>
+            </div>
+            <div class="invoice-row statut">
+              <span class="label">Statut du paiement</span>
+              <span class="value badge badge-success">Paye</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="success-actions">
+          <button type="button" class="btn btn-primary" (click)="voirDetailsCommande()">
+            <i class="fas fa-eye"></i> Voir les details
+          </button>
+          <button type="button" class="btn btn-outline" (click)="allerAuxCommandes()">
+            <i class="fas fa-list"></i> Toutes mes commandes
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simple Success Message (for new orders) -->
+    <div class="success-message" *ngIf="successMessage && !commandePayee">
       <i class="fas fa-check-circle"></i>
       {{ successMessage }}
       <p>Redirection vers vos commandes...</p>
     </div>
 
-    <!-- Checkout Form -->
-    <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()" *ngIf="!loading && !successMessage && panierTotal">
+    <!-- Checkout Form - New Order -->
+    <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()" *ngIf="!loading && !successMessage && panierTotal && !commandeAPayer">
       <div class="checkout-content">
         <div class="checkout-form">
           <!-- Adresse de livraison -->
@@ -264,6 +317,79 @@
             <i class="fas fa-shield-alt"></i>
             Paiement securise
           </p>
+        </div>
+      </div>
+    </form>
+
+    <!-- Checkout Form - Pay Existing Order -->
+    <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()" *ngIf="!loading && !successMessage && commandeAPayer" class="checkout-form">
+      <div class="checkout-content">
+        <div class="checkout-form">
+          <!-- Order Summary -->
+          <div class="form-section">
+            <h2><i class="fas fa-shopping-bag"></i> Commande a payer</h2>
+            <div class="order-summary">
+              <div class="summary-row">
+                <span>Commande</span>
+                <span class="numero">{{ commandeAPayer.numero_commande }}</span>
+              </div>
+              <div class="summary-row">
+                <span>Boutique</span>
+                <span>{{ commandeAPayer.boutique?.nom }}</span>
+              </div>
+              <div class="summary-row">
+                <span>Statut actuel</span>
+                <span class="badge badge-warning">{{ getStatutLabel(commandeAPayer.statut) }}</span>
+              </div>
+              <div class="summary-row total">
+                <span>Total a payer</span>
+                <span class="amount">{{ (commandeAPayer.total_general || commandeAPayer.total_commande || commandeAPayer.total || 0) | number:'1.2-2' }} EUR</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Method -->
+          <div class="form-section">
+            <h2><i class="fas fa-credit-card"></i> Methode de paiement</h2>
+            
+            <div class="payment-methods">
+              <label 
+                *ngFor="let methode of methodesPaiement" 
+                class="payment-method"
+                [class.selected]="checkoutForm.get('methode_paiement')?.value === methode.value"
+              >
+                <input 
+                  type="radio" 
+                  formControlName="methode_paiement" 
+                  [value]="methode.value"
+                >
+                <div class="payment-method-icon">
+                  <i class="fas {{ methode.icon }}"></i>
+                </div>
+                <span class="payment-method-label">{{ methode.label }}</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="payment-summary">
+            <div class="payment-info-card">
+              <i class="fas fa-shield-alt"></i>
+              <div>
+                <strong>Paiement securise</strong>
+                <p>Vos informations de paiement sont chiffrees et securisees</p>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            class="btn btn-success btn-submit btn-lg"
+            [disabled]="submitting"
+          >
+            <i class="fas fa-lock" *ngIf="!submitting"></i>
+            <i class="fas fa-spinner fa-spin" *ngIf="submitting"></i>
+            {{ submitting ? 'Traitement...' : 'Payer maintenant' }}
+          </button>
         </div>
       </div>
     </form>
