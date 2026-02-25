@@ -374,7 +374,7 @@
               {{ isBoutiqueFavorie(boutique._id) ? 'Boutique deja en favoris' : 'Ajouter boutique' }}
             </button>
             <div class="boutique-stats" *ngIf="boutique.statistiques">
-              <span><i class="fas fa-box"></i> {{ boutique.statistiques.nombre_produits || 0 }} produits</span>
+              <!-- <span><i class="fas fa-box"></i> {{ boutique.statistiques.nombre_produits || 0 }} produits</span> -->
               <span *ngIf="boutique.statistiques.note_moyenne">
                 <i class="fas fa-star"></i> {{ boutique.statistiques.note_moyenne | number:'1.1-1' }}
               </span>
