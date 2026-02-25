@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 
+
 const avisSchema = new mongoose.Schema({
   produit: {
     type: mongoose.Schema.Types.ObjectId,
@@ -56,6 +57,7 @@ const avisSchema = new mongoose.Schema({
 });
 
 avisSchema.plugin(mongoosePaginate);
+
 
 // Indexes
 avisSchema.index({ produit: 1 });

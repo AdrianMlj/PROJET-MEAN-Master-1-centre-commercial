@@ -48,7 +48,6 @@ const utilisateurSchema = new mongoose.Schema({
   },
   avatar_url: {
     type: String,
-    default: null
   },
   date_naissance: {
     type: Date

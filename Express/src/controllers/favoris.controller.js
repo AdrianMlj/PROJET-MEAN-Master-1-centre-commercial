@@ -50,12 +50,6 @@ exports.ajouterProduitFavori = async (req, res) => {
       favori: nouveauFavori
     });
   } catch (error) {
-    if (error?.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: 'Ce produit est deja dans vos favoris'
-      });
-    }
     console.error('Erreur ajout favori:', error);
     res.status(500).json({
       success: false,
@@ -113,12 +107,6 @@ exports.ajouterBoutiqueFavori = async (req, res) => {
       favori: nouveauFavori
     });
   } catch (error) {
-    if (error?.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cette boutique est deja dans vos favoris'
-      });
-    }
     console.error('Erreur ajout favori boutique:', error);
     res.status(500).json({
       success: false,
@@ -128,13 +116,15 @@ exports.ajouterBoutiqueFavori = async (req, res) => {
   }
 };
 
-// Obtenir les favoris d'un utilisateur
+// ============================================
+// Obtenir tous les favoris de l'utilisateur connecté
+// ============================================
 exports.obtenirFavoris = async (req, res) => {
   try {
     const favoris = await Favoris.find({ client: req.user.id })
       .populate({
         path: 'produit',
-        select: 'nom prix prix_promotion en_promotion images boutique est_actif quantite_stock',
+        select: 'nom prix prix_promotion en_promotion images boutique est_actif',
         populate: {
           path: 'boutique',
           select: 'nom logo_url est_active'
@@ -150,16 +140,22 @@ exports.obtenirFavoris = async (req, res) => {
       })
       .sort({ date_ajout: -1 });
 
-    // Séparer produits et boutiques
-    const produitsFavoris = favoris.filter(f => f.produit && f.produit.est_actif && f.produit.boutique.est_active);
-    const boutiquesFavoris = favoris.filter(f => f.boutique && f.boutique.est_active);
+    // Séparer les favoris valides
+    const produitsFavoris = favoris
+      .filter(f => f.produit && f.produit.est_actif && f.produit.boutique?.est_active)
+      .map(f => f.produit);
+
+    const boutiquesFavoris = favoris
+      .filter(f => f.boutique && f.boutique.est_active)
+      .map(f => f.boutique);
 
     res.status(200).json({
       success: true,
-      produits: produitsFavoris.map(f => f.produit),
-      boutiques: boutiquesFavoris.map(f => f.boutique),
+      produits: produitsFavoris,
+      boutiques: boutiquesFavoris,
       total: favoris.length
     });
+
   } catch (error) {
     console.error('Erreur obtention favoris:', error);
     res.status(500).json({

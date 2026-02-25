@@ -544,7 +544,7 @@ exports.modifierProduit = async (req, res) => {
   }
 };
 
-// Gérant: Supprimer un produit
+// Gérant: Supprimer un produit (définitivement)
 exports.supprimerProduit = async (req, res) => {
   try {
     // Récupérer le produit
@@ -566,13 +566,12 @@ exports.supprimerProduit = async (req, res) => {
       });
     }
 
-    // Désactiver plutôt que supprimer (soft delete)
-    produit.est_actif = false;
-    await produit.save();
+    // ✅ Suppression définitive
+    await produit.deleteOne();
 
     res.status(200).json({
       success: true,
-      message: 'Produit désactivé avec succès'
+      message: 'Produit supprimé définitivement avec succès'
     });
   } catch (error) {
     console.error('Erreur suppression produit:', error);
@@ -751,17 +750,22 @@ exports.obtenirProduitsBoutiqueGérant = async (req, res) => {
   }
 };
 
-// Upload image produit
-exports.uploadImageProduit = async (req, res) => {
+// ============================================
+// Gérant: Uploader plusieurs images pour un produit
+// ============================================
+exports.uploadImagesProduit = async (req, res) => {
   try {
-    if (!req.file) {
+    const { id } = req.params;
+
+    if (!req.files || req.files.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Aucun fichier uploadé'
       });
     }
 
-    const produit = await Produit.findById(req.params.id);
+    // Récupérer le produit
+    const produit = await Produit.findById(id).populate('boutique');
     if (!produit) {
       return res.status(404).json({
         success: false,
@@ -771,42 +775,48 @@ exports.uploadImageProduit = async (req, res) => {
 
     // Vérifier que l'utilisateur est le gérant de la boutique
     const boutique = await Boutique.findOne({ gerant: req.user.id });
-    if (!boutique || !produit.boutique.equals(boutique._id)) {
+    if (!boutique || !produit.boutique._id.equals(boutique._id)) {
       return res.status(403).json({
         success: false,
         message: 'Vous n\'êtes pas autorisé à modifier ce produit'
       });
     }
 
-    // Construire l'URL de l'image
-    const imageUrl = `/uploads/produits/${req.file.filename}`;
-    
-    // Ajouter l'image au produit
-    const nouvelleImage = {
-      url: imageUrl,
-      ordre: produit.images.length,
-      is_principale: produit.images.length === 0 // Première image = principale
-    };
-    
-    produit.images.push(nouvelleImage);
+    // Limiter le nombre total d'images (par exemple, max 5)
+    const MAX_IMAGES = 5;
+    if (produit.images.length + req.files.length > MAX_IMAGES) {
+      return res.status(400).json({
+        success: false,
+        message: `Vous ne pouvez pas avoir plus de ${MAX_IMAGES} images. Actuellement: ${produit.images.length}`
+      });
+    }
+
+    // Construire les URLs des nouvelles images
+    const nouvellesImages = req.files.map(file => ({
+      url: `/uploads/produits/${file.filename}`,
+      ordre: produit.images.length, // À ajuster si besoin
+      is_principale: produit.images.length === 0 // La première devient principale si aucune
+    }));
+
+    // Ajouter au produit
+    produit.images.push(...nouvellesImages);
     await produit.save();
 
     res.status(200).json({
       success: true,
-      message: 'Image uploadée avec succès',
-      image: nouvelleImage,
+      message: `${req.files.length} image(s) uploadée(s) avec succès`,
       images: produit.images
     });
+
   } catch (error) {
-    console.error('Erreur upload image produit:', error);
+    console.error('Erreur upload images produit:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur lors de l\'upload de l\'image',
+      message: 'Erreur lors de l\'upload des images',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
-
 // Supprimer image produit
 exports.supprimerImageProduit = async (req, res) => {
   try {
@@ -861,6 +871,56 @@ exports.supprimerImageProduit = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression de l\'image',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ============================================
+// Gérant: Activer/Désactiver un produit
+// ============================================
+exports.toggleActivationProduit = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Récupérer le produit
+    const produit = await Produit.findById(id).populate('boutique');
+
+    if (!produit) {
+      return res.status(404).json({
+        success: false,
+        message: 'Produit non trouvé'
+      });
+    }
+
+    // Vérifier que l'utilisateur est le gérant de la boutique
+    const boutique = await Boutique.findOne({ gerant: req.user.id });
+    if (!boutique || !produit.boutique._id.equals(boutique._id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Vous n\'êtes pas autorisé à modifier ce produit'
+      });
+    }
+
+    // Inverser le statut actif
+    produit.est_actif = !produit.est_actif;
+    await produit.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Produit ${produit.est_actif ? 'activé' : 'désactivé'} avec succès`,
+      produit: {
+        id: produit._id,
+        nom: produit.nom,
+        est_actif: produit.est_actif
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur activation/désactivation produit:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la modification du statut du produit',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

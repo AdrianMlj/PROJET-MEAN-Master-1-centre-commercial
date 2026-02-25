@@ -18,6 +18,7 @@ const statistiquesRoutes = require('./routes/statistiques.routes');
 const avisRoutes = require('./routes/avis.routes');
 const favorisRoutes = require('./routes/favoris.routes');
 const adminRoutes = require('./routes/admin.routes');
+const notificationRoutes = require('./routes/notification.routes');
 
 const app = express();
 
@@ -60,6 +61,7 @@ app.use('/api/statistiques', statistiquesRoutes);
 app.use('/api/avis', avisRoutes);
 app.use('/api/favoris', favorisRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Route de test API
 app.get('/api/health', (req, res) => {
@@ -96,6 +98,7 @@ app.use('*', (req, res) => {
       '/api/avis/* - Avis',
       '/api/favoris/* - Favoris',
       '/api/roles/* - Roles',
+      '/api/notifications/* - Notifications'
     ]
   });
 });

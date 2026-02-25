@@ -19,16 +19,8 @@ const favorisSchema = new mongoose.Schema({
 });
 
 // Indexes
-// Unicite uniquement quand le champ cible existe, sinon Mongo considere "null"
-// et bloque l'ajout d'autres favoris du meme client.
-favorisSchema.index(
-  { client: 1, produit: 1 },
-  { unique: true, partialFilterExpression: { produit: { $type: 'objectId' } } }
-);
-favorisSchema.index(
-  { client: 1, boutique: 1 },
-  { unique: true, partialFilterExpression: { boutique: { $type: 'objectId' } } }
-);
+favorisSchema.index({ client: 1, produit: 1 }, { unique: true, sparse: true });
+favorisSchema.index({ client: 1, boutique: 1 }, { unique: true, sparse: true });
 favorisSchema.index({ client: 1 });
 
 // Validation pour s'assurer qu'au moins un des deux est présent

@@ -32,18 +32,10 @@ const roleMiddleware = require('../middlewares/role.middleware');
  *               adresse_livraison:
  *                 type: object
  *                 required:
- *                   - nom_complet
- *                   - telephone
  *                   - rue
  *                   - ville
  *                   - code_postal
  *                 properties:
- *                   nom_complet:
- *                     type: string
- *                     example: "Jean Dupont"
- *                   telephone:
- *                     type: string
- *                     example: "+33612345678"
  *                   rue:
  *                     type: string
  *                     example: "123 Avenue du Commerce"
@@ -510,6 +502,93 @@ router.get('/admin/toutes',
   authMiddleware,
   roleMiddleware('admin_centre'),
   commandeController.obtenirToutesCommandes
+);
+
+/**
+ * @swagger
+ * /commandes/{id}/payer:
+ *   post:
+ *     tags: [Commandes]
+ *     summary: Payer une commande (client)
+ *     description: Permet au client de payer une commande après confirmation de la boutique
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               methode_paiement:
+ *                 type: string
+ *                 enum: [carte_credit, virement, mobile]
+ *                 default: carte_credit
+ *               token_paiement:
+ *                 type: string
+ *                 description: Token du fournisseur de paiement (optionnel)
+ *     responses:
+ *       200:
+ *         description: Paiement effectué
+ *       400:
+ *         description: Commande non payable
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/Error'
+ */
+router.post('/:id/payer',
+  authMiddleware,
+  roleMiddleware('acheteur'),
+  commandeController.payerCommande
+);
+
+/**
+ * @swagger
+ * /commandes/{id}/facture:
+ *   get:
+ *     tags: [Commandes]
+ *     summary: Télécharger la facture PDF de la commande
+ *     description: Génère et télécharge un PDF récapitulatif de la commande (accessible par le client , le gerant, l'admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la commande
+ *     responses:
+ *       200:
+ *         description: Fichier PDF
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/Error'
+ */
+router.get('/:id/facture',
+  authMiddleware,
+  commandeController.genererFacturePDF
 );
 
 module.exports = router;

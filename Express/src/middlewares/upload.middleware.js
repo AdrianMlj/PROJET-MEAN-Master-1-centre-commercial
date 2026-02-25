@@ -19,12 +19,31 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let uploadPath = uploadsDir;
     
-    if (req.baseUrl.includes('/produits')) {
-      uploadPath = produitsDir;
-    } else if (req.baseUrl.includes('/boutiques')) {
-      uploadPath = boutiquesDir;
-    } else if (req.baseUrl.includes('/utilisateurs')) {
+    // ✅ SOLUTION AMÉLIORÉE - Vérification multiple
+    const url = req.originalUrl || req.url;
+    
+    // 1. Vérifier par le nom du champ (fieldname)
+    if (file.fieldname === 'avatar') {
       uploadPath = avatarsDir;
+      console.log('👤 Avatar upload vers:', avatarsDir);
+    }
+    // 2. Vérifier par le chemin de l'URL
+    else if (url.includes('/auth/avatar') || url.includes('/utilisateurs')) {
+      uploadPath = avatarsDir;
+      console.log('👤 Avatar upload vers:', avatarsDir);
+    }
+    // 3. Vérifier par baseUrl
+    else if (req.baseUrl.includes('/produits')) {
+      uploadPath = produitsDir;
+      console.log('📸 Produit upload vers:', produitsDir);
+    }
+    else if (req.baseUrl.includes('/boutiques')) {
+      uploadPath = boutiquesDir;
+      console.log('🏪 Boutique upload vers:', boutiquesDir);
+    }
+    else if (req.baseUrl.includes('/utilisateurs')) {
+      uploadPath = avatarsDir;
+      console.log('👤 Utilisateur upload vers:', avatarsDir);
     }
     
     cb(null, uploadPath);
@@ -32,7 +51,14 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    
+    // ✅ Garder le nom original du champ (avatar, logo, image, etc.)
+    let prefix = file.fieldname;
+    if (file.fieldname === 'avatar') {
+      prefix = 'avatar';
+    }
+    
+    cb(null, prefix + '-' + uniqueSuffix + ext);
   }
 });
 
