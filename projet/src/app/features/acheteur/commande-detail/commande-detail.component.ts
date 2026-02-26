@@ -15,6 +15,7 @@ export class CommandeDetailComponent implements OnInit {
   loading = true;
   loadingHistorique = false;
   errorMessage = '';
+  showFacture = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -24,6 +25,9 @@ export class CommandeDetailComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
+    const facture = this.route.snapshot.queryParams['facture'];
+    this.showFacture = facture === 'true';
+    
     if (id) {
       this.chargerCommande(id);
       this.chargerHistorique(id);
@@ -151,15 +155,41 @@ export class CommandeDetailComponent implements OnInit {
 
   peutPayer(): boolean {
     return this.commande?.statut === 'pret' && 
-           (this.commande.statut_paiement === 'en_attente' || !this.commande.statut_paiement);
+           (this.commande.informations_paiement?.statut === 'en_attente' || !this.commande.informations_paiement?.statut);
   }
 
   payerCommande(): void {
     if (!this.commande) return;
     
-    // Navigate to checkout with the commande ID
-    this.router.navigate(['/acheteur/checkout'], { 
-      queryParams: { commandeId: this.commande._id } 
+    // Navigate to payer page with the commande ID
+    this.router.navigate(['/acheteur/payer', this.commande._id]);
+  }
+
+  toggleFacture(): void {
+    this.showFacture = !this.showFacture;
+  }
+
+  downloadFacture(): void {
+    if (!this.commande) return;
+    
+    const numeroCommande = this.commande.numero_commande;
+    
+    this.commandeService.telechargerFacture(this.commande._id).subscribe({
+      next: (blob) => {
+        // Create a download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `facture-${numeroCommande}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (error) => {
+        console.error('Erreur lors du téléchargement de la facture:', error);
+        alert('Erreur lors du téléchargement de la facture');
+      }
     });
   }
 

@@ -436,3 +436,182 @@
     order: 3;
   }
 }
+
+/* Facture Styles */
+.facture-card {
+  border: 2px solid #667eea;
+  background: #fff;
+}
+
+.facture-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #667eea;
+}
+
+.facture-header h2 {
+  color: #667eea;
+  font-size: 1.5rem;
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.facture-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.facture-content {
+  font-size: 0.95rem;
+}
+
+.facture-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.facture-seller h4,
+.facture-buyer h4,
+.facture-number p {
+  margin-bottom: 5px;
+}
+
+.facture-seller h4 {
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+.facture-seller p,
+.facture-buyer p {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.facture-number {
+  text-align: right;
+}
+
+.facture-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.facture-table thead {
+  background: #667eea;
+  color: white;
+}
+
+.facture-table th,
+.facture-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.facture-table th {
+  font-weight: 600;
+}
+
+.facture-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.facture-totals {
+  margin-left: auto;
+  width: 300px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.facture-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  color: #666;
+}
+
+.facture-line.total {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #333;
+  border-top: 2px solid #667eea;
+  margin-top: 8px;
+  padding-top: 10px;
+}
+
+.facture-payment {
+  margin-top: 20px;
+  padding: 15px;
+  background: #d4edda;
+  border-radius: 8px;
+  color: #155724;
+}
+
+.facture-payment p {
+  margin: 5px 0;
+}
+
+.facture-payment i {
+  margin-right: 5px;
+}
+
+.facture-footer {
+  margin-top: 30px;
+  text-align: center;
+  color: #888;
+  font-style: italic;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 0.85rem;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-primary:hover {
+  background: #5568d3;
+}
+
+@media (max-width: 768px) {
+  .facture-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .facture-number {
+    text-align: left;
+  }
+  
+  .facture-totals {
+    width: 100%;
+  }
+}

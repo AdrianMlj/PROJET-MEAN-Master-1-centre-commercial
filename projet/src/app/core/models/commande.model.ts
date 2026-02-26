@@ -39,7 +39,12 @@ export interface Commande {
   adresse_livraison: AdresseLivraison;
   mode_livraison: ModeLivraison;
   statut: StatutCommande;
-  statut_paiement: 'en_attente' | 'paye' | 'rembourse' | 'echoue';
+  informations_paiement?: {
+    methode?: string;
+    statut?: 'en_attente' | 'paye' | 'echec' | 'rembourse';
+    reference?: string;
+    date_paiement?: Date;
+  };
   methode_paiement: MethodePaiement;
   sous_total: number;
   frais_livraison: number;

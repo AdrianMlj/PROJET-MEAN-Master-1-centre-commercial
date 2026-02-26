@@ -21,6 +21,86 @@
 
     <!-- Commande Content -->
     <div class="commande-content" *ngIf="!loading && commande">
+      <!-- Facture Section -->
+      <div class="info-card facture-card" *ngIf="showFacture">
+        <div class="facture-header">
+          <h2><i class="fas fa-file-invoice"></i> FACTURE</h2>
+          <div class="facture-actions">
+            <button class="btn btn-sm btn-primary" (click)="downloadFacture()">
+              <i class="fas fa-download"></i> PDF
+            </button>
+            <button class="btn btn-sm btn-secondary" (click)="toggleFacture()">
+              <i class="fas fa-times"></i> Fermer
+            </button>
+          </div>
+        </div>
+        <div class="facture-content">
+          <div class="facture-info">
+            <div class="facture-seller">
+              <h4>{{ commande.boutique?.nom }}</h4>
+              <p>{{ commande.boutique?.adresse }}</p>
+            </div>
+            <div class="facture-buyer">
+              <h4>Facturé à:</h4>
+              <p><strong>{{ commande.adresse_livraison?.nom_complet }}</strong></p>
+              <p>{{ commande.adresse_livraison?.rue }}</p>
+              <p *ngIf="commande.adresse_livraison?.complement">{{ commande.adresse_livraison?.complement }}</p>
+              <p>{{ commande.adresse_livraison?.code_postal }} {{ commande.adresse_livraison?.ville }}</p>
+            </div>
+            <div class="facture-number">
+              <p><strong>N° Facture:</strong> FAC-{{ commande.numero_commande }}</p>
+              <p><strong>Date:</strong> {{ commande.date_commande | date:'dd/MM/yyyy' }}</p>
+              <p><strong>Commande:</strong> {{ commande.numero_commande }}</p>
+              <p><strong>Livraison:</strong> {{ getModeLivraisonLabel(commande.mode_livraison) }}</p>
+            </div>
+          </div>
+          
+          <table class="facture-table">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Qté</th>
+                <th>Prix Unit.</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let detail of commande.details">
+                <td>{{ detail.produit?.nom }}</td>
+                <td>{{ detail.quantite }}</td>
+                <td>{{ detail.prix_unitaire | number:'1.2-2' }} €</td>
+                <td>{{ detail.prix_total | number:'1.2-2' }} €</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div class="facture-totals">
+            <div class="facture-line">
+              <span>Sous-total:</span>
+              <span>{{ commande.sous_total | number:'1.2-2' }} €</span>
+            </div>
+            <div class="facture-line">
+              <span>Frais de livraison:</span>
+              <span>{{ commande.frais_livraison | number:'1.2-2' }} €</span>
+            </div>
+            <div class="facture-line total">
+              <span>Total TTC:</span>
+              <span>{{ commande.total | number:'1.2-2' }} €</span>
+            </div>
+          </div>
+          
+          <div class="facture-payment" *ngIf="commande.informations_paiement?.statut === 'paye'">
+            <p><i class="fas fa-check-circle"></i> <strong>Payé le:</strong> {{ commande.informations_paiement?.date_paiement | date:'dd/MM/yyyy à HH:mm' }}</p>
+            <p><strong>Méthode de paiement:</strong> {{ getMethodePaiementLabel(commande.informations_paiement?.methode || commande.methode_paiement) }}</p>
+            <p><strong>Référence paiement:</strong> {{ commande.informations_paiement?.reference }}</p>
+          </div>
+          
+          <div class="facture-footer">
+            <p>Merci pour votre achat !</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Header Card -->
       <div class="info-card header-card">
         <div class="header-main">
@@ -33,8 +113,8 @@
               <i class="fas" [ngClass]="getStatutIcon(commande.statut)"></i>
               {{ getStatutLabel(commande.statut) }}
             </span>
-            <span class="payment-badge" [ngClass]="getPaiementClass(commande.statut_paiement)">
-              {{ getPaiementLabel(commande.statut_paiement) }}
+            <span class="payment-badge" [ngClass]="getPaiementClass(commande.informations_paiement?.statut || 'en_attente')">
+              {{ getPaiementLabel(commande.informations_paiement?.statut || 'en_attente') }}
             </span>
           </div>
         </div>
@@ -43,6 +123,10 @@
           <span><i class="fas fa-store"></i> {{ commande.boutique?.nom }}</span>
         </div>
         <div class="header-actions">
+          <button class="btn btn-primary" *ngIf="commande.informations_paiement?.statut === 'paye'" (click)="toggleFacture()">
+            <i class="fas fa-file-invoice"></i>
+            {{ showFacture ? 'Masquer la facture' : 'Voir la facture' }}
+          </button>
           <button class="btn btn-success" *ngIf="peutPayer()" (click)="payerCommande()">
             <i class="fas fa-credit-card"></i>
             Payer la commande
@@ -161,8 +245,8 @@
               <p><strong>Méthode:</strong> {{ getMethodePaiementLabel(commande.methode_paiement) }}</p>
               <p>
                 <strong>Statut:</strong> 
-                <span class="payment-status" [ngClass]="getPaiementClass(commande.statut_paiement)">
-                  {{ getPaiementLabel(commande.statut_paiement) }}
+                <span class="payment-status" [ngClass]="getPaiementClass(commande.informations_paiement?.statut || 'en_attente')">
+                  {{ getPaiementLabel(commande.informations_paiement?.statut || 'en_attente') }}
                 </span>
               </p>
             </div>

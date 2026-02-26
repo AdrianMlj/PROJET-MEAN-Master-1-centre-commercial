@@ -185,9 +185,18 @@ export class CheckoutComponent implements OnInit {
         if (response.success) {
           // Store the paid order for invoice display
           this.commandePayee = this.commandeAPayer;
-          this.commandePayee!.statut_paiement = 'paye';
+          this.commandePayee!.informations_paiement = {
+            methode: methodePaiement as string,
+            statut: 'paye',
+            date_paiement: new Date()
+          };
           this.commandePayee!.methode_paiement = methodePaiement as MethodePaiement;
           this.successMessage = 'Paiement effectue avec succes !';
+          
+          // Auto-redirect to order details with invoice after 2 seconds
+          setTimeout(() => {
+            this.voirDetailsCommande();
+          }, 2000);
         } else {
           this.errorMessage = response.message || 'Erreur lors du paiement';
           this.submitting = false;
@@ -202,7 +211,9 @@ export class CheckoutComponent implements OnInit {
 
   voirDetailsCommande(): void {
     if (this.commandePayee) {
-      this.router.navigate(['/acheteur/commande-detail', this.commandePayee._id]);
+      this.router.navigate(['/acheteur/commande-detail', this.commandePayee._id], { 
+        queryParams: { facture: true } 
+      });
     } else {
       this.router.navigate(['/acheteur/commandes']);
     }

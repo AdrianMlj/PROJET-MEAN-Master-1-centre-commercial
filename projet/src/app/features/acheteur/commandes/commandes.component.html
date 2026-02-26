@@ -75,8 +75,8 @@
             <span class="status-badge" [ngClass]="getStatutClass(commande.statut)">
               {{ getStatutLabel(commande.statut) }}
             </span>
-            <span class="payment-badge" [ngClass]="getPaiementClass(commande.statut_paiement)">
-              {{ getPaiementLabel(commande.statut_paiement) }}
+            <span class="payment-badge" [ngClass]="getPaiementClass(commande.informations_paiement?.statut || 'en_attente')">
+              {{ getPaiementLabel(commande.informations_paiement?.statut || 'en_attente') }}
             </span>
           </div>
         </div>
@@ -123,7 +123,7 @@
             </button>
             <button 
               class="btn btn-sm btn-success" 
-              *ngIf="commande.statut === 'pret' && (commande.statut_paiement === 'en_attente' || !commande.statut_paiement)"
+              *ngIf="commande.statut === 'pret' && (commande.informations_paiement?.statut === 'en_attente' || !commande.informations_paiement?.statut)"
               (click)="payerCommande(commande, $event)"
             >
               <i class="fas fa-credit-card"></i>

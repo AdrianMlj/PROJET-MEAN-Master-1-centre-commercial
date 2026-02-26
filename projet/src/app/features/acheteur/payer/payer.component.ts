@@ -59,7 +59,7 @@ export class PayerComponent implements OnInit {
           // Check if the order is ready for payment
           if (this.commande.statut !== 'pret') {
             this.errorMessage = 'Cette commande ne peut pas être payée pour le moment. Statut: ' + this.commande.statut;
-          } else if (this.commande.statut_paiement !== 'en_attente') {
+          } else if (this.commande.informations_paiement?.statut !== 'en_attente') {
             this.errorMessage = 'Cette commande a déjà été payée.';
           }
         } else {
@@ -82,20 +82,31 @@ export class PayerComponent implements OnInit {
     this.submitting = true;
     this.errorMessage = '';
 
-    // For now, we'll just simulate payment success
-    // In a real app, this would call a payment API
     const methode_paiement = this.paiementForm.value.methode_paiement;
     
-    // Simulate payment processing
-    setTimeout(() => {
-      this.successMessage = `Paiement de ${this.commande.total_general}€ effectué avec succès par ${this.getMethodeLabel(methode_paiement)}!`;
-      this.submitting = false;
-      
-      // Redirect to commandes after success
-      setTimeout(() => {
-        this.router.navigate(['/acheteur/commandes']);
-      }, 2000);
-    }, 1500);
+    // Call the actual payment API
+    this.commandeService.payerCommande(this.commandeId, methode_paiement).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.successMessage = `Paiement de ${this.commande.total_general || this.commande.total}€ effectué avec succès par ${this.getMethodeLabel(methode_paiement)}!`;
+          this.submitting = false;
+          
+          // Redirect to order details with invoice after success
+          setTimeout(() => {
+            this.router.navigate(['/acheteur/commande-detail', this.commandeId], {
+              queryParams: { facture: true }
+            });
+          }, 2000);
+        } else {
+          this.errorMessage = response.message || 'Erreur lors du paiement';
+          this.submitting = false;
+        }
+      },
+      error: (error) => {
+        this.errorMessage = error.error?.message || 'Erreur lors du paiement';
+        this.submitting = false;
+      }
+    });
   }
 
   getMethodeLabel(methode: string): string {

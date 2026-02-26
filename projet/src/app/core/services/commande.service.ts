@@ -52,4 +52,10 @@ export class CommandeService {
   payerCommande(id: string, methodePaiement: string): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/${id}/payer`, { methode_paiement: methodePaiement });
   }
+
+  telechargerFacture(id: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/facture`, {
+      responseType: 'blob'
+    });
+  }
 }
