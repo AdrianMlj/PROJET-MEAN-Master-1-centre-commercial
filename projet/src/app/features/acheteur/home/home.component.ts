@@ -803,7 +803,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       filters.en_promotion = this.filtreEnPromotion;
     }
 
-    if (this.currentViewMode === 'promotions' || this.filtreEnPromotion) {
+    if (this.currentViewMode === 'promotions' || this.filtreEnPromotion || this.filtreTri === 'promotion') {
       filters.en_promotion = true;
       filters.tri = 'promotion';
     }
