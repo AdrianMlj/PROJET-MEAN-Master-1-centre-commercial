@@ -935,7 +935,7 @@ exports.genererFacturePDF = async (req, res) => {
     doc.fillColor(primaryColor);
     doc.text(commande.numero_commande, col1X + 120, startY);
     doc.text(new Date(commande.date_commande).toLocaleDateString('fr-FR'), col1X + 120, startY + lineHeight);
-    doc.text(commande.informations_paiement.statut, col1X + 120, startY + 2 * lineHeight);
+    doc.text(commande.statut, col1X + 120, startY + 2 * lineHeight);
 
     doc.fillColor(secondaryColor);
     doc.text('Mode de livraison :', col2X, startY);
