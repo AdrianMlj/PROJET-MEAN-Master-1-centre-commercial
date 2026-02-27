@@ -30,23 +30,56 @@ swaggerConfig(app);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuration CORS
+// ============================================
+// ✅ CONFIGURATION CORS CORRIGÉE
+// ============================================
+// Liste des origines autorisées (frontends)
+const allowedOrigins = [
+  'https://projet-mean-master-1-centre-commercial-1.onrender.com', // Ancien frontend
+  'https://projet-mean-master-1-centre-commercial-2.onrender.com', // Nouveau frontend
+  process.env.FRONTEND_URL,                                        // Variable d'environnement
+  process.env.FRONTEND_URL2                                        // Deuxième variable
+].filter(origin => origin && origin.trim() !== '');               // Filtrer les valeurs vides
+
+console.log('🌍 CORS - Origines autorisées:', allowedOrigins);
+
+// Middleware CORS avec support de plusieurs origines
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:4200',
-  credentials: true,
+  origin: function(origin, callback) {
+    // Autoriser les requêtes sans origine (Postman, curl, etc.)
+    if (!origin) {
+      console.log('📡 Requête sans origine acceptée');
+      return callback(null, true);
+    }
+    
+    // Vérifier si l'origine est dans la liste autorisée
+    if (allowedOrigins.includes(origin)) {
+      console.log(`✅ CORS accepté pour: ${origin}`);
+      return callback(null, true);
+    }
+    
+    // Si l'origine n'est pas autorisée, log et refus
+    console.log(`❌ CORS refusé pour: ${origin}`);
+    console.log('📋 Origines autorisées:', allowedOrigins);
+    callback(new Error('CORS non autorisé pour cette origine'));
+  },
+  credentials: true,  // Important pour les cookies/sessions
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  exposedHeaders: ['Authorization'] // Pour les tokens JWT
 }));
 
-// Servir les fichiers uploadés
+// Middleware pour servir les fichiers uploadés
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Route d'accueil
+// Route d'accueil - Redirection vers la documentation Swagger
 app.get('/', (req, res) => {
   res.redirect('/api-docs');
 });
 
-// Configuration des routes API
+// ============================================
+// CONFIGURATION DES ROUTES API
+// ============================================
 app.use('/api/auth', authRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/utilisateurs', utilisateurRoutes);
@@ -70,12 +103,14 @@ app.get('/api/health', (req, res) => {
     message: 'API Centre Commercial M1P13 2026 fonctionnelle',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
+    environment: process.env.NODE_ENV || 'development',
     documentation: 'http://localhost:3000/api-docs'
   });
 });
 
-// Route 404
+// ============================================
+// GESTION DES ERREURS 404
+// ============================================
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -93,7 +128,7 @@ app.use('*', (req, res) => {
       '/api/categories-boutique/* - Categorie Boutique',
       '/api/categories-produit/* - Categorie Produit',
       '/api/paiements/* - Paiements',
-      '/api/statistiques/* - Statisques',
+      '/api/statistiques/* - Statistiques',
       '/api/utilisateurs/* - Utilisateurs',
       '/api/avis/* - Avis',
       '/api/favoris/* - Favoris',
