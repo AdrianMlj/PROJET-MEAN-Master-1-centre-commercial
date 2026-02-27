@@ -38,8 +38,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-// Servir les fichiers uploadés
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Route d'accueil
 app.get('/', (req, res) => {
