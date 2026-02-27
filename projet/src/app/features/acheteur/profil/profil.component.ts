@@ -89,7 +89,6 @@ export class ProfilComponent implements OnInit {
             preferences: response.utilisateur.preferences || {}
           });
           
-          // Charger les stats si disponibles
           if (response.statistiques) {
             this.stats = response.statistiques;
           }
@@ -102,7 +101,6 @@ export class ProfilComponent implements OnInit {
       }
     });
 
-    // Charger les commandes des le debut pour les statistiques
     this.chargerCommandes();
   }
 
@@ -115,12 +113,13 @@ export class ProfilComponent implements OnInit {
         if (response.success)
         {
           this.orders = response.docs || [];
-          // Calculate stats from orders
           this.stats.totalCommandes = this.orders.length;
+          
+          // ✅ Correction: Utiliser total_general ou total_commande
           this.stats.totalAchats = this.orders
             .filter(o => o.statut === 'livre')
-            .reduce((sum, o) => sum + (o.total || 0), 0);
-          // Count unique boutiques
+            .reduce((sum, o) => sum + (o.total_general || o.total_commande || 0), 0);
+          
           const boutiqueIds = new Set(this.orders.map(o => o.boutique?._id));
           this.stats.boutiquesVisitees = boutiqueIds.size;
         }
@@ -209,7 +208,6 @@ export class ProfilComponent implements OnInit {
     this.passwordMessage = '';
     this.passwordError = '';
     
-    // Load orders when switching to orders tab
     if (tab === 'commandes' && this.orders.length === 0) {
       this.chargerCommandes();
     }

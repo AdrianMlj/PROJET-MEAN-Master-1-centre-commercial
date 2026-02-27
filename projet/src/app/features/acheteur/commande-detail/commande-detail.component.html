@@ -38,11 +38,10 @@
           <div class="facture-info">
             <div class="facture-seller">
               <h4>{{ commande.boutique?.nom }}</h4>
-              <p>{{ commande.boutique?.adresse }}</p>
+              <!-- <p>{{ commande.boutique?.adresse }}</p> -->
             </div>
             <div class="facture-buyer">
               <h4>Facturé à:</h4>
-              <p><strong>{{ commande.adresse_livraison?.nom_complet }}</strong></p>
               <p>{{ commande.adresse_livraison?.rue }}</p>
               <p *ngIf="commande.adresse_livraison?.complement">{{ commande.adresse_livraison?.complement }}</p>
               <p>{{ commande.adresse_livraison?.code_postal }} {{ commande.adresse_livraison?.ville }}</p>
@@ -69,7 +68,7 @@
                 <td>{{ detail.produit?.nom }}</td>
                 <td>{{ detail.quantite }}</td>
                 <td>{{ detail.prix_unitaire | number:'1.2-2' }} €</td>
-                <td>{{ detail.prix_total | number:'1.2-2' }} €</td>
+                <td>{{ (detail.prix_unitaire * detail.quantite) | number:'1.2-2' }} €</td>
               </tr>
             </tbody>
           </table>
@@ -77,7 +76,7 @@
           <div class="facture-totals">
             <div class="facture-line">
               <span>Sous-total:</span>
-              <span>{{ commande.sous_total | number:'1.2-2' }} €</span>
+              <span>{{ getSousTotal() | number:'1.2-2' }} €</span>
             </div>
             <div class="facture-line">
               <span>Frais de livraison:</span>
@@ -85,7 +84,7 @@
             </div>
             <div class="facture-line total">
               <span>Total TTC:</span>
-              <span>{{ commande.total | number:'1.2-2' }} €</span>
+              <span>{{ getTotalGeneral() | number:'1.2-2' }} €</span>
             </div>
           </div>
           
@@ -157,7 +156,7 @@
                 </div>
                 <div class="product-price">
                   <span class="unit-price">{{ detail.prix_unitaire | number:'1.2-2' }} €</span>
-                  <span class="total-price">{{ detail.prix_total | number:'1.2-2' }} €</span>
+                  <span class="total-price">{{ (detail.prix_unitaire * detail.quantite) | number:'1.2-2' }} €</span>
                 </div>
               </div>
             </div>
@@ -202,7 +201,7 @@
             <div class="summary-lines">
               <div class="summary-line">
                 <span>Sous-total</span>
-                <span>{{ commande.sous_total | number:'1.2-2' }} €</span>
+                <span>{{ getSousTotal() | number:'1.2-2' }} €</span>
               </div>
               <div class="summary-line">
                 <span>Frais de livraison</span>
@@ -212,7 +211,7 @@
               </div>
               <div class="summary-line total">
                 <span>Total</span>
-                <span>{{ commande.total | number:'1.2-2' }} €</span>
+                <span>{{ getTotalGeneral() | number:'1.2-2' }} €</span>
               </div>
             </div>
           </div>

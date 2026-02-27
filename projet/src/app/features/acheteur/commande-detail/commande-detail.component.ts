@@ -160,8 +160,6 @@ export class CommandeDetailComponent implements OnInit {
 
   payerCommande(): void {
     if (!this.commande) return;
-    
-    // Navigate to payer page with the commande ID
     this.router.navigate(['/acheteur/payer', this.commande._id]);
   }
 
@@ -176,7 +174,6 @@ export class CommandeDetailComponent implements OnInit {
     
     this.commandeService.telechargerFacture(this.commande._id).subscribe({
       next: (blob) => {
-        // Create a download link
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -203,5 +200,28 @@ export class CommandeDetailComponent implements OnInit {
       'refuse': 'fa-ban'
     };
     return icons[statut] || 'fa-circle';
+  }
+
+  // ✅ Méthodes de calcul des totaux
+  getSousTotal(): number {
+    if (!this.commande) return 0;
+    
+    // Si les détails sont disponibles, calculer le total
+    if (this.commande.details && this.commande.details.length > 0) {
+      return this.commande.details.reduce((sum, detail) => {
+        // Utiliser sous_total si disponible, sinon calculer
+        const detailTotal = detail.sous_total || (detail.prix_unitaire * detail.quantite);
+        return sum + detailTotal;
+      }, 0);
+    }
+    
+    // Sinon, utiliser total_commande
+    return this.commande.total_commande || 0;
+  }
+
+  getTotalGeneral(): number {
+    if (!this.commande) return 0;
+    // Utiliser total_general en priorité, sinon total_commande + frais
+    return this.commande.total_general || (this.getSousTotal() + (this.commande.frais_livraison || 0));
   }
 }

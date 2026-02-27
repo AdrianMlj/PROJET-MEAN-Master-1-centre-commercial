@@ -104,7 +104,6 @@ export class CommandesComponent implements OnInit {
 
   payerCommande(commande: Commande, event: Event): void {
     event.stopPropagation();
-    // Navigate to payment page for this commande
     this.router.navigate(['/acheteur/payer', commande._id]);
   }
 
@@ -232,11 +231,12 @@ export class CommandesComponent implements OnInit {
     return commande.statut === 'en_attente';
   }
 
+  // ✅ Correction: Utiliser les bonnes propriétés du modèle
   getCommandeTotal(commande: Commande): number {
-    // Utiliser total_general si disponible, sinon total
-    return (commande as any).total_general || commande.total || 0;
+    return commande.total_general || commande.total_commande || 0;
   }
 
+  // ✅ Correction: Utiliser les bonnes propriétés pour le tri
   private appliquerFiltresLocaux(): void {
     const term = this.recherche.trim().toLowerCase();
     let list = [...this.commandes];
@@ -254,10 +254,10 @@ export class CommandesComponent implements OnInit {
         list.sort((a, b) => new Date(a.date_commande).getTime() - new Date(b.date_commande).getTime());
         break;
       case 'total_desc':
-        list.sort((a, b) => b.total - a.total);
+        list.sort((a, b) => (b.total_general || b.total_commande || 0) - (a.total_general || a.total_commande || 0));
         break;
       case 'total_asc':
-        list.sort((a, b) => a.total - b.total);
+        list.sort((a, b) => (a.total_general || a.total_commande || 0) - (b.total_general || b.total_commande || 0));
         break;
       default:
         list.sort((a, b) => new Date(b.date_commande).getTime() - new Date(a.date_commande).getTime());

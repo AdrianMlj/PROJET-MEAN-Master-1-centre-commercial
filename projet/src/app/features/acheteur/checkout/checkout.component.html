@@ -52,7 +52,7 @@
             </div>
             <div class="invoice-row total">
               <span class="label">Montant paye</span>
-              <span class="value amount">{{ (commandePayee.total_general || commandePayee.total_commande || commandePayee.total || 0) | number:'1.2-2' }} EUR</span>
+              <span class="value amount">{{ (commandePayee.total_general || commandePayee.total_commande || 0) | number:'1.2-2' }} EUR</span>
             </div>
             <div class="invoice-row statut">
               <span class="label">Statut du paiement</span>
@@ -343,7 +343,7 @@
               </div>
               <div class="summary-row total">
                 <span>Total a payer</span>
-                <span class="amount">{{ (commandeAPayer.total_general || commandeAPayer.total_commande || commandeAPayer.total || 0) | number:'1.2-2' }} EUR</span>
+                <span class="amount">{{ getTotalCommande() | number:'1.2-2' }} EUR</span>
               </div>
             </div>
           </div>
@@ -395,4 +395,3 @@
     </form>
   </div>
 </div>
-

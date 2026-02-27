@@ -21,7 +21,7 @@ export class CheckoutComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   commandeAPayer: Commande | null = null;
-  commandePayee: Commande | null = null; // Store the paid order for invoice display
+  commandePayee: Commande | null = null;
 
   modesLivraison: { value: ModeLivraison; label: string; description: string }[] = [
     { value: 'livraison_standard', label: 'Livraison standard', description: '3-5 jours ouvres' },
@@ -78,7 +78,6 @@ export class CheckoutComponent implements OnInit {
       next: (response) => {
         if (response.success && response.commande) {
           this.commandeAPayer = response.commande;
-          // Pre-fill the form with existing address
           if (response.commande.adresse_livraison) {
             this.checkoutForm.patchValue({
               adresse_livraison: response.commande.adresse_livraison,
@@ -135,13 +134,11 @@ export class CheckoutComponent implements OnInit {
     this.submitting = true;
     this.errorMessage = '';
 
-    // If we have a commande to pay, use the payment endpoint
     if (this.commandeAPayer) {
       this.payerCommandeExistante();
       return;
     }
 
-    // Otherwise, create a new order
     const commandeData = {
       adresse_livraison: this.checkoutForm.value.adresse_livraison,
       mode_livraison: this.checkoutForm.value.mode_livraison,
@@ -183,7 +180,6 @@ export class CheckoutComponent implements OnInit {
     this.commandeService.payerCommande(this.commandeAPayer._id, methodePaiement).subscribe({
       next: (response) => {
         if (response.success) {
-          // Store the paid order for invoice display
           this.commandePayee = this.commandeAPayer;
           this.commandePayee!.informations_paiement = {
             methode: methodePaiement as string,
@@ -193,7 +189,6 @@ export class CheckoutComponent implements OnInit {
           this.commandePayee!.methode_paiement = methodePaiement as MethodePaiement;
           this.successMessage = 'Paiement effectue avec succes !';
           
-          // Auto-redirect to order details with invoice after 2 seconds
           setTimeout(() => {
             this.voirDetailsCommande();
           }, 2000);
@@ -260,5 +255,9 @@ export class CheckoutComponent implements OnInit {
     };
     return labels[statut] || statut;
   }
-}
 
+  getTotalCommande(): number {
+    if (!this.commandeAPayer) return 0;
+    return this.commandeAPayer.total_general || this.commandeAPayer.total_commande || 0;
+  }
+}

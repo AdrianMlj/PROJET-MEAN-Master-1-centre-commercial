@@ -21,7 +21,7 @@ export interface CommandeDetail {
   produit: Produit;
   quantite: number;
   prix_unitaire: number;
-  prix_total: number;
+  sous_total?: number;        // Optionnel car peut être calculé
 }
 
 export interface Commande {
@@ -46,11 +46,9 @@ export interface Commande {
     date_paiement?: Date;
   };
   methode_paiement: MethodePaiement;
-  sous_total: number;
+  total_commande: number;      // Total des produits sans frais (API)
   frais_livraison: number;
-  total: number;
-  total_commande: number;
-  total_general: number;
+  total_general: number;       // Total avec frais (API)
   notes?: string;
   date_commande: Date;
   date_livraison_estimee?: Date;
