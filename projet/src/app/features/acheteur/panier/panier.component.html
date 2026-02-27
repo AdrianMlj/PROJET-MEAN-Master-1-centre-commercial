@@ -47,7 +47,12 @@
         <div class="cart-item" *ngFor="let element of panier.elements" [class.updating]="updating[element._id]">
           <div class="col-product">
             <div class="product-image" (click)="voirProduit(element.produit._id)">
-              <img [src]="element.produit.images && element.produit.images[0] ? 'http://localhost:3000' + element.produit.images[0].url : 'assets/placeholder-product.png'" [alt]="element.produit.nom">
+              <!-- ✅ Utilisation de la méthode getProduitImageUrl() avec gestion d'erreur -->
+              <img 
+                [src]="getProduitImageUrl(element.produit)" 
+                [alt]="element.produit.nom"
+                (error)="onImageError($event)"
+              >
             </div>
             <div class="product-details">
               <h3 (click)="voirProduit(element.produit._id)">{{ element.produit.nom }}</h3>

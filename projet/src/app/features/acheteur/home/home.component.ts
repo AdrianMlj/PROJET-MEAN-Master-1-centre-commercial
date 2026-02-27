@@ -97,6 +97,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private messageTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  // URLs par défaut pour les images manquantes
+  private readonly DEFAULT_PRODUCT_IMAGE = 'assets/placeholder-product.png';
+  private readonly DEFAULT_BOUTIQUE_IMAGE = 'assets/placeholder-boutique.png';
+  private readonly DEFAULT_AVATAR = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png';
+
   constructor(
     private produitService: ProduitService,
     private boutiqueService: BoutiqueService,
@@ -709,9 +714,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   chargerCategoriesProduit(): void {
-    // For products catalog, we need to get unique categories from products
-    // Since there's no global product category API, we'll just load all products
-    // and the filter will work on the client side based on product.categorie_produit
     this.loadingCategoriesProduit = false;
   }
 
@@ -741,7 +743,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  // For single boutique view
   appliquerFiltrePrixBoutique(): void {
     if (this.boutiqueSelectionnee) {
       this.appliquerFiltreCategorieProduitBoutique();
@@ -872,6 +873,41 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.loadingProduitsBoutique = false;
       }
     });
+  }
+
+  // ========================================
+  // Utility methods
+  // ========================================
+
+  /**
+   * ✅ Obtient l'URL de l'image principale d'un produit
+   * Utilise directement l'URL Cloudinary ou l'image par défaut
+   */
+  getProduitImageUrl(produit: Produit): string {
+    if (!produit.images || produit.images.length === 0) {
+      return this.DEFAULT_PRODUCT_IMAGE;
+    }
+    return produit.images[0].url; // L'URL Cloudinary est déjà complète
+  }
+
+  /**
+   * ✅ Obtient l'URL du logo d'une boutique
+   * Utilise directement l'URL Cloudinary ou l'image par défaut
+   */
+  getBoutiqueLogoUrl(boutique: Boutique): string {
+    if (!boutique || !boutique.logo_url) {
+      return this.DEFAULT_BOUTIQUE_IMAGE;
+    }
+    return boutique.logo_url; // L'URL Cloudinary est déjà complète
+  }
+
+  /**
+   * ✅ Gestionnaire d'erreur pour les images
+   * Remplace par l'image par défaut en cas d'erreur de chargement
+   */
+  onImageError(event: any, type: 'produit' | 'boutique' = 'produit'): void {
+    console.warn(`⚠️ Erreur chargement image ${type}, utilisation du placeholder`);
+    event.target.src = type === 'produit' ? this.DEFAULT_PRODUCT_IMAGE : this.DEFAULT_BOUTIQUE_IMAGE;
   }
 
   private afficherMessage(message: string, erreur: boolean = false): void {

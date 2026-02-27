@@ -1,71 +1,10 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-
-// Créer les dossiers s'ils n'existent pas
-const uploadsDir = path.join(__dirname, '../../uploads');
-const produitsDir = path.join(uploadsDir, 'produits');
-const boutiquesDir = path.join(uploadsDir, 'boutiques');
-const avatarsDir = path.join(uploadsDir, 'avatars');
-
-[uploadsDir, produitsDir, boutiquesDir, avatarsDir].forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
-
-// Configuration du stockage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let uploadPath = uploadsDir;
-    
-    // ✅ SOLUTION AMÉLIORÉE - Vérification multiple
-    const url = req.originalUrl || req.url;
-    
-    // 1. Vérifier par le nom du champ (fieldname)
-    if (file.fieldname === 'avatar') {
-      uploadPath = avatarsDir;
-      console.log('👤 Avatar upload vers:', avatarsDir);
-    }
-    // 2. Vérifier par le chemin de l'URL
-    else if (url.includes('/auth/avatar') || url.includes('/utilisateurs')) {
-      uploadPath = avatarsDir;
-      console.log('👤 Avatar upload vers:', avatarsDir);
-    }
-    // 3. Vérifier par baseUrl
-    else if (req.baseUrl.includes('/produits')) {
-      uploadPath = produitsDir;
-      console.log('📸 Produit upload vers:', produitsDir);
-    }
-    else if (req.baseUrl.includes('/boutiques')) {
-      uploadPath = boutiquesDir;
-      console.log('🏪 Boutique upload vers:', boutiquesDir);
-    }
-    else if (req.baseUrl.includes('/utilisateurs')) {
-      uploadPath = avatarsDir;
-      console.log('👤 Utilisateur upload vers:', avatarsDir);
-    }
-    
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    
-    // ✅ Garder le nom original du champ (avatar, logo, image, etc.)
-    let prefix = file.fieldname;
-    if (file.fieldname === 'avatar') {
-      prefix = 'avatar';
-    }
-    
-    cb(null, prefix + '-' + uniqueSuffix + ext);
-  }
-});
+const { storage } = require('../config/cloudinary');
 
 // Filtre des fichiers
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif|webp/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const extname = allowedTypes.test(file.originalname.toLowerCase().split(' ').join('').split('.').pop());
   const mimetype = allowedTypes.test(file.mimetype);
 
   if (extname && mimetype) {
@@ -75,7 +14,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Configuration de Multer
+// Configuration de Multer avec Cloudinary
 const upload = multer({
   storage: storage,
   limits: {
@@ -88,7 +27,7 @@ const upload = multer({
 exports.uploadProduitImage = upload.single('image');
 exports.uploadBoutiqueLogo = upload.single('logo');
 exports.uploadAvatar = upload.single('avatar');
-exports.uploadMultipleImages = upload.array('images', 5); // max 5 images
+exports.uploadMultipleImages = upload.array('images', 5);
 
 // Middleware pour gérer les erreurs d'upload
 exports.handleUploadError = (err, req, res, next) => {

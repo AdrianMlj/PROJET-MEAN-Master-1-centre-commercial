@@ -17,6 +17,9 @@ export class CommandeDetailComponent implements OnInit {
   errorMessage = '';
   showFacture = false;
 
+  // URLs par défaut
+  private readonly DEFAULT_PRODUCT_IMAGE = 'assets/placeholder-product.png';
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -200,6 +203,25 @@ export class CommandeDetailComponent implements OnInit {
       'refuse': 'fa-ban'
     };
     return icons[statut] || 'fa-circle';
+  }
+
+  /**
+   * ✅ Obtient l'URL de l'image d'un produit
+   * Utilise directement l'URL Cloudinary ou l'image par défaut
+   */
+  getProduitImageUrl(produit: any): string {
+    if (!produit || !produit.images || produit.images.length === 0) {
+      return this.DEFAULT_PRODUCT_IMAGE;
+    }
+    return produit.images[0].url; // L'URL Cloudinary est déjà complète
+  }
+
+  /**
+   * ✅ Gestionnaire d'erreur pour les images
+   */
+  onImageError(event: any): void {
+    console.warn('⚠️ Erreur chargement image produit, utilisation du placeholder');
+    event.target.src = this.DEFAULT_PRODUCT_IMAGE;
   }
 
   // ✅ Méthodes de calcul des totaux

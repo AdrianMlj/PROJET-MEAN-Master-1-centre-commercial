@@ -42,6 +42,10 @@ export class ProduitDetailComponent implements OnInit, OnDestroy {
   favoriProduitLoading = false;
   favoriBoutiqueLoading = false;
 
+  // URLs par défaut
+  private readonly DEFAULT_PRODUCT_IMAGE = 'assets/placeholder-product.png';
+  private readonly DEFAULT_BOUTIQUE_IMAGE = 'assets/placeholder-boutique.png';
+
   private destroy$ = new Subject<void>();
   private messageTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -118,9 +122,29 @@ export class ProduitDetailComponent implements OnInit, OnDestroy {
     return Math.round((1 - this.produit.prix_promotion / this.produit.prix) * 100);
   }
 
+  /**
+   * ✅ Obtient l'URL de l'image principale du produit
+   * Utilise directement l'URL Cloudinary ou l'image par défaut
+   */
   getImagePrincipale(): string {
     const image = this.produit?.images?.[this.imageIndex]?.url;
-    return image ? `http://localhost:3000${image}` : 'assets/placeholder-product.png';
+    return image || this.DEFAULT_PRODUCT_IMAGE; // L'URL Cloudinary est déjà complète
+  }
+
+  /**
+   * ✅ Obtient l'URL d'une image de la galerie
+   * Utilise directement l'URL Cloudinary ou l'image par défaut
+   */
+  getImageUrl(image: any): string {
+    return image?.url || this.DEFAULT_PRODUCT_IMAGE;
+  }
+
+  /**
+   * ✅ Gestionnaire d'erreur pour les images
+   */
+  onImageError(event: any): void {
+    console.warn('⚠️ Erreur chargement image produit, utilisation du placeholder');
+    event.target.src = this.DEFAULT_PRODUCT_IMAGE;
   }
 
   setImage(index: number): void {

@@ -25,7 +25,11 @@
     <div class="detail-content" *ngIf="!loading && produit">
       <div class="gallery-card">
         <div class="main-image">
-          <img [src]="getImagePrincipale()" [alt]="produit.nom">
+          <img 
+            [src]="getImagePrincipale()" 
+            [alt]="produit.nom"
+            (error)="onImageError($event)"
+          >
           <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction() }}%</span>
         </div>
         <div class="thumbs" *ngIf="produit.images?.length">
@@ -36,7 +40,11 @@
             *ngFor="let image of produit.images; let i = index"
             (click)="setImage(i)"
           >
-            <img [src]="'http://localhost:3000' + image.url" [alt]="produit.nom + ' image ' + (i + 1)">
+            <img 
+              [src]="getImageUrl(image)" 
+              [alt]="produit.nom + ' image ' + (i + 1)"
+              (error)="onImageError($event)"
+            >
           </button>
         </div>
       </div>

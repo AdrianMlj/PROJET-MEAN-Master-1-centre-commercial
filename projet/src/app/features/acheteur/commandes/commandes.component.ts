@@ -41,6 +41,10 @@ export class CommandesComponent implements OnInit {
     { value: 'refuse', label: 'Refusé' }
   ];
 
+  // URLs par défaut
+  private readonly DEFAULT_PRODUCT_IMAGE = 'assets/placeholder-product.png';
+  private readonly DEFAULT_BOUTIQUE_IMAGE = 'assets/placeholder-boutique.png';
+
   constructor(
     private commandeService: CommandeService,
     private panierService: PanierService,
@@ -229,6 +233,36 @@ export class CommandesComponent implements OnInit {
 
   peutAnnuler(commande: Commande): boolean {
     return commande.statut === 'en_attente';
+  }
+
+  /**
+   * ✅ Obtient l'URL du logo d'une boutique
+   * Utilise directement l'URL Cloudinary ou l'image par défaut
+   */
+  getBoutiqueLogoUrl(boutique: any): string {
+    if (!boutique || !boutique.logo_url) {
+      return this.DEFAULT_BOUTIQUE_IMAGE;
+    }
+    return boutique.logo_url; // L'URL Cloudinary est déjà complète
+  }
+
+  /**
+   * ✅ Obtient l'URL de l'image d'un produit
+   * Utilise directement l'URL Cloudinary ou l'image par défaut
+   */
+  getProduitImageUrl(produit: any): string {
+    if (!produit || !produit.images || produit.images.length === 0) {
+      return this.DEFAULT_PRODUCT_IMAGE;
+    }
+    return produit.images[0].url; // L'URL Cloudinary est déjà complète
+  }
+
+  /**
+   * ✅ Gestionnaire d'erreur pour les images
+   */
+  onImageError(event: any, type: 'produit' | 'boutique' = 'produit'): void {
+    console.warn(`⚠️ Erreur chargement image ${type}, utilisation du placeholder`);
+    event.target.src = type === 'produit' ? this.DEFAULT_PRODUCT_IMAGE : this.DEFAULT_BOUTIQUE_IMAGE;
   }
 
   // ✅ Correction: Utiliser les bonnes propriétés du modèle

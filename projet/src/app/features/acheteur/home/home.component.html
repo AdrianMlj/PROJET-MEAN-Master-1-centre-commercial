@@ -6,6 +6,7 @@
     </div>
   </div>
 
+  <!-- SECTION: VUE BOUTIQUE -->
   <section class="section boutique-focus-section" *ngIf="vueBoutiqueActive">
     <div class="container">
       <div class="boutique-view-actions">
@@ -27,7 +28,11 @@
 
       <div class="boutique-highlight" *ngIf="!loadingBoutiqueSelection && boutiqueSelectionnee">
         <div class="boutique-logo">
-          <img [src]="boutiqueSelectionnee.logo_url ? 'http://localhost:3000' + boutiqueSelectionnee.logo_url : 'assets/placeholder-boutique.png'" [alt]="boutiqueSelectionnee.nom">
+          <img 
+            [src]="getBoutiqueLogoUrl(boutiqueSelectionnee)" 
+            [alt]="boutiqueSelectionnee.nom"
+            (error)="onImageError($event, 'boutique')"
+          >
         </div>
         <div class="boutique-info">
           <h2>{{ boutiqueSelectionnee.nom }}</h2>
@@ -48,7 +53,7 @@
         </div>
       </div>
 
-      <!-- Filter by product category for single boutique -->
+      <!-- Filtres pour la boutique -->
       <div class="filters-row" *ngIf="vueBoutiqueActive && categoriesProduitBoutique.length > 0">
         <div class="filter-group">
           <label for="filtreCatProdBoutique"><i class="fas fa-filter"></i> Categorie:</label>
@@ -65,7 +70,6 @@
           </select>
         </div>
 
-        <!-- Price filters for boutique -->
         <div class="filter-group">
           <label for="filtrePrixMinBout"><i class="fas fa-euro-sign"></i> Prix min:</label>
           <input
@@ -93,10 +97,15 @@
         </div>
       </div>
 
+      <!-- Produits de la boutique -->
       <div class="products-grid" *ngIf="!loadingProduitsBoutique && produitsBoutique.length > 0">
         <div class="product-card" *ngFor="let produit of produitsBoutique" (click)="voirProduit(produit._id)">
           <div class="product-image">
-            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <img 
+              [src]="getProduitImageUrl(produit)" 
+              [alt]="produit.nom"
+              (error)="onImageError($event, 'produit')"
+            >
             <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction(produit) }}%</span>
           </div>
           <div class="product-info">
@@ -140,6 +149,7 @@
         <p>Aucun produit en vente dans cette boutique</p>
       </div>
 
+      <!-- Section avis boutique -->
       <div class="boutique-avis-section" *ngIf="!loadingBoutiqueSelection && boutiqueSelectionnee">
         <div class="boutique-avis-card">
           <h3><i class="fas fa-pen"></i> Votre avis sur la boutique</h3>
@@ -237,6 +247,7 @@
     </div>
   </section>
 
+  <!-- SECTION: HERO (ACCUEIL) -->
   <section class="hero-section" *ngIf="!vueBoutiqueActive && currentViewMode === 'home'">
     <div class="hero-content">
       <h1>Bienvenue au Centre Commercial</h1>
@@ -257,6 +268,7 @@
     </div>
   </section>
 
+  <!-- SECTION: PROMOTIONS -->
   <section class="section promotions-section" *ngIf="!vueBoutiqueActive && currentViewMode === 'home'">
     <div class="container">
       <div class="section-header">
@@ -269,7 +281,11 @@
       <div class="products-grid" *ngIf="!loading.promotions && produitsEnPromotion.length > 0">
         <div class="product-card" *ngFor="let produit of produitsEnPromotion" (click)="voirProduit(produit._id)">
           <div class="product-image">
-            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <img 
+              [src]="getProduitImageUrl(produit)" 
+              [alt]="produit.nom"
+              (error)="onImageError($event, 'produit')"
+            >
             <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction(produit) }}%</span>
           </div>
           <div class="product-info">
@@ -325,6 +341,7 @@
     </div>
   </section>
 
+  <!-- SECTION: NOUVEAUTES -->
   <section class="section nouveautes-section" *ngIf="!vueBoutiqueActive && currentViewMode === 'home'">
     <div class="container">
       <div class="section-header">
@@ -337,7 +354,11 @@
       <div class="products-grid" *ngIf="!loading.nouveautes && nouveautes.length > 0">
         <div class="product-card" *ngFor="let produit of nouveautes" (click)="voirProduit(produit._id)">
           <div class="product-image">
-            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <img 
+              [src]="getProduitImageUrl(produit)" 
+              [alt]="produit.nom"
+              (error)="onImageError($event, 'produit')"
+            >
             <span class="badge new">Nouveau</span>
           </div>
           <div class="product-info">
@@ -388,6 +409,7 @@
     </div>
   </section>
 
+  <!-- SECTION: BOUTIQUES -->
   <section class="section boutiques-section" *ngIf="!vueBoutiqueActive && (currentViewMode === 'home' || currentViewMode === 'boutiques')">
     <div class="container">
       <div class="section-header">
@@ -397,7 +419,7 @@
         </a>
       </div>
 
-      <!-- Filter by boutique category -->
+      <!-- Filtres par catégorie de boutique -->
       <div class="filters-row" *ngIf="currentViewMode === 'boutiques' && categoriesBoutique.length > 0">
         <div class="filter-group">
           <label for="filtreCatBoutique"><i class="fas fa-filter"></i> Categorie:</label>
@@ -418,7 +440,11 @@
       <div class="boutiques-grid" *ngIf="!loading.boutiques && boutiques.length > 0">
         <div class="boutique-card" *ngFor="let boutique of boutiques" (click)="voirBoutique(boutique._id)">
           <div class="boutique-logo">
-            <img [src]="'http://localhost:3000' + boutique.logo_url" [alt]="boutique.nom" onError="this.src='assets/placeholder-boutique.png'">
+            <img 
+              [src]="getBoutiqueLogoUrl(boutique)" 
+              [alt]="boutique.nom"
+              (error)="onImageError($event, 'boutique')"
+            >
           </div>
           <div class="boutique-info">
             <h3>{{ boutique.nom }}</h3>
@@ -437,7 +463,6 @@
               {{ isBoutiqueFavorie(boutique._id) ? 'Boutique deja en favoris' : 'Ajouter boutique' }}
             </button>
             <div class="boutique-stats" *ngIf="boutique.statistiques">
-              <!-- <span><i class="fas fa-box"></i> {{ boutique.statistiques.nombre_produits || 0 }} produits</span> -->
               <span *ngIf="boutique.statistiques.note_moyenne">
                 <i class="fas fa-star"></i> {{ boutique.statistiques.note_moyenne | number:'1.1-1' }}
               </span>
@@ -458,6 +483,7 @@
     </div>
   </section>
 
+  <!-- SECTION: MEILLEURES VENTES -->
   <section class="section ventes-section" *ngIf="!vueBoutiqueActive && currentViewMode === 'home'">
     <div class="container">
       <div class="section-header">
@@ -470,7 +496,11 @@
       <div class="products-grid" *ngIf="!loading.ventes && meilleuresVentes.length > 0">
         <div class="product-card" *ngFor="let produit of meilleuresVentes" (click)="voirProduit(produit._id)">
           <div class="product-image">
-            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <img 
+              [src]="getProduitImageUrl(produit)" 
+              [alt]="produit.nom"
+              (error)="onImageError($event, 'produit')"
+            >
             <span class="badge bestseller">Top vente</span>
           </div>
           <div class="product-info">
@@ -525,6 +555,7 @@
     </div>
   </section>
 
+  <!-- SECTION: CATALOGUE PRODUITS / RECHERCHE / PROMOTIONS -->
   <section class="section catalogue-section" *ngIf="!vueBoutiqueActive && (currentViewMode === 'produits' || currentViewMode === 'recherche' || currentViewMode === 'promotions')">
     <div class="container">
       <div class="section-header">
@@ -544,7 +575,7 @@
         </button>
       </div>
 
-      <!-- Filter by product category -->
+      <!-- Filtres pour le catalogue -->
       <div class="filters-row" *ngIf="categoriesProduitCatalogue.length > 0">
         <div class="filter-group">
           <label for="filtreCatProduit"><i class="fas fa-filter"></i> Categorie:</label>
@@ -561,7 +592,6 @@
           </select>
         </div>
 
-        <!-- Price filters -->
         <div class="filter-group">
           <label for="filtrePrixMin"><i class="fas fa-euro-sign"></i> Prix min:</label>
           <input
@@ -588,7 +618,6 @@
           >
         </div>
 
-        <!-- Sort -->
         <div class="filter-group">
           <label for="filtreTri"><i class="fas fa-sort"></i> Trier:</label>
           <select 
@@ -620,7 +649,11 @@
       <div class="products-grid" *ngIf="!loadingCatalogue && !erreurCatalogue && produitsCatalogue.length > 0">
         <div class="product-card" *ngFor="let produit of produitsCatalogue" (click)="voirProduit(produit._id)">
           <div class="product-image">
-            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <img 
+              [src]="getProduitImageUrl(produit)" 
+              [alt]="produit.nom"
+              (error)="onImageError($event, 'produit')"
+            >
             <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction(produit) }}%</span>
           </div>
           <div class="product-info">
@@ -659,6 +692,7 @@
         </div>
       </div>
 
+      <!-- Résultats de recherche pour les boutiques -->
       <div class="recherche-boutiques" *ngIf="currentViewMode === 'recherche' && !loadingCatalogue && boutiquesRecherche.length > 0">
         <div class="section-header small">
           <h2><i class="fas fa-store"></i> Boutiques et gerants</h2>
@@ -666,7 +700,11 @@
         <div class="boutiques-grid">
           <div class="boutique-card" *ngFor="let boutique of boutiquesRecherche" (click)="voirBoutique(boutique._id)">
             <div class="boutique-logo">
-              <img [src]="'http://localhost:3000' + boutique.logo_url" [alt]="boutique.nom" onError="this.src='assets/placeholder-boutique.png'">
+              <img 
+                [src]="getBoutiqueLogoUrl(boutique)" 
+                [alt]="boutique.nom"
+                (error)="onImageError($event, 'boutique')"
+              >
             </div>
             <div class="boutique-info">
               <h3>{{ boutique.nom }}</h3>

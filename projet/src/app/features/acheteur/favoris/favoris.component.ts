@@ -20,6 +20,10 @@ export class FavorisComponent implements OnInit {
   removeLoadingProduit: Record<string, boolean> = {};
   removeLoadingBoutique: Record<string, boolean> = {};
 
+  // URLs par défaut
+  private readonly DEFAULT_PRODUCT_IMAGE = 'assets/placeholder-product.png';
+  private readonly DEFAULT_BOUTIQUE_IMAGE = 'assets/placeholder-boutique.png';
+
   constructor(
     private favorisService: FavorisService,
     private router: Router
@@ -97,6 +101,36 @@ export class FavorisComponent implements OnInit {
   getReduction(produit: Produit): number {
     if (!produit.en_promotion || !produit.prix_promotion) return 0;
     return Math.round((1 - produit.prix_promotion / produit.prix) * 100);
+  }
+
+  /**
+   * ✅ Obtient l'URL de l'image d'un produit
+   * Utilise directement l'URL Cloudinary ou l'image par défaut
+   */
+  getProduitImageUrl(produit: Produit): string {
+    if (!produit.images || produit.images.length === 0) {
+      return this.DEFAULT_PRODUCT_IMAGE;
+    }
+    return produit.images[0].url; // L'URL Cloudinary est déjà complète
+  }
+
+  /**
+   * ✅ Obtient l'URL du logo d'une boutique
+   * Utilise directement l'URL Cloudinary ou l'image par défaut
+   */
+  getBoutiqueLogoUrl(boutique: Boutique): string {
+    if (!boutique || !boutique.logo_url) {
+      return this.DEFAULT_BOUTIQUE_IMAGE;
+    }
+    return boutique.logo_url; // L'URL Cloudinary est déjà complète
+  }
+
+  /**
+   * ✅ Gestionnaire d'erreur pour les images
+   */
+  onImageError(event: any, type: 'produit' | 'boutique' = 'produit'): void {
+    console.warn(`⚠️ Erreur chargement image ${type}, utilisation du placeholder`);
+    event.target.src = type === 'produit' ? this.DEFAULT_PRODUCT_IMAGE : this.DEFAULT_BOUTIQUE_IMAGE;
   }
 
   private afficherMessage(message: string, error: boolean = false): void {

@@ -27,7 +27,12 @@
       <div class="products-grid" *ngIf="produitsFavoris.length > 0">
         <div class="product-card" *ngFor="let produit of produitsFavoris" (click)="voirProduit(produit._id)">
           <div class="product-image">
-            <img [src]="produit.images && produit.images[0] ? 'http://localhost:3000' + produit.images[0].url : 'assets/placeholder-product.png'" [alt]="produit.nom">
+            <!-- ✅ Utilisation de la méthode getProduitImageUrl() avec gestion d'erreur -->
+            <img 
+              [src]="getProduitImageUrl(produit)" 
+              [alt]="produit.nom"
+              (error)="onImageError($event, 'produit')"
+            >
             <span class="badge promo" *ngIf="produit.en_promotion">-{{ getReduction(produit) }}%</span>
           </div>
           <div class="product-info">
@@ -59,7 +64,12 @@
       <div class="boutiques-grid" *ngIf="boutiquesFavories.length > 0">
         <div class="boutique-card" *ngFor="let boutique of boutiquesFavories" (click)="voirBoutique(boutique._id)">
           <div class="boutique-logo">
-            <img [src]="boutique.logo_url ? 'http://localhost:3000' + boutique.logo_url : 'assets/placeholder-boutique.png'" [alt]="boutique.nom">
+            <!-- ✅ Utilisation de la méthode getBoutiqueLogoUrl() avec gestion d'erreur -->
+            <img 
+              [src]="getBoutiqueLogoUrl(boutique)" 
+              [alt]="boutique.nom"
+              (error)="onImageError($event, 'boutique')"
+            >
           </div>
           <div class="boutique-info">
             <h3>{{ boutique.nom }}</h3>

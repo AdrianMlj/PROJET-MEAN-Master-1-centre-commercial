@@ -50,6 +50,7 @@
               <p><strong>N° Facture:</strong> FAC-{{ commande.numero_commande }}</p>
               <p><strong>Date:</strong> {{ commande.date_commande | date:'dd/MM/yyyy' }}</p>
               <p><strong>Commande:</strong> {{ commande.numero_commande }}</p>
+              <p><strong>Statut:</strong> {{ commande.statut }}</p>
               <p><strong>Livraison:</strong> {{ getModeLivraisonLabel(commande.mode_livraison) }}</p>
             </div>
           </div>
@@ -145,7 +146,12 @@
             <div class="products-list">
               <div class="product-item" *ngFor="let detail of commande.details">
                 <div class="product-image">
-                  <img [src]="detail.produit?.images && detail.produit.images[0] ? detail.produit.images[0] : 'assets/placeholder-product.png'" [alt]="detail.produit?.nom">
+                  <!-- ✅ Utilisation de la méthode getProduitImageUrl() avec gestion d'erreur -->
+                  <img 
+                    [src]="getProduitImageUrl(detail.produit)" 
+                    [alt]="detail.produit?.nom"
+                    (error)="onImageError($event)"
+                  >
                 </div>
                 <div class="product-info">
                   <h3>{{ detail.produit?.nom }}</h3>
