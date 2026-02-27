@@ -194,9 +194,8 @@ export class ModifierProduitComponent implements OnInit {
     });
   }
 
-  getImageUrl(image: ProduitImage): string {
-    if (image.url.startsWith('http')) return image.url;
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}${image.url}`;
-  }
+  // ✅ MODIFIÉ: Méthode simplifiée pour les images Cloudinary
+    getImageUrl(image: ProduitImage): string {
+      return image.url;
+    }
 }

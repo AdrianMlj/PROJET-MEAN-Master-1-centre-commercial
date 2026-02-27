@@ -202,16 +202,22 @@ export class ListeProduitsComponent implements OnInit {
     }
   }
 
-  // Gestion du carrousel d'images
+  // ✅ MODIFIÉ: Méthode simplifiée pour l'image courante du produit
   getCurrentImage(produit: Produit): string {
+    // Si pas d'images, retourner un placeholder
     if (!produit.images || produit.images.length === 0) {
       return 'https://via.placeholder.com/300';
     }
+    
+    // Récupérer l'index courant pour ce produit (ou 0 par défaut)
     const index = this.currentImageIndex[produit._id] || 0;
+    
+    // ✅ Avec Cloudinary, l'URL de l'image est TOUJOURS complète
+    // Exemple: "https://res.cloudinary.com/.../centre-commercial/produits/image-123456.jpg"
     const image = produit.images[index];
-    if (image.url.startsWith('http')) return image.url;
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}${image.url}`;
+    
+    // Retourner directement l'URL Cloudinary
+    return image.url;
   }
 
   prevImage(produit: Produit): void {

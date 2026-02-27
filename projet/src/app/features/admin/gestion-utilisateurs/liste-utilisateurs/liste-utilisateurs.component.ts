@@ -209,21 +209,13 @@ export class ListeUtilisateursComponent implements OnInit {
     }
   }
 
-  // ✅ MODIFIÉ: Nouvelle méthode pour obtenir l'URL de l'avatar
+  // ✅ MODIFIÉ: Nouvelle méthode pour obtenir l'URL de l'avatar depuis Cloudinary
   getAvatarUrl(avatarUrl: string | null | undefined): string {
     // Si pas d'avatar, retourner l'image par défaut
     if (!avatarUrl || avatarUrl.trim() === '') {
       return this.DEFAULT_AVATAR_URL;
     }
-    
-    // Si l'URL est déjà complète (commence par http)
-    if (avatarUrl.startsWith('http')) {
-      return avatarUrl;
-    }
-    
-    // Sinon, construire l'URL complète vers le backend
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}${avatarUrl}`;
+    return avatarUrl;
   }
 
   // ✅ MODIFIÉ: Gestion d'erreur d'image - remplace par l'avatar par défaut

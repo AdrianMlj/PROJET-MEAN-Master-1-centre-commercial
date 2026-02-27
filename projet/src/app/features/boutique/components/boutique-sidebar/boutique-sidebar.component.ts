@@ -112,25 +112,22 @@ export class BoutiqueSidebarComponent implements OnInit {
   }
 
   getAvatarUrl(): string {
+    // Si pas d'utilisateur ou pas d'avatar, retourner l'image par défaut
     if (!this.currentUser || !this.currentUser.avatar_url) {
       return 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png';
     }
-    if (this.currentUser.avatar_url.startsWith('http')) {
-      return this.currentUser.avatar_url;
-    }
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}${this.currentUser.avatar_url}`;
+    
+    return this.currentUser.avatar_url;
   }
 
+
+  // ✅ MODIFIÉ: Méthode simplifiée pour le logo Cloudinary
   getBoutiqueLogoUrl(): string {
+    // Si pas de boutique ou pas de logo, retourner l'image par défaut
     if (!this.maBoutique || !this.maBoutique.logo_url) {
       return 'https://www.legrand.es/modules/custom/legrand_ecat/assets/img/no-image.png';
     }
-    if (this.maBoutique.logo_url.startsWith('http')) {
-      return this.maBoutique.logo_url;
-    }
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}${this.maBoutique.logo_url}`;
+    return this.maBoutique.logo_url;
   }
 
   getCategorieName(): string {

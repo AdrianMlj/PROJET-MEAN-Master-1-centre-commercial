@@ -126,11 +126,13 @@ export class DetailsCommandeComponent implements OnInit {
     this.router.navigate(['/boutique/commandes/liste']);
   }
 
+  // ✅ MODIFIÉ: Méthode simplifiée pour les images Cloudinary
   getImageUrl(url: string): string {
-    if (!url) return 'https://via.placeholder.com/80';
-    if (url.startsWith('http')) return url;
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}${url}`;
+    // Si pas d'URL, retourner une image par défaut/placeholder
+    if (!url) {
+      return 'https://via.placeholder.com/80';
+    }
+    return url;
   }
 
   formatDate(date: Date): string {

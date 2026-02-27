@@ -1,6 +1,7 @@
 const Produit = require('../models/produit.model');
 const Boutique = require('../models/boutique.model');
 const CategorieProduit = require('../models/categorieProduit.model');
+const { deleteImageByUrl } = require('../utils/cloudinary.util');
 
 // Lister les produits avec filtres (publique)
 exports.listerProduits = async (req, res) => {
@@ -764,6 +765,8 @@ exports.uploadImagesProduit = async (req, res) => {
       });
     }
 
+    console.log(`📸 Upload de ${req.files.length} image(s) pour le produit ${id}`);
+
     // Récupérer le produit
     const produit = await Produit.findById(id).populate('boutique');
     if (!produit) {
@@ -791,12 +794,15 @@ exports.uploadImagesProduit = async (req, res) => {
       });
     }
 
-    // Construire les URLs des nouvelles images
-    const nouvellesImages = req.files.map(file => ({
-      url: `/uploads/produits/${file.filename}`,
-      ordre: produit.images.length, // À ajuster si besoin
-      is_principale: produit.images.length === 0 // La première devient principale si aucune
+    // ✅ Construire les URLs des nouvelles images avec Cloudinary
+    const nouvellesImages = req.files.map((file, index) => ({
+      url: file.path, // URL Cloudinary complète
+      ordre: produit.images.length + index,
+      is_principale: produit.images.length === 0 && index === 0 // La première devient principale si aucune
     }));
+
+    // ✅ Afficher les URLs Cloudinary pour vérification
+    console.log('☁️ URLs Cloudinary:', nouvellesImages.map(img => img.url));
 
     // Ajouter au produit
     produit.images.push(...nouvellesImages);
@@ -809,7 +815,7 @@ exports.uploadImagesProduit = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erreur upload images produit:', error);
+    console.error('❌ Erreur upload images produit:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de l\'upload des images',
@@ -817,12 +823,18 @@ exports.uploadImagesProduit = async (req, res) => {
     });
   }
 };
+
+// ============================================
 // Supprimer image produit
+// ============================================
 exports.supprimerImageProduit = async (req, res) => {
   try {
     const { imageId } = req.params;
+    const produitId = req.params.produitId;
 
-    const produit = await Produit.findById(req.params.produitId);
+    console.log(`🗑️ Suppression image ${imageId} du produit ${produitId}`);
+
+    const produit = await Produit.findById(produitId);
     if (!produit) {
       return res.status(404).json({
         success: false,
@@ -839,27 +851,36 @@ exports.supprimerImageProduit = async (req, res) => {
       });
     }
 
-    // Trouver et supprimer l'image
-    const imageIndex = produit.images.findIndex(img => img._id.toString() === imageId);
-    if (imageIndex === -1) {
+    // Trouver l'image à supprimer
+    const image = produit.images.find(img => img._id.toString() === imageId);
+    if (!image) {
       return res.status(404).json({
         success: false,
         message: 'Image non trouvée'
       });
     }
 
-    // Supprimer l'image
+    // ✅ 1. Supprimer l'image de Cloudinary
+    console.log('☁️ Suppression de Cloudinary:', image.url);
+    await deleteImageByUrl(image.url);
+
+    // ✅ 2. Supprimer l'image du tableau
+    const imageIndex = produit.images.findIndex(img => img._id.toString() === imageId);
     produit.images.splice(imageIndex, 1);
     
-    // Réorganiser les ordres
+    // ✅ 3. Réorganiser les ordres
     produit.images.forEach((img, index) => {
       img.ordre = index;
       if (index === 0) {
         img.is_principale = true;
+      } else {
+        img.is_principale = false;
       }
     });
     
     await produit.save();
+
+    console.log(`✅ Image supprimée avec succès. Reste: ${produit.images.length} image(s)`);
 
     res.status(200).json({
       success: true,
@@ -867,7 +888,7 @@ exports.supprimerImageProduit = async (req, res) => {
       images: produit.images
     });
   } catch (error) {
-    console.error('Erreur suppression image produit:', error);
+    console.error('❌ Erreur suppression image produit:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression de l\'image',

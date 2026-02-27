@@ -76,17 +76,14 @@ export class DetailsBoutiqueComponent implements OnInit {
     }
   }
 
+  // ✅ MODIFIÉ: Méthode simplifiée pour les logos Cloudinary
   getLogoUrl(logoUrl: string | undefined): string {
+    // Si pas de logo, retourner l'image par défaut
     if (!logoUrl || logoUrl.trim() === '') {
       return this.DEFAULT_BOUTIQUE_IMAGE;
     }
     
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}${logoUrl}`;
+    return logoUrl;
   }
 
   onLogoError(event: any): void {

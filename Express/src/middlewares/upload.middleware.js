@@ -1,7 +1,7 @@
 const multer = require('multer');
 const { storage } = require('../config/cloudinary');
 
-// Filtre des fichiers (inchangé)
+// Filtre des fichiers
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif|webp/;
   const extname = allowedTypes.test(file.originalname.toLowerCase().split(' ').join('').split('.').pop());
@@ -16,20 +16,20 @@ const fileFilter = (req, file, cb) => {
 
 // Configuration de Multer avec Cloudinary
 const upload = multer({
-  storage: storage,  // Cloudinary storage
+  storage: storage,
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024 // 5MB
   },
   fileFilter: fileFilter
 });
 
-// Middlewares spécifiques (inchangés)
+// Middlewares spécifiques
 exports.uploadProduitImage = upload.single('image');
 exports.uploadBoutiqueLogo = upload.single('logo');
 exports.uploadAvatar = upload.single('avatar');
 exports.uploadMultipleImages = upload.array('images', 5);
 
-// Middleware pour gérer les erreurs d'upload (adapté)
+// Middleware pour gérer les erreurs d'upload
 exports.handleUploadError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {

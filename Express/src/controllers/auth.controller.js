@@ -4,6 +4,7 @@ const Boutique = require('../models/boutique.model');
 const { hasher, comparer } = require('../utils/password.util');
 const { genererToken } = require('../utils/token.util');
 const { validerEmail, validerMotDePasse } = require('../utils/validators');
+const { deleteImageByUrl } = require('../utils/cloudinary.util');
 
 exports.inscription = async (req, res) => {
   try {
@@ -343,6 +344,9 @@ exports.changerMotDePasse = async (req, res) => {
   }
 };
 
+// ============================================
+// Uploader l'avatar (création)
+// ============================================
 exports.uploadAvatar = async (req, res) => {
   try {
     if (!req.file) {
@@ -352,6 +356,12 @@ exports.uploadAvatar = async (req, res) => {
       });
     }
 
+    console.log('📸 Fichier uploadé Cloudinary:', {
+      fieldname: req.file.fieldname,
+      path: req.file.path,
+      filename: req.file.filename
+    });
+
     const utilisateur = await Utilisateur.findById(req.user.id);
     if (!utilisateur) {
       return res.status(404).json({
@@ -360,20 +370,20 @@ exports.uploadAvatar = async (req, res) => {
       });
     }
 
-    // Construire l'URL de l'avatar
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    // ✅ Utiliser l'URL Cloudinary complète
+    const cloudinaryUrl = req.file.path;
     
     // Mettre à jour l'avatar
-    utilisateur.avatar_url = avatarUrl;
+    utilisateur.avatar_url = cloudinaryUrl;
     await utilisateur.save();
 
     res.status(200).json({
       success: true,
       message: 'Avatar uploadé avec succès',
-      avatar_url: avatarUrl
+      avatar_url: cloudinaryUrl
     });
   } catch (error) {
-    console.error('Erreur upload avatar:', error);
+    console.error('❌ Erreur upload avatar:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de l\'upload de l\'avatar',
@@ -383,7 +393,7 @@ exports.uploadAvatar = async (req, res) => {
 };
 
 // ============================================
-// Mettre à jour l'avatar de l'utilisateur connecté
+// Mettre à jour l'avatar (remplacement)
 // ============================================
 exports.updateAvatar = async (req, res) => {
   try {
@@ -394,6 +404,8 @@ exports.updateAvatar = async (req, res) => {
       });
     }
 
+    console.log('📸 Nouvel avatar uploadé:', req.file.path);
+
     const utilisateur = await Utilisateur.findById(req.user.id);
     if (!utilisateur) {
       return res.status(404).json({
@@ -402,26 +414,26 @@ exports.updateAvatar = async (req, res) => {
       });
     }
 
-    // Supprimer l'ancien avatar du serveur (si existe)
+    // ✅ 1. Supprimer l'ancienne image de Cloudinary si elle existe
     if (utilisateur.avatar_url) {
-      const oldPath = path.join(__dirname, '../../', utilisateur.avatar_url);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-      }
+      console.log('🗑️ Suppression de l\'ancien avatar:', utilisateur.avatar_url);
+      await deleteImageByUrl(utilisateur.avatar_url);
     }
 
-    // Construire l'URL du nouvel avatar
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    utilisateur.avatar_url = avatarUrl;
+    // ✅ 2. Utiliser la nouvelle URL Cloudinary
+    const cloudinaryUrl = req.file.path;
+    utilisateur.avatar_url = cloudinaryUrl;
     await utilisateur.save();
+
+    console.log('✅ Avatar mis à jour avec succès:', cloudinaryUrl);
 
     res.status(200).json({
       success: true,
       message: 'Avatar mis à jour avec succès',
-      avatar_url: avatarUrl
+      avatar_url: cloudinaryUrl
     });
   } catch (error) {
-    console.error('Erreur mise à jour avatar:', error);
+    console.error('❌ Erreur mise à jour avatar:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour de l\'avatar',

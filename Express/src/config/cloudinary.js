@@ -8,6 +8,12 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Vérification de la configuration
+console.log('📸 Configuration Cloudinary:');
+console.log(`- Cloud Name: ${process.env.CLOUDINARY_CLOUD_NAME ? '✓ Présent' : '✗ Manquant'}`);
+console.log(`- API Key: ${process.env.CLOUDINARY_API_KEY ? '✓ Présent' : '✗ Manquant'}`);
+console.log(`- API Secret: ${process.env.CLOUDINARY_API_SECRET ? '✓ Présent' : '✗ Manquant'}`);
+
 // Fonction pour déterminer le dossier selon le type d'upload
 const getFolder = (req, file) => {
   const url = req.originalUrl || req.url;

@@ -154,13 +154,13 @@ export class BoutiqueGerantComponent implements OnInit {
   }
 
   getLogoUrl(): string {
-    if (!this.boutique || !this.boutique.logo_url) {
-      return 'https://www.legrand.es/modules/custom/legrand_ecat/assets/img/no-image.png';
-    }
-    if (this.boutique.logo_url.startsWith('http')) return this.boutique.logo_url;
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}${this.boutique.logo_url}`;
+  // Si pas de boutique ou pas de logo, retourner l'image par défaut
+  if (!this.boutique || !this.boutique.logo_url) {
+    return 'https://www.legrand.es/modules/custom/legrand_ecat/assets/img/no-image.png';
   }
+
+  return this.boutique.logo_url;
+}
 
   onLogoSelected(event: any): void {
     const file = event.target.files[0];

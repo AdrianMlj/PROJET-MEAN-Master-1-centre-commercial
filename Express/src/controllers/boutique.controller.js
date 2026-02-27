@@ -6,6 +6,7 @@ const Produit = require('../models/produit.model');
 const Commande = require('../models/commande.model');
 const Notification = require('../models/notification.model');
 const Role = require('../models/role.model');
+const { deleteImageByUrl } = require('../utils/cloudinary.util');
 
 // Lister toutes les boutiques (publique)
 exports.listerBoutiques = async (req, res) => {
@@ -720,6 +721,8 @@ exports.uploadLogo = async (req, res) => {
       });
     }
 
+    console.log('📸 Upload logo Cloudinary:', req.file.path);
+
     const boutique = await Boutique.findOne({ gerant: req.user.id });
     if (!boutique) {
       return res.status(404).json({
@@ -728,7 +731,8 @@ exports.uploadLogo = async (req, res) => {
       });
     }
 
-    const logoUrl = `/uploads/boutiques/${req.file.filename}`;
+    // ✅ Utiliser l'URL Cloudinary complète
+    const logoUrl = req.file.path;
     boutique.logo_url = logoUrl;
     await boutique.save();
 
@@ -738,7 +742,7 @@ exports.uploadLogo = async (req, res) => {
       logo_url: logoUrl
     });
   } catch (error) {
-    console.error('Erreur upload logo:', error);
+    console.error('❌ Erreur upload logo:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de l\'upload du logo',
@@ -748,7 +752,7 @@ exports.uploadLogo = async (req, res) => {
 };
 
 // ============================================
-// METTRE À JOUR LE LOGO (PUT)
+// METTRE À JOUR LE LOGO (PUT) - AVEC SUPPRESSION ANCIEN
 // ============================================
 exports.updateLogo = async (req, res) => {
   try {
@@ -759,6 +763,8 @@ exports.updateLogo = async (req, res) => {
       });
     }
 
+    console.log('📸 Nouveau logo uploadé:', req.file.path);
+
     const boutique = await Boutique.findOne({ gerant: req.user.id });
     if (!boutique) {
       return res.status(404).json({
@@ -767,9 +773,18 @@ exports.updateLogo = async (req, res) => {
       });
     }
 
-    const logoUrl = `/uploads/boutiques/${req.file.filename}`;
+    // ✅ 1. Supprimer l'ancien logo de Cloudinary si existe
+    if (boutique.logo_url) {
+      console.log('🗑️ Suppression de l\'ancien logo:', boutique.logo_url);
+      await deleteImageByUrl(boutique.logo_url);
+    }
+
+    // ✅ 2. Utiliser le nouveau logo Cloudinary
+    const logoUrl = req.file.path;
     boutique.logo_url = logoUrl;
     await boutique.save();
+
+    console.log('✅ Logo mis à jour avec succès:', logoUrl);
 
     res.status(200).json({
       success: true,
@@ -777,7 +792,7 @@ exports.updateLogo = async (req, res) => {
       logo_url: logoUrl
     });
   } catch (error) {
-    console.error('Erreur mise à jour logo:', error);
+    console.error('❌ Erreur mise à jour logo:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour du logo',
@@ -798,6 +813,8 @@ exports.uploadImages = async (req, res) => {
       });
     }
 
+    console.log(`📸 Upload de ${req.files.length} image(s) Cloudinary`);
+
     const boutique = await Boutique.findOne({ gerant: req.user.id });
     if (!boutique) {
       return res.status(404).json({
@@ -815,9 +832,8 @@ exports.uploadImages = async (req, res) => {
       });
     }
 
-    const nouvellesImages = req.files.map(file => 
-      `/uploads/boutiques/${file.filename}`
-    );
+    // ✅ Récupérer les URLs Cloudinary complètes
+    const nouvellesImages = req.files.map(file => file.path);
 
     boutique.images = [...boutique.images, ...nouvellesImages];
     await boutique.save();
@@ -829,7 +845,7 @@ exports.uploadImages = async (req, res) => {
       total_images: boutique.images.length
     });
   } catch (error) {
-    console.error('Erreur upload multiple images:', error);
+    console.error('❌ Erreur upload multiple images:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de l\'upload des images',
@@ -839,7 +855,7 @@ exports.uploadImages = async (req, res) => {
 };
 
 // ============================================
-// SUPPRIMER UNE IMAGE (DELETE)
+// SUPPRIMER UNE IMAGE (DELETE) - AVEC SUPPRESSION CLOUDINARY
 // ============================================
 exports.supprimerImage = async (req, res) => {
   try {
@@ -863,20 +879,26 @@ exports.supprimerImage = async (req, res) => {
       });
     }
 
-    // Supprimer l'image du tableau
-    const imageSupprimee = boutique.images.splice(imageIndex, 1);
-    
+    // ✅ Récupérer l'URL de l'image à supprimer
+    const imageASupprimer = boutique.images[imageIndex];
+    console.log('🗑️ Suppression image Cloudinary:', imageASupprimer);
+
+    // ✅ Supprimer l'image de Cloudinary
+    await deleteImageByUrl(imageASupprimer);
+
+    // ✅ Supprimer l'image du tableau
+    boutique.images.splice(imageIndex, 1);
     await boutique.save();
 
     res.status(200).json({
       success: true,
       message: 'Image supprimée avec succès',
-      image_supprimee: imageSupprimee[0],
+      image_supprimee: imageASupprimer,
       images: boutique.images
     });
 
   } catch (error) {
-    console.error('Erreur suppression image:', error);
+    console.error('❌ Erreur suppression image:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression de l\'image',
@@ -907,7 +929,7 @@ exports.getImages = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erreur récupération images:', error);
+    console.error('❌ Erreur récupération images:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des images',
@@ -941,13 +963,19 @@ exports.setImagePrincipale = async (req, res) => {
       });
     }
 
-    // Récupérer l'image à définir comme principale
+    // ✅ Récupérer l'image à définir comme principale
     const imagePrincipale = boutique.images[imageIndex];
     
-    // Supprimer l'image du tableau
+    // ✅ Si un ancien logo existe, le supprimer de Cloudinary
+    if (boutique.logo_url) {
+      console.log('🗑️ Suppression de l\'ancien logo avant remplacement:', boutique.logo_url);
+      await deleteImageByUrl(boutique.logo_url);
+    }
+    
+    // ✅ Supprimer l'image du tableau
     boutique.images.splice(imageIndex, 1);
     
-    // Définir comme nouveau logo
+    // ✅ Définir comme nouveau logo
     boutique.logo_url = imagePrincipale;
     
     await boutique.save();
@@ -960,7 +988,7 @@ exports.setImagePrincipale = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erreur définition image principale:', error);
+    console.error('❌ Erreur définition image principale:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la définition de l\'image principale',

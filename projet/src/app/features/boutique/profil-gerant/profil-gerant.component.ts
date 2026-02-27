@@ -72,15 +72,13 @@ export class ProfilGerantComponent implements OnInit {
     return nouveau === confirm ? null : { mismatch: true };
   }
 
+  // ✅ MODIFIÉ: Méthode simplifiée pour l'avatar Cloudinary
   getAvatarUrl(): string {
+    // Si pas d'utilisateur ou pas d'avatar, retourner l'image par défaut
     if (!this.currentUser || !this.currentUser.avatar_url) {
       return 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png';
     }
-    if (this.currentUser.avatar_url.startsWith('http')) {
-      return this.currentUser.avatar_url;
-    }
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}${this.currentUser.avatar_url}`;
+    return this.currentUser.avatar_url;
   }
 
   onAvatarSelected(event: any): void {
