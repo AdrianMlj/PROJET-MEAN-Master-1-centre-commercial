@@ -24,7 +24,7 @@ const options = {
         description: 'Serveur de développement local'
       },
       {
-        url: ' https://projet-mean-master-1-centre-commercial.onrender.com/api',
+        url: ' https://m1p13mean-adrianno-maressah.onrender.com/api',
         description: 'Serveur de production'
       }
     ],
