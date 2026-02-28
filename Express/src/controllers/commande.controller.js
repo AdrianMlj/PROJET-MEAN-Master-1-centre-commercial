@@ -884,7 +884,7 @@ exports.genererFacturePDF = async (req, res) => {
 
     // Récupérer la commande avec les informations nécessaires
     const commande = await Commande.findById(id)
-      .populate('client', 'nom prenom email telephone adresse') // ✅ ajout du téléphone
+      .populate('client', 'nom prenom email telephone adresse')
       .populate({
         path: 'boutique',
         select: 'nom adresse contact gerant'
@@ -940,6 +940,11 @@ exports.genererFacturePDF = async (req, res) => {
     // En-tête
     doc.fontSize(24).fillColor(primaryColor).text('FACTURE', 50, 50);
     doc.moveDown(0.5);
+    
+    // ✅ Ajout du nom de la boutique sous le titre
+    doc.fontSize(14).fillColor(accentColor).text(commande.boutique.nom, 50, doc.y + 5);
+    doc.moveDown(1);
+    
     doc.strokeColor(accentColor).lineWidth(2).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
     doc.moveDown(1);
 
