@@ -11,6 +11,7 @@ import { filter } from 'rxjs/operators';
 export class AppComponent implements OnInit {
   title = 'Centre Commercial';
   showNavbar = true;
+  showFooter = true;
 
   constructor(private router: Router) {}
 
@@ -23,6 +24,8 @@ export class AppComponent implements OnInit {
       this.showNavbar = !url.startsWith('/acheteur') &&
                         !url.startsWith('/admin') &&
                         !url.startsWith('/boutique');
+      // Footer is always shown
+      this.showFooter = true;
     });
   }
 }
