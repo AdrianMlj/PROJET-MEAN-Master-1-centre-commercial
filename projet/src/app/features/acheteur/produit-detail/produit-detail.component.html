@@ -114,10 +114,6 @@
             <i class="fas" [ngClass]="adding ? 'fa-spinner fa-spin' : 'fa-cart-plus'"></i>
             {{ adding ? 'Ajout...' : 'Ajouter au panier' }}
           </button>
-          <button class="btn btn-success" (click)="ajouterAuPanier(true)" [disabled]="produit.quantite_stock <= 0 || adding">
-            <i class="fas fa-bolt"></i>
-            Acheter maintenant
-          </button>
         </div>
       </div>
     </div>
