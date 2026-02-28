@@ -4,7 +4,8 @@ const favorisSchema = new mongoose.Schema({
   client: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Utilisateur',
-    required: true
+    required: true,
+    index: true
   },
   produit: {
     type: mongoose.Schema.Types.ObjectId,
@@ -18,12 +19,29 @@ const favorisSchema = new mongoose.Schema({
   timestamps: { createdAt: 'date_ajout' }
 });
 
-// Indexes
-favorisSchema.index({ client: 1, produit: 1 }, { unique: true, sparse: true });
-favorisSchema.index({ client: 1, boutique: 1 }, { unique: true, sparse: true });
+favorisSchema.index(
+  { client: 1, produit: 1 }, 
+  { 
+    unique: true,
+    partialFilterExpression: { 
+      produit: { $type: "objectId" } 
+    }
+  }
+);
+
+favorisSchema.index(
+  { client: 1, boutique: 1 }, 
+  { 
+    unique: true,
+    partialFilterExpression: { 
+      boutique: { $type: "objectId" } 
+    }
+  }
+);
+
 favorisSchema.index({ client: 1 });
 
-// Validation pour s'assurer qu'au moins un des deux est présent
+
 favorisSchema.pre('validate', function(next) {
   if (!this.produit && !this.boutique) {
     next(new Error('Au moins un produit ou une boutique doit être spécifié'));
