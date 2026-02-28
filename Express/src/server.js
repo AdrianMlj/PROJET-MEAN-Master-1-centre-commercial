@@ -11,8 +11,8 @@ const server = express();
 
 // ✅ Configuration CORS avec le package officiel (plus fiable)
 const allowedOrigins = [
-  'https://projet-mean-master-1-centre-commercial-1.onrender.com',
-  'https://projet-mean-master-1-centre-commercial-2.onrender.com',
+  'https://m1p13mean-adrianno-maressah-1.onrender.com',
+  'https://m1p13mean-adrianno-maressah-2.onrender.com',
   process.env.FRONTEND_URL,
   process.env.FRONTEND_URL2
 ].filter(Boolean);
