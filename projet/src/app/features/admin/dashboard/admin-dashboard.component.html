@@ -75,32 +75,6 @@
         </div>
       </div>
 
-      <!-- Produits -->
-      <div class="stat-card products">
-        <div class="stat-icon">
-          <i class="fas fa-box"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ dashboardData.statistiques.produits.total }}</h3>
-          <p>Produits</p>
-        </div>
-      </div>
-
-      <!-- Commandes -->
-      <div class="stat-card orders">
-        <div class="stat-icon">
-          <i class="fas fa-shopping-bag"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ dashboardData.statistiques.commandes.total }}</h3>
-          <p>Commandes</p>
-          <div class="stat-details" *ngIf="dashboardData.statistiques.commandes.ce_mois > 0">
-            <span class="badge info">
-              <i class="fas fa-calendar"></i> {{ dashboardData.statistiques.commandes.ce_mois }} ce mois
-            </span>
-          </div>
-        </div>
-      </div>
 
       <!-- Chiffre d'affaires -->
       <div class="stat-card revenue">
@@ -129,9 +103,6 @@
           <div class="stat-details">
             <span class="badge warning" *ngIf="dashboardData.alertes.boutiques_inactives > 0">
               {{ dashboardData.alertes.boutiques_inactives }} boutique(s) inactive(s)
-            </span>
-            <span class="badge warning" *ngIf="dashboardData.alertes.commandes_en_attente > 0">
-              {{ dashboardData.alertes.commandes_en_attente }} commande(s) en attente
             </span>
           </div>
         </div>

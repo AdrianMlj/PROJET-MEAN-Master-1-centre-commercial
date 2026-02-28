@@ -82,10 +82,25 @@ export class BoutiqueDashboardComponent implements OnInit {
 
   formatDate(dateStr: string): string {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
   }
 
   navigateTo(path: string): void {
     this.router.navigate([`/boutique/${path}`]);
+  }
+
+  // ✅ Récupérer la valeur maximale du CA pour l'échelle
+  getMaxCA(): number {
+    if (!this.evolutionVentes || this.evolutionVentes.length === 0) return 0;
+    return Math.max(...this.evolutionVentes.map(v => v.chiffreAffaires || 0));
+  }
+
+  // ✅ Calculer la hauteur de la barre (max 150px)
+  getBarHeight(value: number): number {
+    const max = this.getMaxCA();
+    if (max === 0) return 30; // hauteur minimale
+    const ratio = value / max;
+    // Hauteur entre 40px et 150px
+    return 40 + ratio * 110;
   }
 }

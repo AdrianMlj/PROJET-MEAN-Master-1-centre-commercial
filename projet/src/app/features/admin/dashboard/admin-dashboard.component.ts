@@ -130,10 +130,7 @@ export class AdminDashboardComponent implements OnInit {
   getAlerteCount(): number {
     if (!this.dashboardData) return 0;
     const alertes = this.dashboardData.alertes;
-    return alertes.boutiques_inactives + 
-           alertes.produits_rupture + 
-           alertes.produits_faible_stock + 
-           alertes.commandes_en_attente;
+    return alertes.boutiques_inactives;
   }
 
   getAlerteMessage(): string {

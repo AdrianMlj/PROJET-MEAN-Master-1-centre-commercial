@@ -143,15 +143,56 @@
       </div>
     </div>
 
-    <!-- Évolution des ventes (mini graphique en barres) -->
-    <div class="card" *ngIf="evolutionVentes.length > 0">
-      <h3><i class="fas fa-chart-line"></i> Évolution des ventes (7 derniers jours)</h3>
-      <div class="evolution">
-        <div class="bar-chart">
-          <div class="bar-item" *ngFor="let ev of evolutionVentes.slice(-7)">
-            <div class="bar" [style.height.px]="ev.chiffreAffaires / 10" [style.background]="'#667eea'"></div>
-            <span class="bar-label">{{ formatDate(ev._id) }}</span>
+    <!-- Évolution des ventes (graphique amélioré) -->
+    <div class="card evolution-card" *ngIf="evolutionVentes.length > 0">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-chart-line"></i>
+          Évolution des ventes (7 derniers jours)
+        </h3>
+        <div class="legend">
+          <span class="legend-item">
+            <span class="color-dot" style="background: #667eea;"></span>
+            Chiffre d'affaires
+          </span>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <!-- Axe vertical (valeurs) -->
+        <div class="y-axis">
+          <span>{{ formatCurrency(getMaxCA()) }}</span>
+          <span>{{ formatCurrency(getMaxCA() * 0.75) }}</span>
+          <span>{{ formatCurrency(getMaxCA() * 0.5) }}</span>
+          <span>{{ formatCurrency(getMaxCA() * 0.25) }}</span>
+          <span>0 €</span>
+        </div>
+
+        <!-- Barres -->
+        <div class="bars">
+          <div class="bar-wrapper" *ngFor="let ev of evolutionVentes.slice(-7)">
+            <div class="bar" [style.height.px]="getBarHeight(ev.chiffreAffaires)">
+              <span class="bar-value">{{ formatCurrency(ev.chiffreAffaires) }}</span>
+            </div>
+            <div class="bar-label">{{ formatDate(ev._id) }}</div>
           </div>
+        </div>
+      </div>
+
+      <!-- Indicateur de tendance -->
+      <div class="trend" *ngIf="evolutionVentes.length > 1">
+        <div class="trend-badge" [ngClass]="{
+          'up': evolutionVentes.slice(-1)[0]?.chiffreAffaires > evolutionVentes.slice(-2,-1)[0]?.chiffreAffaires,
+          'down': evolutionVentes.slice(-1)[0]?.chiffreAffaires < evolutionVentes.slice(-2,-1)[0]?.chiffreAffaires,
+          'stable': evolutionVentes.slice(-1)[0]?.chiffreAffaires === evolutionVentes.slice(-2,-1)[0]?.chiffreAffaires
+        }">
+          <i class="fas" [ngClass]="{
+            'fa-arrow-up': evolutionVentes.slice(-1)[0]?.chiffreAffaires > evolutionVentes.slice(-2,-1)[0]?.chiffreAffaires,
+            'fa-arrow-down': evolutionVentes.slice(-1)[0]?.chiffreAffaires < evolutionVentes.slice(-2,-1)[0]?.chiffreAffaires,
+            'fa-minus': evolutionVentes.slice(-1)[0]?.chiffreAffaires === evolutionVentes.slice(-2,-1)[0]?.chiffreAffaires
+          }"></i>
+          <span>Évolution: </span>
+          <strong>{{ ((evolutionVentes.slice(-1)[0]?.chiffreAffaires - evolutionVentes.slice(-2,-1)[0]?.chiffreAffaires) / (evolutionVentes.slice(-2,-1)[0]?.chiffreAffaires || 1) * 100).toFixed(1) }}%</strong>
         </div>
       </div>
     </div>
