@@ -11,7 +11,7 @@ const options = {
       contact: {
         name: 'Support Technique',
         email: 'support@commerce-m1p13.com',
-        url: 'https://projet-mean-master-1-centre-commercial.onrender.com'
+        url: 'https://m1p13mean-adrianno-maressah.onrender.com/api'
       },
       license: {
         name: 'MIT',

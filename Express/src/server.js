@@ -11,8 +11,9 @@ const server = express();
 
 // ✅ Configuration CORS avec le package officiel (plus fiable)
 const allowedOrigins = [
-  'https://m1p13mean-adrianno-maressah-1.onrender.com',
-  'https://m1p13mean-adrianno-maressah-2.onrender.com',
+  'http://localhost:4200/',
+  'http://localhost:3000',
+  'https://m1p13mean-adrianno-maressah.onrender.com',
   process.env.FRONTEND_URL,
   process.env.FRONTEND_URL2
 ].filter(Boolean);

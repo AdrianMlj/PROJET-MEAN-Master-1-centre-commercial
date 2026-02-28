@@ -35,11 +35,12 @@ app.use(express.urlencoded({ extended: true }));
 // ============================================
 // Liste des origines autorisées (frontends)
 const allowedOrigins = [
-  'https://projet-mean-master-1-centre-commercial-1.onrender.com', // Ancien frontend
-  'https://projet-mean-master-1-centre-commercial-2.onrender.com', // Nouveau frontend
-  process.env.FRONTEND_URL,                                        // Variable d'environnement
-  process.env.FRONTEND_URL2                                        // Deuxième variable
-].filter(origin => origin && origin.trim() !== '');               // Filtrer les valeurs vides
+  'http://localhost:4200/',
+  'http://localhost:3000',
+  'https://m1p13mean-adrianno-maressah.onrender.com', 
+  process.env.FRONTEND_URL,                                        
+  process.env.FRONTEND_URL2                                        
+].filter(origin => origin && origin.trim() !== '');               
 
 console.log('🌍 CORS - Origines autorisées:', allowedOrigins);
 
