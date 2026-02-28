@@ -438,7 +438,7 @@ exports.mettreAJourStatutCommande = async (req, res) => {
 
     const commande = await Commande.findById(req.params.id)
       .populate('boutique')
-      .populate('client', 'nom prenom email'); // ✅ pour récupérer les infos du client
+      .populate('client', 'nom prenom email');
 
     if (!commande) {
       return res.status(404).json({
@@ -460,7 +460,7 @@ exports.mettreAJourStatutCommande = async (req, res) => {
 
     // Valider la transition de statut
     const transitionsValides = {
-      'en_attente': ['en_preparation', 'annule', 'refuse','pret'],
+      'en_attente': ['en_preparation', 'annule', 'refuse', 'pret'],
       'en_preparation': ['pret', 'annule'],
       'pret': ['livre', 'annule'],
       'livre': [],
@@ -473,6 +473,20 @@ exports.mettreAJourStatutCommande = async (req, res) => {
         success: false,
         message: `Transition de statut invalide: ${ancienStatut} -> ${nouveau_statut}`
       });
+    }
+
+    // ✅ VÉRIFICATION SUPPLÉMENTAIRE POUR LE STATUT "livre"
+    if (nouveau_statut === 'livre') {
+      // Récupérer le paiement associé à la commande
+      const paiement = await Paiement.findOne({ commande: commande._id });
+      
+      // Vérifier si le paiement existe et est payé
+      if (!paiement || paiement.statut_paiement !== 'paye') {
+        return res.status(400).json({
+          success: false,
+          message: 'Impossible de marquer la commande comme livrée car le paiement n\'a pas encore été effectué'
+        });
+      }
     }
 
     // Mettre à jour le statut
@@ -526,7 +540,7 @@ exports.mettreAJourStatutCommande = async (req, res) => {
       }
     }
 
-    // ✅ NOUVELLE NOTIFICATION POUR L'ACHETEUR (statut 'livre')
+    // ✅ NOTIFICATION POUR L'ACHETEUR (statut 'livre')
     if (nouveau_statut === 'livre') {
       try {
         const notification = new Notification({
@@ -561,6 +575,7 @@ exports.mettreAJourStatutCommande = async (req, res) => {
     });
   }
 };
+
 // Obtenir l'historique des statuts d'une commande
 exports.obtenirHistoriqueStatuts = async (req, res) => {
   try {
