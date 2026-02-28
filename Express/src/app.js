@@ -35,7 +35,7 @@ app.use(express.urlencoded({ extended: true }));
 // ============================================
 // Liste des origines autorisées (frontends)
 const allowedOrigins = [
-  'http://localhost:4200/',
+  'http://localhost:4200',
   'http://localhost:3000',
   'https://m1p13mean-adrianno-maressah.onrender.com', 
   process.env.FRONTEND_URL,                                        
