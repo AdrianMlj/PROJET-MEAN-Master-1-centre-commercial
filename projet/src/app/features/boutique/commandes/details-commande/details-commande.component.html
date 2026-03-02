@@ -60,17 +60,23 @@
           </div>
         </div>
 
-        <!-- Adresse de livraison -->
-        <div class="info-card">
+        <!-- Adresse de livraison (optionnelle) -->
+        <div class="info-card" *ngIf="commande.adresse_livraison; else noAddress">
           <h3><i class="fas fa-map-marker-alt"></i> Adresse de livraison</h3>
           <div class="info-content">
             <p>{{ commande.adresse_livraison.rue }}</p>
-            <p *ngIf="commande.adresse_livraison.complement">{{ commande.adresse_livraison.complement }}</p>
             <p>{{ commande.adresse_livraison.code_postal }} {{ commande.adresse_livraison.ville }}</p>
             <p>{{ commande.adresse_livraison.pays }}</p>
-            <p *ngIf="commande.adresse_livraison.instructions"><i>Instruction: {{ commande.adresse_livraison.instructions }}</i></p>
           </div>
         </div>
+        <ng-template #noAddress>
+          <div class="info-card">
+            <h3><i class="fas fa-map-marker-alt"></i> Adresse de livraison</h3>
+            <div class="info-content">
+              <p>Non renseignée</p>
+            </div>
+          </div>
+        </ng-template>
 
         <!-- Paiement -->
         <div class="info-card">
@@ -81,9 +87,11 @@
                 {{ commande.est_paye ? 'Payé' : 'Impayé' }}
               </span>
             </p>
-            <p *ngIf="commande.informations_paiement.methode">Méthode: {{ commande.informations_paiement.methode }}</p>
-            <p *ngIf="commande.informations_paiement.reference">Réf: {{ commande.informations_paiement.reference }}</p>
-            <p *ngIf="commande.informations_paiement.date_paiement">Date: {{ formatDate(commande.informations_paiement.date_paiement) }}</p>
+            <ng-container *ngIf="commande.informations_paiement as paiement">
+              <p *ngIf="paiement.methode">Méthode: {{ paiement.methode }}</p>
+              <p *ngIf="paiement.reference">Réf: {{ paiement.reference }}</p>
+              <p *ngIf="paiement.date_paiement">Date: {{ formatDate(paiement.date_paiement) }}</p>
+            </ng-container>
           </div>
         </div>
 
@@ -91,7 +99,7 @@
         <div class="info-card">
           <h3><i class="fas fa-truck"></i> Livraison</h3>
           <div class="info-content">
-            <p>Mode: {{ commande.mode_livraison }}</p>
+            <p>Mode: {{ commande.mode_livraison || 'Non spécifié' }}</p>
             <p>Frais: {{ formatCurrency(commande.frais_livraison) }}</p>
             <p *ngIf="commande.date_livraison_estimee">Estimée le: {{ formatDate(commande.date_livraison_estimee) }}</p>
           </div>

@@ -1,12 +1,8 @@
 export interface AdresseLivraison {
-  nom_complet: string;
-  telephone: string;
-  rue: string;
-  complement?: string;
-  ville: string;
-  code_postal: string;
-  pays: string;
-  instructions?: string;
+  rue?: string;
+  ville?: string;
+  code_postal?: string;
+  pays?: string;
 }
 
 export interface ClientInfo {
@@ -53,7 +49,7 @@ export interface Commande {
   frais_livraison: number;
   total_general: number;
   adresse_livraison: AdresseLivraison;
-  mode_livraison: 'retrait_boutique' | 'livraison_standard' | 'livraison_express';
+  mode_livraison?: 'retrait_boutique' | 'livraison_standard' | 'livraison_express';
   notes?: string;
   informations_paiement: {
     methode?: string;

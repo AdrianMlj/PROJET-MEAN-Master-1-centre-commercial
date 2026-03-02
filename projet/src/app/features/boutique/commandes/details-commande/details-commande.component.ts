@@ -86,14 +86,12 @@ export class DetailsCommandeComponent implements OnInit {
     });
   }
 
-  // Méthode pour visualiser la facture (ouvre dans un nouvel onglet)
   visualiserFacture(): void {
     if (!this.commande) return;
     this.commandeService.getFacture(this.commande._id).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         window.open(url, '_blank');
-        // Libérer l'objet URL après un délai pour permettre l'ouverture
         setTimeout(() => window.URL.revokeObjectURL(url), 100);
       },
       error: (error) => {
@@ -103,7 +101,6 @@ export class DetailsCommandeComponent implements OnInit {
     });
   }
 
-  // Méthode pour télécharger la facture (si on veut forcer le téléchargement)
   telechargerFacture(): void {
     if (!this.commande) return;
     this.commandeService.getFacture(this.commande._id).subscribe({
@@ -126,9 +123,7 @@ export class DetailsCommandeComponent implements OnInit {
     this.router.navigate(['/boutique/commandes/liste']);
   }
 
-  // ✅ MODIFIÉ: Méthode simplifiée pour les images Cloudinary
   getImageUrl(url: string): string {
-    // Si pas d'URL, retourner une image par défaut/placeholder
     if (!url) {
       return 'https://via.placeholder.com/80';
     }
