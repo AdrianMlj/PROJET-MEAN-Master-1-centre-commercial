@@ -113,7 +113,7 @@ export class PayerComponent implements OnInit {
           this.submitting = false;
           
           setTimeout(() => {
-            this.router.navigate(['/acheteur/commande-detail', this.commandeId], {
+            this.router.navigate(['/acheteur/commande', this.commandeId], {
               queryParams: { facture: true }
             });
           }, 2000);
