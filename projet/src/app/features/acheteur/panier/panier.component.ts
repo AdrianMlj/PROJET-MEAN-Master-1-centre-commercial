@@ -223,49 +223,36 @@ export class PanierComponent implements OnInit, OnDestroy {
   }
 
   passerCommande(): void {
-    if (!this.panier || this.panier.elements.length === 0) {
-      this.afficherMessage('Votre panier est vide', true);
-      return;
-    }
+  if (!this.panier || this.panier.elements.length === 0) {
+    this.afficherMessage('Votre panier est vide', true);
+    return;
+  }
 
-    // Préparer les données de commande avec des valeurs par défaut
-    const user = this.authService.getCurrentUser();
-    const commandeData = {
-      adresse_livraison: {
-        nom_complet: user ? `${user.prenom || ''} ${user.nom}`.trim() : 'Client',
-        telephone: user?.telephone || '0600000000',
-        rue: 'Adresse à confirmer',
-        ville: 'Ville à confirmer',
-        code_postal: '00000',
-        pays: 'France'
-      },
-      mode_livraison: 'retrait_boutique' as ModeLivraison,
-      methode_paiement: 'especes' as MethodePaiement,
-      notes: 'Commande passée depuis le panier'
-    };
+  // ✅ On envoie un objet vide, car le backend ne requiert plus de données
+  const commandeData = {};
 
-    this.submitting = true;
-    this.commandeService.passerCommande(commandeData).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.afficherMessage(`Commande(s) passée(s) avec succès! ${response.nombre_commandes} commande(s) créée(s) en attente de confirmation.`);
-          this.panierService.resetNombreArticles();
-          this.panier = null;
-          this.panierTotal = null;
-          setTimeout(() => {
-            this.router.navigate(['/acheteur/commandes']);
-          }, 1500);
-        } else {
-          this.errorMessage = response.message;
-          this.submitting = false;
-        }
-      },
-      error: (error) => {
-        this.errorMessage = error.error?.message || 'Erreur lors de la commande';
+  this.submitting = true;
+  this.commandeService.passerCommande(commandeData).subscribe({
+    next: (response) => {
+      if (response.success) {
+        this.afficherMessage(`Commande(s) passée(s) avec succès! ${response.nombre_commandes} commande(s) créée(s) en attente de confirmation.`);
+        this.panierService.resetNombreArticles();
+        this.panier = null;
+        this.panierTotal = null;
+        setTimeout(() => {
+          this.router.navigate(['/acheteur/commandes']);
+        }, 1500);
+      } else {
+        this.errorMessage = response.message;
         this.submitting = false;
       }
-    });
-  }
+    },
+    error: (error) => {
+      this.errorMessage = error.error?.message || 'Erreur lors de la commande';
+      this.submitting = false;
+    }
+  });
+}
 
   continuerAchats(): void {
     this.router.navigate(['/acheteur/produits']);

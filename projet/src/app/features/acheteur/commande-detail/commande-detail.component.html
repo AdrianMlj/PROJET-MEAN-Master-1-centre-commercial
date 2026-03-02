@@ -42,7 +42,6 @@
             <div class="facture-buyer">
               <h4>Facturé à:</h4>
               <p>{{ commande.adresse_livraison?.rue }}</p>
-              <p *ngIf="commande.adresse_livraison?.complement">{{ commande.adresse_livraison?.complement }}</p>
               <p>{{ commande.adresse_livraison?.code_postal }} {{ commande.adresse_livraison?.ville }}</p>
             </div>
             <div class="facture-number">
@@ -229,16 +228,10 @@
                 <strong>Mode:</strong> {{ getModeLivraisonLabel(commande.mode_livraison) }}
               </p>
               <div class="address">
-                <p><strong>{{ commande.adresse_livraison?.nom_complet }}</strong></p>
                 <p>{{ commande.adresse_livraison?.rue }}</p>
-                <p *ngIf="commande.adresse_livraison?.complement">{{ commande.adresse_livraison?.complement }}</p>
                 <p>{{ commande.adresse_livraison?.code_postal }} {{ commande.adresse_livraison?.ville }}</p>
                 <p>{{ commande.adresse_livraison?.pays }}</p>
-                <p class="phone"><i class="fas fa-phone"></i> {{ commande.adresse_livraison?.telephone }}</p>
-              </div>
-              <p class="instructions" *ngIf="commande.adresse_livraison?.instructions">
-                <i class="fas fa-info-circle"></i> {{ commande.adresse_livraison?.instructions }}
-              </p>
+              </div> 
             </div>
           </div>
 

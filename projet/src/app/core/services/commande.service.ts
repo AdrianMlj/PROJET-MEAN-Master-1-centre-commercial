@@ -8,7 +8,8 @@ import {
   CommandeHistoriqueResponse,
   PasserCommandeRequest, 
   PasserCommandeResponse,
-  CommandeFilters 
+  CommandeFilters,
+  PayerCommandeRequest  // ✅ Import
 } from '../models/commande.model';
 
 @Injectable({
@@ -49,8 +50,9 @@ export class CommandeService {
     return this.http.put<{ success: boolean; message: string; commande: any }>(`${this.apiUrl}/${id}/annuler`, {});
   }
 
-  payerCommande(id: string, methodePaiement: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/${id}/payer`, { methode_paiement: methodePaiement });
+  // ✅ Modifié pour accepter un objet PayerCommandeRequest
+  payerCommande(id: string, data: PayerCommandeRequest): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/payer`, data);
   }
 
   telechargerFacture(id: string): Observable<Blob> {

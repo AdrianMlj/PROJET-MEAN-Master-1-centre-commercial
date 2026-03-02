@@ -57,25 +57,81 @@
         </div>
       </div>
 
-      <!-- Payment Method Selection -->
+      <!-- Payment Form -->
       <div class="payment-method-card">
-        <h3>Choisir le mode de paiement</h3>
+        <h3>Informations de livraison et paiement</h3>
         
         <form [formGroup]="paiementForm" (ngSubmit)="onSubmit()">
-          <div class="payment-options">
-            <label class="payment-option" *ngFor="let methode of methodesPaiement"
-                   [class.selected]="paiementForm.get('methode_paiement')?.value === methode.value">
-              <input type="radio" formControlName="methode_paiement" [value]="methode.value">
-              <i class="fas {{ methode.icon }}"></i>
-              <span>{{ methode.label }}</span>
-            </label>
+          <!-- Adresse de livraison -->
+          <div class="form-section" formGroupName="adresse_livraison">
+            <h4>Adresse de livraison</h4>
+            
+            <div class="form-group">
+              <label for="rue">Rue *</label>
+              <input type="text" id="rue" formControlName="rue" class="form-control" [class.is-invalid]="adresseRue?.invalid && adresseRue?.touched">
+              <div class="invalid-feedback" *ngIf="adresseRue?.invalid && adresseRue?.touched">
+                La rue est requise
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="ville">Ville *</label>
+                <input type="text" id="ville" formControlName="ville" class="form-control" [class.is-invalid]="adresseVille?.invalid && adresseVille?.touched">
+                <div class="invalid-feedback" *ngIf="adresseVille?.invalid && adresseVille?.touched">
+                  La ville est requise
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="code_postal">Code postal *</label>
+                <input type="text" id="code_postal" formControlName="code_postal" class="form-control" [class.is-invalid]="adresseCodePostal?.invalid && adresseCodePostal?.touched">
+                <div class="invalid-feedback" *ngIf="adresseCodePostal?.invalid && adresseCodePostal?.touched">
+                  Code postal invalide (5 chiffres)
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="pays">Pays *</label>
+              <input type="text" id="pays" formControlName="pays" class="form-control">
+            </div>
           </div>
+
+          <!-- Mode de livraison -->
+          <div class="form-section">
+            <h4>Mode de livraison</h4>
+            <div class="delivery-options">
+              <label class="delivery-option" *ngFor="let mode of modesLivraison">
+                <input type="radio" formControlName="mode_livraison" [value]="mode.value">
+                <div class="delivery-info">
+                  <span class="label">{{ mode.label }}</span>
+                  <span class="description">{{ mode.description }}</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Méthode de paiement -->
+          <div class="form-section">
+            <h4>Méthode de paiement</h4>
+            <div class="payment-options">
+              <label class="payment-option" *ngFor="let methode of methodesPaiement"
+                     [class.selected]="paiementForm.get('methode_paiement')?.value === methode.value">
+                <input type="radio" formControlName="methode_paiement" [value]="methode.value">
+                <i class="fas {{ methode.icon }}"></i>
+                <span>{{ methode.label }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- ❌ La section "Instructions" a été supprimée -->
 
           <div class="payment-actions">
             <button type="button" class="btn btn-secondary" (click)="retourCommandes()">
               Annuler
             </button>
-            <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            <button type="submit" class="btn btn-primary" [disabled]="submitting || paiementForm.invalid">
               <i class="fas" [class.fa-spinner]="submitting" [class.fa-spin]="submitting"></i>
               {{ submitting ? 'Paiement en cours...' : 'Confirmer le paiement' }}
             </button>

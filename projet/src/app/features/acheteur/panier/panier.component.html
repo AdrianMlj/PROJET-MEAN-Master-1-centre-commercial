@@ -47,7 +47,6 @@
         <div class="cart-item" *ngFor="let element of panier.elements" [class.updating]="updating[element._id]">
           <div class="col-product">
             <div class="product-image" (click)="voirProduit(element.produit._id)">
-              <!-- ✅ Utilisation de la méthode getProduitImageUrl() avec gestion d'erreur -->
               <img 
                 [src]="getProduitImageUrl(element.produit)" 
                 [alt]="element.produit.nom"
@@ -141,10 +140,10 @@
 
         <div class="summary-content" *ngIf="!loadingTotal && panierTotal">
           <!-- Par boutique -->
-          <div class="boutique-summary" *ngFor="let detail of panierTotal.detail_par_boutique">
+          <div class="boutique-summary" *ngFor="let detail of panierTotal.detail_par_boutique; let last = last">
             <h4>{{ detail.boutique.nom }}</h4>
             <div class="summary-line">
-              <span>Sous-total</span>
+              <span>Sous-total articles</span>
               <span>{{ detail.total | number:'1.2-2' }} €</span>
             </div>
             <div class="summary-line">
@@ -153,22 +152,16 @@
                 {{ detail.frais_livraison === 0 ? 'Gratuit' : (detail.frais_livraison | number:'1.2-2') + ' €' }}
               </span>
             </div>
+            <!-- Total général de la boutique -->
+            <div class="summary-line boutique-total">
+              <strong>Total boutique</strong>
+              <strong>{{ detail.total_general | number:'1.2-2' }} €</strong>
+            </div>
+            <div class="summary-divider" *ngIf="!last"></div>
           </div>
 
-          <div class="summary-divider"></div>
-
-          <div class="summary-line total-line">
-            <span>Total produits</span>
-            <span>{{ panierTotal.total_produits | number:'1.2-2' }} €</span>
-          </div>
-          <div class="summary-line">
-            <span>Frais de livraison total</span>
-            <span>{{ panierTotal.frais_livraison_total | number:'1.2-2' }} €</span>
-          </div>
-          <div class="summary-line grand-total">
-            <span>Total</span>
-            <span>{{ panierTotal.total_general | number:'1.2-2' }} €</span>
-          </div>
+          <!-- ❌ Suppression des totaux globaux -->
+          <!-- Les lignes globales sont retirées -->
         </div>
 
         <div class="summary-actions">

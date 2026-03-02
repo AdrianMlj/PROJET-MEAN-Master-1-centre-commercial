@@ -6,14 +6,10 @@ export type ModeLivraison = 'retrait_boutique' | 'livraison_standard' | 'livrais
 export type MethodePaiement = 'carte_credit' | 'especes' | 'virement' | 'mobile' | 'carte_bancaire';
 
 export interface AdresseLivraison {
-  nom_complet: string;
-  telephone: string;
   rue: string;
-  complement?: string;
   ville: string;
   code_postal: string;
-  pays?: string;
-  instructions?: string;
+  pays: string;
 }
 
 export interface CommandeDetail {
@@ -21,7 +17,7 @@ export interface CommandeDetail {
   produit: Produit;
   quantite: number;
   prix_unitaire: number;
-  sous_total?: number;        // Optionnel car peut être calculé
+  sous_total?: number;
 }
 
 export interface Commande {
@@ -46,9 +42,9 @@ export interface Commande {
     date_paiement?: Date;
   };
   methode_paiement: MethodePaiement;
-  total_commande: number;      // Total des produits sans frais (API)
+  total_commande: number;
   frais_livraison: number;
-  total_general: number;       // Total avec frais (API)
+  total_general: number;
   notes?: string;
   date_commande: Date;
   date_livraison_estimee?: Date;
@@ -90,10 +86,6 @@ export interface CommandeHistoriqueResponse {
 }
 
 export interface PasserCommandeRequest {
-  adresse_livraison: AdresseLivraison;
-  mode_livraison?: ModeLivraison;
-  notes?: string;
-  methode_paiement: MethodePaiement;
 }
 
 export interface PasserCommandeResponse {
@@ -101,6 +93,15 @@ export interface PasserCommandeResponse {
   message: string;
   commandes: Commande[];
   nombre_commandes: number;
+}
+
+// ✅ Nouvelle interface pour le paiement
+export interface PayerCommandeRequest {
+  adresse_livraison: AdresseLivraison;
+  mode_livraison: ModeLivraison;
+  notes?: string;
+  methode_paiement: MethodePaiement;
+  token_paiement?: string;
 }
 
 export interface CommandeFilters {

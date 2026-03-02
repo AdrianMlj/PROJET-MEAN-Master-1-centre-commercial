@@ -16,55 +16,10 @@ const roleMiddleware = require('../middlewares/role.middleware');
  * /commandes:
  *   post:
  *     summary: Passer une commande
+ *     description: Crée une commande à partir du panier de l'utilisateur. Aucune information de livraison ou de paiement n'est requise à cette étape.
  *     tags: [Commandes]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - adresse_livraison
- *               - methode_paiement
- *             properties:
- *               adresse_livraison:
- *                 type: object
- *                 required:
- *                   - rue
- *                   - ville
- *                   - code_postal
- *                 properties:
- *                   rue:
- *                     type: string
- *                     example: "123 Avenue du Commerce"
- *                   complement:
- *                     type: string
- *                     example: "Appartement 4B"
- *                   ville:
- *                     type: string
- *                     example: "Paris"
- *                   code_postal:
- *                     type: string
- *                     example: "75000"
- *                   pays:
- *                     type: string
- *                     example: "France"
- *                   instructions:
- *                     type: string
- *                     example: "Sonner 3 fois"
- *               mode_livraison:
- *                 type: string
- *                 enum: [retrait_boutique, livraison_standard, livraison_express]
- *                 default: livraison_standard
- *               notes:
- *                 type: string
- *                 description: "Notes supplémentaires pour la commande"
- *               methode_paiement:
- *                 type: string
- *                 enum: [carte_credit, especes, virement, mobile, carte_bancaire]
- *                 example: carte_credit
  *     responses:
  *       201:
  *         description: Commande(s) passée(s) avec succès
@@ -85,10 +40,9 @@ const roleMiddleware = require('../middlewares/role.middleware');
  *                     $ref: '#/components/schemas/Commande'
  *                 nombre_commandes:
  *                   type: integer
- *                   description: Nombre de commandes créées
  *                   example: 2
  *       400:
- *         description: Erreur de validation ou panier vide
+ *         description: Panier vide ou produits indisponibles
  *         content:
  *           application/json:
  *             schema:
@@ -508,9 +462,9 @@ router.get('/admin/toutes',
  * @swagger
  * /commandes/{id}/payer:
  *   post:
- *     tags: [Commandes]
  *     summary: Payer une commande (client)
- *     description: Permet au client de payer une commande après confirmation de la boutique
+ *     description: Permet au client de payer une commande après confirmation de la boutique. Fournit les informations de livraison et de paiement.
+ *     tags: [Commandes]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -519,25 +473,82 @@ router.get('/admin/toutes',
  *         required: true
  *         schema:
  *           type: string
+ *         description: ID de la commande
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - adresse_livraison
+ *               - methode_paiement
  *             properties:
+ *               adresse_livraison:
+ *                 type: object
+ *                 required:
+ *                   - rue
+ *                   - ville
+ *                   - code_postal
+ *                 properties:
+ *                   rue:
+ *                     type: string
+ *                     description: Rue et numéro
+ *                     example: "123 Avenue du Commerce"
+ *                   ville:
+ *                     type: string
+ *                     example: "Paris"
+ *                   code_postal:
+ *                     type: string
+ *                     example: "75000"
+ *                   pays:
+ *                     type: string
+ *                     default: "France"
+ *                     example: "France"
+ *               mode_livraison:
+ *                 type: string
+ *                 enum: [retrait_boutique, livraison_standard, livraison_express]
+ *                 default: livraison_standard
+ *                 description: Mode de livraison choisi
+ *               notes:
+ *                 type: string
+ *                 description: Notes supplémentaires pour la commande
+ *                 example: "Appeler avant livraison"
  *               methode_paiement:
  *                 type: string
- *                 enum: [carte_credit, virement, mobile]
- *                 default: carte_credit
+ *                 enum: [carte_credit, especes, virement, mobile, carte_bancaire]
+ *                 description: Méthode de paiement
+ *                 example: "carte_credit"
  *               token_paiement:
  *                 type: string
  *                 description: Token du fournisseur de paiement (optionnel)
  *     responses:
  *       200:
  *         description: Paiement effectué
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Paiement effectué avec succès"
+ *                 commande:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     numero:
+ *                       type: string
+ *                     statut:
+ *                       type: string
+ *                     paiement:
+ *                       type: object
  *       400:
- *         description: Commande non payable
+ *         description: Commande non payable ou données invalides
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       403:

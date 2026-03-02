@@ -210,3 +210,154 @@
 .payment-actions .btn {
   min-width: 150px;
 }
+.form-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.form-section h4 {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #27ae60;
+}
+
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+textarea.form-control {
+  resize: vertical;
+}
+
+.delivery-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delivery-option {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border: 2px solid #eee;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.delivery-option:hover {
+  border-color: #c5d0e8;
+}
+
+.delivery-option input {
+  margin-right: 15px;
+  accent-color: #27ae60;
+}
+
+.delivery-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.delivery-info .label {
+  font-weight: 600;
+  color: #333;
+}
+
+.delivery-info .description {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.payment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border: 2px solid #eee;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.payment-option:hover {
+  border-color: #c5d0e8;
+}
+
+.payment-option.selected {
+  border-color: #27ae60;
+  background: #f0f8f4;
+}
+
+.payment-option input {
+  margin-right: 15px;
+  accent-color: #27ae60;
+}
+
+.payment-option i {
+  font-size: 1.3rem;
+  color: #27ae60;
+  margin-right: 12px;
+}
+
+.payment-option span {
+  font-weight: 500;
+  color: #333;
+}
+
+.payment-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.payment-actions .btn {
+  min-width: 150px;
+}

@@ -12,24 +12,10 @@ const PDFDocument = require('pdfkit');
 const { genererReferencePaiement } = require('../utils/generateur');
 
 // ============================================
-// Passer une commande (sans création de paiement)
+// Passer une commande (sans informations de livraison/paiement)
 // ============================================
 exports.passerCommande = async (req, res) => {
   try {
-    const { 
-      adresse_livraison, 
-      mode_livraison, 
-      notes 
-    } = req.body;
-
-    // Validation
-    if (!adresse_livraison ||  !adresse_livraison.rue || !adresse_livraison.ville || !adresse_livraison.code_postal) {
-      return res.status(400).json({
-        success: false,
-        message: 'Adresse de livraison incomplète'
-      });
-    }
-
     // Récupérer le panier de l'utilisateur
     const panier = await Panier.findOne({ client: req.user.id })
       .populate({
@@ -107,23 +93,19 @@ exports.passerCommande = async (req, res) => {
     for (const boutiqueId in elementsParBoutique) {
       const { boutique, elements, total } = elementsParBoutique[boutiqueId];
 
-      // Calcul des frais de livraison
-      const seuilLivraisonGratuite = boutique.parametres?.livraison_gratuite_apres || 50;
-      const frais_livraison = total >= seuilLivraisonGratuite ? 0 : (boutique.parametres?.frais_livraison || 5);
-      const total_general = total + frais_livraison;
+      // Frais de livraison temporairement à 0 (seront recalculés au paiement)
+      const frais_livraison = 0;
+      const total_general = total;
 
-      // Créer la commande (sans informations de paiement)
+      // Créer la commande (sans adresse, mode livraison, notes, ni paiement)
       const nouvelleCommande = new Commande({
         numero_commande: genererNumeroCommande(),
         client: req.user.id,
         boutique: boutique._id,
         total_commande: total,
         frais_livraison,
-        total_general,
-        adresse_livraison,
-        mode_livraison: mode_livraison || 'livraison_standard',
-        notes
-        // pas d'informations_paiement
+        total_general
+        // adresse_livraison, mode_livraison, notes ne sont pas fournis
       });
 
       const commandeSauvee = await nouvelleCommande.save();
@@ -150,7 +132,7 @@ exports.passerCommande = async (req, res) => {
       });
       await historique.save();
 
-      // ✅ NOTIFICATION POUR LA BOUTIQUE
+      // Notification à la boutique
       try {
         const notification = new Notification({
           destinataire: boutique.gerant,
@@ -168,8 +150,7 @@ exports.passerCommande = async (req, res) => {
               sous_total: e.sous_total
             })),
             total: total_general,
-            clientId: req.user.id,
-            adresseLivraison: adresse_livraison
+            clientId: req.user.id
           }
         });
         await notification.save();
@@ -177,7 +158,7 @@ exports.passerCommande = async (req, res) => {
         console.error('Erreur notification boutique:', notifError);
       }
 
-      // ✅ NOTIFICATION POUR L'ACHETEUR (confirmation de commande)
+      // Notification à l'acheteur (confirmation)
       try {
         const notificationAcheteur = new Notification({
           destinataire: req.user.id,
@@ -198,7 +179,7 @@ exports.passerCommande = async (req, res) => {
         console.error('Erreur notification acheteur:', notifError);
       }
 
-      // Mettre à jour le stock des produits
+      // Mettre à jour le stock
       for (const element of elements) {
         await Produit.findByIdAndUpdate(
           element.produit,
@@ -786,10 +767,30 @@ exports.obtenirToutesCommandes = async (req, res) => {
 exports.payerCommande = async (req, res) => {
   try {
     const { id } = req.params;
-    const { methode_paiement, token_paiement } = req.body; // token_paiement simulé ou réel
+    const { 
+      adresse_livraison,
+      mode_livraison,
+      notes,
+      methode_paiement,
+      token_paiement 
+    } = req.body;
 
-    // 1. Récupérer la commande
-    const commande = await Commande.findById(id);
+    // Validation des champs requis (adresse simplifiée)
+    if (!adresse_livraison || !adresse_livraison.rue || !adresse_livraison.ville || !adresse_livraison.code_postal) {
+      return res.status(400).json({
+        success: false,
+        message: 'Adresse de livraison incomplète (rue, ville, code postal requis)'
+      });
+    }
+    if (!methode_paiement || !['carte_credit', 'especes', 'virement', 'mobile', 'carte_bancaire'].includes(methode_paiement)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Méthode de paiement invalide'
+      });
+    }
+
+    // 1. Récupérer la commande avec la boutique et le client
+    const commande = await Commande.findById(id).populate('boutique').populate('client');
     if (!commande) {
       return res.status(404).json({
         success: false,
@@ -798,14 +799,14 @@ exports.payerCommande = async (req, res) => {
     }
 
     // 2. Vérifier que l'utilisateur est le client
-    if (!commande.client.equals(req.user.id)) {
+    if (!commande.client._id.equals(req.user.id)) {
       return res.status(403).json({
         success: false,
         message: 'Vous n\'êtes pas autorisé à payer cette commande'
       });
     }
 
-    // 3. Vérifier que la commande est dans un état permettant le paiement (ex: 'pret')
+    // 3. Vérifier que la commande est au statut 'pret'
     if (commande.statut !== 'pret') {
       return res.status(400).json({
         success: false,
@@ -813,10 +814,23 @@ exports.payerCommande = async (req, res) => {
       });
     }
 
-    // 4. Simuler un paiement (ici vous intégrerez Stripe ou autre)
-    // Pour l'exemple, on suppose que le paiement réussit
-    const paiementReussi = true;
+    // 4. Recalculer les frais de livraison selon le mode choisi et la boutique
+    const boutique = commande.boutique;
+    const seuilLivraisonGratuite = boutique.parametres?.livraison_gratuite_apres || 50;
+    let frais_livraison = boutique.parametres?.frais_livraison || 5;
 
+    if (mode_livraison === 'livraison_express') {
+      frais_livraison = frais_livraison * 1.5;
+    }
+
+    if (commande.total_commande >= seuilLivraisonGratuite) {
+      frais_livraison = 0;
+    }
+
+    const total_general = commande.total_commande + frais_livraison;
+
+    // 5. Simuler un paiement (à remplacer par un vrai service)
+    const paiementReussi = true;
     if (!paiementReussi) {
       return res.status(400).json({
         success: false,
@@ -824,49 +838,68 @@ exports.payerCommande = async (req, res) => {
       });
     }
 
-    // 5. Créer le document Paiement
-    const Paiement = require('../models/paiement.model');
-    const nouveauPaiement = new Paiement({
-      commande: commande._id,
-      montant: commande.total_general,
-      methode_paiement: methode_paiement || 'carte_credit',
-      statut_paiement: 'paye',
-      date_paiement: new Date(),
-      reference_paiement: genererReferencePaiement()
-    });
-    await nouveauPaiement.save();
+    // 6. Construire l'adresse de livraison complète avec les infos du client
+    const adresseComplete = {
+      nom_complet: `${commande.client.nom} ${commande.client.prenom}`,
+      telephone: commande.client.telephone || '',
+      rue: adresse_livraison.rue,
+      complement: adresse_livraison.complement || '',
+      ville: adresse_livraison.ville,
+      code_postal: adresse_livraison.code_postal,
+      pays: adresse_livraison.pays || 'France',
+      instructions: adresse_livraison.instructions || ''
+    };
 
-    // 6. Mettre à jour la commande avec les infos de paiement
+    // 7. Mettre à jour la commande
+    commande.adresse_livraison = adresseComplete;
+    commande.mode_livraison = mode_livraison || 'livraison_standard';
+    commande.notes = notes || '';
+    commande.frais_livraison = frais_livraison;
+    commande.total_general = total_general;
     commande.informations_paiement = {
       methode: methode_paiement,
       statut: 'paye',
-      reference: nouveauPaiement.reference_paiement,
+      reference: genererReferencePaiement(),
       date_paiement: new Date()
     };
-    // Optionnel : changer le statut de la commande (ex: 'payee' ou garder 'pret')
-    // commande.statut = 'payee'; // si vous voulez un statut distinct
     await commande.save();
 
-    // 7. Notification à la boutique
+    // 8. Créer le document Paiement
+    const nouveauPaiement = new Paiement({
+      commande: commande._id,
+      montant: total_general,
+      methode_paiement: methode_paiement,
+      statut_paiement: 'paye',
+      date_paiement: new Date(),
+      reference_paiement: commande.informations_paiement.reference
+    });
+    await nouveauPaiement.save();
+
+    // 9. Notifications
     try {
-      const boutique = await Boutique.findById(commande.boutique);
-      if (boutique) {
-        const Notification = require('../models/notification.model');
-        const notification = new Notification({
-          destinataire: boutique.gerant,
-          type: 'commande',
-          titre: 'Paiement reçu',
-          message: `Le client a payé la commande ${commande.numero_commande}.`,
-          donnees: {
-            commandeId: commande._id,
-            numeroCommande: commande.numero_commande,
-            montant: commande.total_general
-          }
-        });
-        await notification.save();
-      }
+      const notification = new Notification({
+        destinataire: boutique.gerant,
+        type: 'commande',
+        titre: 'Paiement reçu',
+        message: `Le client a payé la commande ${commande.numero_commande}.`,
+        donnees: { commandeId: commande._id, numeroCommande: commande.numero_commande, montant: total_general }
+      });
+      await notification.save();
     } catch (notifError) {
       console.error('Erreur notification boutique (paiement):', notifError);
+    }
+
+    try {
+      const notification = new Notification({
+        destinataire: req.user.id,
+        type: 'commande',
+        titre: 'Paiement confirmé',
+        message: `Le paiement de votre commande ${commande.numero_commande} a bien été reçu.`,
+        donnees: { commandeId: commande._id, numeroCommande: commande.numero_commande, montant: total_general }
+      });
+      await notification.save();
+    } catch (notifError) {
+      console.error('Erreur notification acheteur (paiement):', notifError);
     }
 
     res.status(200).json({

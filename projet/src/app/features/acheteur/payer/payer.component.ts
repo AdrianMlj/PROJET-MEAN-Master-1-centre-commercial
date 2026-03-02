@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommandeService } from '../../../core/services/commande.service';
-import { MethodePaiement } from '../../../core/models/commande.model';
+import { MethodePaiement, ModeLivraison, PayerCommandeRequest } from '../../../core/models/commande.model';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-payer',
@@ -19,6 +20,12 @@ export class PayerComponent implements OnInit {
   successMessage = '';
   commande: any = null;
 
+  modesLivraison: { value: ModeLivraison; label: string; description: string }[] = [
+    { value: 'livraison_standard', label: 'Livraison standard', description: '3-5 jours ouvrés' },
+    { value: 'livraison_express', label: 'Livraison express', description: '24-48h' },
+    { value: 'retrait_boutique', label: 'Retrait en boutique', description: 'Gratuit' }
+  ];
+
   methodesPaiement: { value: MethodePaiement; label: string; icon: string }[] = [
     { value: 'carte_bancaire', label: 'Carte bancaire', icon: 'fa-credit-card' },
     { value: 'carte_credit', label: 'Carte de crédit', icon: 'fa-credit-card' },
@@ -31,10 +38,19 @@ export class PayerComponent implements OnInit {
     private formBuilder: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private commandeService: CommandeService
+    private commandeService: CommandeService,
+    private authService: AuthService
   ) {
     this.paiementForm = this.formBuilder.group({
+      adresse_livraison: this.formBuilder.group({
+        rue: ['', Validators.required],
+        ville: ['', Validators.required],
+        code_postal: ['', [Validators.required, Validators.pattern(/^[0-9]{5}$/)]],
+        pays: ['France', Validators.required]
+      }),
+      mode_livraison: ['livraison_standard', Validators.required],
       methode_paiement: ['carte_bancaire', Validators.required]
+      // ❌ notes supprimé
     });
   }
 
@@ -56,10 +72,9 @@ export class PayerComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.commande = response.commande;
-          // Check if the order is ready for payment
           if (this.commande.statut !== 'pret') {
             this.errorMessage = 'Cette commande ne peut pas être payée pour le moment. Statut: ' + this.commande.statut;
-          } else if (this.commande.informations_paiement?.statut !== 'en_attente') {
+          } else if (this.commande.informations_paiement?.statut === 'paye') {
             this.errorMessage = 'Cette commande a déjà été payée.';
           }
         } else {
@@ -76,22 +91,27 @@ export class PayerComponent implements OnInit {
 
   onSubmit(): void {
     if (this.paiementForm.invalid || !this.commandeId) {
+      this.paiementForm.markAllAsTouched();
       return;
     }
 
     this.submitting = true;
     this.errorMessage = '';
 
-    const methode_paiement = this.paiementForm.value.methode_paiement;
-    
-    // Call the actual payment API
-    this.commandeService.payerCommande(this.commandeId, methode_paiement).subscribe({
+    const formValue = this.paiementForm.value;
+    const paiementData: PayerCommandeRequest = {
+      adresse_livraison: formValue.adresse_livraison,
+      mode_livraison: formValue.mode_livraison,
+      methode_paiement: formValue.methode_paiement
+      // ❌ notes non inclus
+    };
+
+    this.commandeService.payerCommande(this.commandeId, paiementData).subscribe({
       next: (response) => {
         if (response.success) {
-          this.successMessage = `Paiement de ${this.commande.total_general || this.commande.total}€ effectué avec succès par ${this.getMethodeLabel(methode_paiement)}!`;
+          this.successMessage = `Paiement de ${this.commande.total_general || this.commande.total}€ effectué avec succès par ${this.getMethodeLabel(formValue.methode_paiement)} !`;
           this.submitting = false;
           
-          // Redirect to order details with invoice after success
           setTimeout(() => {
             this.router.navigate(['/acheteur/commande-detail', this.commandeId], {
               queryParams: { facture: true }
@@ -129,4 +149,8 @@ export class PayerComponent implements OnInit {
   retourCommandes(): void {
     this.router.navigate(['/acheteur/commandes']);
   }
+
+  get adresseRue() { return this.paiementForm.get('adresse_livraison.rue'); }
+  get adresseVille() { return this.paiementForm.get('adresse_livraison.ville'); }
+  get adresseCodePostal() { return this.paiementForm.get('adresse_livraison.code_postal'); }
 }
