@@ -12,7 +12,7 @@ const PDFDocument = require('pdfkit');
 const { genererReferencePaiement } = require('../utils/generateur');
 
 // ============================================
-// Passer une commande (sans informations de livraison/paiement)
+// Passer une commande (avec frais de livraison de la boutique)
 // ============================================
 exports.passerCommande = async (req, res) => {
   try {
@@ -93,9 +93,9 @@ exports.passerCommande = async (req, res) => {
     for (const boutiqueId in elementsParBoutique) {
       const { boutique, elements, total } = elementsParBoutique[boutiqueId];
 
-      // Frais de livraison temporairement à 0 (seront recalculés au paiement)
-      const frais_livraison = 0;
-      const total_general = total;
+      // ✅ Frais de livraison standard de la boutique
+      const frais_livraison = boutique.parametres?.frais_livraison || 0;
+      const total_general = total + frais_livraison;
 
       // Créer la commande (sans adresse, mode livraison, notes, ni paiement)
       const nouvelleCommande = new Commande({
